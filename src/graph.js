@@ -1,18 +1,17 @@
 import { cities, routes } from "./GameMap";
 import { cardinalDirection } from "./geo";
 
-// Return cities connected to fromCities
-//   fromCities - String[] (or Set) of city keys
-//   depth - (optional) number of hops to traverse, defaults to 1
-//   routeTestFn - (optional) function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
+// Return cities connected to fromCitiesKeys
 
-export function citiesConnectedTo(fromCities, depth, routeTestFn) {
-  routeTestFn = routeTestFn ?? (() => true);  // Return all connections if no route test is specified
-  depth = depth ?? 1;
+export function citiesConnectedTo(
+  fromCitiesKeys,                 // String[] or Set of city keys
+  depth = 1,                      // number of hops to traverse
+  routeTestFn = () => true        // function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
+) {
   
-  const connectedCities = new Set([...fromCities]);
+  const connectedCities = new Set([...fromCitiesKeys]);
   
-  let iteratorCities = new Set([...fromCities]);
+  let iteratorCities = new Set([...fromCitiesKeys]);
   while ((depth-- > 0) && (iteratorCities.size < cities.size)) {
     iteratorCities.forEach((iteratorCity) => {
       cities.get(iteratorCity)?.routes.forEach(routeKey => {
@@ -25,47 +24,64 @@ export function citiesConnectedTo(fromCities, depth, routeTestFn) {
     iteratorCities = new Set([...connectedCities]);
   }
   
-  fromCities.forEach(fromCity => connectedCities.delete(fromCity));
+  fromCitiesKeys.forEach(fromCity => connectedCities.delete(fromCity));
   
   return connectedCities;
 }
 
-// TODO: Make and return a real Contract object instead of a string
+// Group candidates into cardinal direction buckets
+// Candidates can appear in more than one bucket if there's more than one origin (from) city
 
-export function generateStartingContract(activeCities) {
-
-  // Throughout this function, "candidate" is a city being considered as a possible destination for the contract
-
-  // Get all cities within 2 hops of active (starting) cities without crossing mountains
-  const candidates = citiesConnectedTo(activeCities, 2, (r => !r.mountainous));
-  console.log(`candidates:\n${[...candidates]}`);
-
-  // Group candidates into cardinal direction buckets
-  // Candidates can appear in more than one bucket because there's more than one origin city
+function citiesByDirection(
+  fromCitiesKeys,
+  candidateCitiesKeys
+) {
   let candidatesByDirection = new Map([
     ["north", new Set()],
     ["east", new Set()],
     ["south", new Set()],
     ["west", new Set()]
   ]);
-  candidates.forEach(candidate => {
-    activeCities.forEach(activeCity => 
-                         candidatesByDirection.get(cardinalDirection(activeCity, candidate)).add(candidate))
+  candidateCitiesKeys.forEach(candidate => {
+    fromCitiesKeys.forEach(activeCity => {
+      candidatesByDirection.get(cardinalDirection(activeCity, candidate))?.add(candidate)
+    })
   });
-
+  
   // If a list in one direction is empty, copy the opposite direction’s list into it
-  // If two opposite directions are both empty, this effectively does nothing
+  // Thie implements the requirement "If there are no cities in the selected direction, choose the opposite direction instead."
 
-  if (candidatesByDirection.get("north").size === 0) 
-    candidatesByDirection.set("north", candidatesByDirection.get("south"))
-  else if (candidatesByDirection.get("south").size === 0)
+  if (candidatesByDirection.get("north").size === 0) {
+    candidatesByDirection.set("north", candidatesByDirection.get("south"));
+  } else if (candidatesByDirection.get("south").size === 0) {
     candidatesByDirection.set("south", candidatesByDirection.get("north"));
+  }
 
-  if (candidatesByDirection.get("east").size === 0) 
-    candidatesByDirection.set("east", candidatesByDirection.get("west"))
-  else if (candidatesByDirection.get("west").size === 0)
+  if (candidatesByDirection.get("east").size === 0) {
+    candidatesByDirection.set("east", candidatesByDirection.get("west"));
+  } else if (candidatesByDirection.get("west").size === 0) {
     candidatesByDirection.set("west", candidatesByDirection.get("east"));
+  }
 
+  return candidatesByDirection;
+}
+
+// TODO: Make and return a real Contract object instead of a string
+
+export function generateStartingContract(activeCitiesKeys) {
+  
+  if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length !== 2) {
+    console.error(`generateStartingContract(${activeCitiesKeys}): not an Array(2)`);
+    return;
+  }
+
+  // Throughout this function, "candidate" is always a city key, for a city being considered as a destination for the contract
+
+  // Get all cities within 2 hops of active (starting) cities without crossing mountains
+  const candidates = citiesConnectedTo(activeCitiesKeys, 2, (r => !r.mountainous));
+  console.log(`candidates:\n${[...candidates]}`);
+
+  const candidatesByDirection = citiesByDirection(activeCitiesKeys, candidates);
   console.log("candidatesByDirection:");
   console.log(candidatesByDirection);
   
@@ -117,9 +133,9 @@ export function generateStartingContract(activeCities) {
   
   // List all commodities available in active cities and remove the ones available in every potential destination
   
-  const activeCitiesCommodities = new Set();
-  activeCities.forEach(city => cities.get(city).commodities.forEach(commodity => activeCitiesCommodities.add(commodity)));
-  const validCommodities = activeCitiesCommodities.difference(commoditiesInEveryCandidate);
+  const activeCitiesKeysCommodities = new Set();
+  activeCitiesKeys.forEach(city => cities.get(city).commodities.forEach(commodity => activeCitiesKeysCommodities.add(commodity)));
+  const validCommodities = activeCitiesKeysCommodities.difference(commoditiesInEveryCandidate);
   console.log(`validCommodities:\n${[...validCommodities]}`);
 
   // Randomly pick a commodity for the contract
@@ -162,5 +178,11 @@ export function generateStartingContract(activeCities) {
 function valueOfCity(cityKey) {
   // TODO: Adjust city value based on completed contracts
   const city = cities.get(cityKey);
+
+  if (city === undefined) {
+    console.error(`valueOfCity("${cityKey}"): could not find cityKey)`);
+    return 0;
+  }
+
   return 2 * (1 + (city.commodities.length > 0) + city.large + (3 * city.westCoast));
 }
