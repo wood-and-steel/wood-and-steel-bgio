@@ -7,6 +7,11 @@ export function heading(fromKey, toKey) {
   const fromCity = cities.get(fromKey);
   const toCity = cities.get(toKey);
 
+  if (fromCity === undefined || toCity === undefined) {
+    console.error(`heading("${fromKey}", "${toKey}"): could not find both keys`);
+    return;
+  }
+
   // deg to rad
   const fromLat = fromCity.latitude * Math.PI / 180.0;
   const fromLong = fromCity.longitude * Math.PI / 180.0;
@@ -25,7 +30,14 @@ export function heading(fromKey, toKey) {
 // Given two cities, return one of ["north", "south", "east", "west"]
 
 export function cardinalDirection(fromKey, toKey) {
+
   const h = heading(fromKey, toKey);
+
+  if (h === undefined) {
+    console.error(`candinalDirection("${fromKey}", "${toKey}"): could not get heading`);
+    return;
+  }
+
   if (h > 315.0 || h <= 45.0)
     return "north"
   else if (h > 45.0 && h <= 135.0)
