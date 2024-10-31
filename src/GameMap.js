@@ -266,3 +266,38 @@ export const routes = new Map([
   [ "Tallahassee-Tampa", { "length": 2, "mountainous": false, cities: ["Tallahassee", "Tampa"] } ],
   [ "Thunder Bay-Winnipeg", { "length": 4, "mountainous": false, cities: ["Thunder Bay", "Winnipeg"] } ]
 ])
+
+export const commodities = new Map(
+  [ "coal", "coal" ],
+  [ "copper", "copper" ],
+  [ "lead", "lead" ],
+  [ "oil", "oil" ],
+  [ "nickel", "nickel" ],
+  [ "iron ore", "iron ore" ],
+  [ "bauxite", "bauxite" ],
+  [ "potash", "potash" ],
+  [ "salt", "salt" ],
+  [ "precious metals", "precious metals" ],
+  [ "wood", "wood" ],
+  [ "aluminum", "aluminum" ],
+  [ "steel", "steel" ],
+  [ "machinery", "machinery" ],
+  [ "cars", "cars" ],
+  [ "textiles", "textiles" ],
+  [ "paper", "paper" ],
+  [ "wine", "wine" ],
+  [ "beer", "beer" ],
+  [ "fish", "fish" ],
+  [ "pork", "pork" ],
+  [ "cattle", "cattle" ],
+  [ "sheep", "sheep" ],
+  [ "fruit", "fruit" ],
+  [ "tobacco", "tobacco" ],
+  [ "cotton", "cotton" ],
+  [ "wheat", "wheat" ],
+  [ "oats", "oats" ],
+  [ "rice", "rice" ],
+  [ "corn", "corn" ],
+  [ "imports", "imports" ],
+  [ "tourists", "tourists" ]
+);
