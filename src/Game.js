@@ -1,4 +1,4 @@
-import { generateStartingContract } from "./graph";
+import Contract from "./Contract"
 
 export const WoodAndSteel = {
   setup: () => ({ 
@@ -6,11 +6,9 @@ export const WoodAndSteel = {
   }),
 
   moves: {
-
-    // TODO: Remove generateContract. Wired it up this way for now to work around my lack of React skill.
-
     generateContract: ({ G }, activeCities) => {
-      const contract = generateStartingContract(activeCities);
+    // TODO: Remove generateContract. Wired it up this way for now to work around my lack of React skill.
+    const contract = Contract.generateStartingContract(activeCities);
       G.contracts.push(contract.toJSON());
     },
   },
