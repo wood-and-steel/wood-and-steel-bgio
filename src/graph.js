@@ -30,13 +30,50 @@ export function citiesConnectedTo(
   return connectedCities;
 }
 
+
+export function shortestDistance(
+  fromKey, 
+  toCityTestFn,               // function to filter destination city (e.g. c => c === "New York")
+  routeTestFn = () => true    // function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
+) 
+{
+  let iteratorCities = new Set([ fromKey ]);
+  const connectedCities = new Set([ fromKey ]);
+  let distance = 0;
+
+  while (
+    ![...iteratorCities].some(toCityTestFn) &&     // have not found a city match the given criteria
+    (iteratorCities.size < cities.size) &&         // have not gotten to all the cities
+    distance < 30                                  // longest possible distance is 12, but 30 allows for future maps with more cities
+  ) {
+    iteratorCities.forEach((iteratorCity) => {
+      cities.get(iteratorCity)?.routes.forEach(routeKey => {
+        const route = routes.get(routeKey)
+        if (routeTestFn(route)) {
+          connectedCities.add(route?.cities.find(cityOnRoute => cityOnRoute !== iteratorCity))
+        }
+      })
+    })
+    iteratorCities = new Set([...connectedCities]);
+    distance++;
+  }
+  
+  if ([...iteratorCities].some(toCityTestFn)) {
+    return distance;
+  } else {
+    return undefined;
+  }
+}
+
+
 // Group candidates into cardinal direction buckets
 // Candidates can appear in more than one bucket if there's more than one origin (from) city
 
 function citiesByDirection(
   fromCitiesKeys,
   candidateCitiesKeys
-) {
+) 
+{
   let candidatesByDirection = new Map([
     ["north", new Set()],
     ["east", new Set()],
@@ -48,7 +85,7 @@ function citiesByDirection(
       candidatesByDirection.get(cardinalDirection(activeCity, candidate))?.add(candidate)
     })
   });
-  
+
   // If a list in one direction is empty, copy the opposite direction’s list into it
   // Thie implements the requirement "If there are no cities in the selected direction, choose the opposite direction instead."
 
