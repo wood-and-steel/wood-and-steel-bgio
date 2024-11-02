@@ -37,7 +37,7 @@ export default class Contract {
       !["market", "private", "fulfilled"].includes(type)
       // TODO: Add test for player validity
     ) {
-      console.error("new Contract() failed");
+      console.error(`new Contract(${destinationKey}, ${commodity}, ${type}, ${player}) failed`);
       return undefined;
     }
     this.#destinationKey = destinationKey;
@@ -71,25 +71,40 @@ export default class Contract {
     return new Contract(temp?.destinationKey, temp?.commodity, temp?.type, temp?.player);
   };
 
-/**
- * Returns the value of a city
- * 
- * @param {string} cityKey 
- * @returns {number}
- */
-static valueOfCity(cityKey) {
-  // TODO: Adjust city value based on completed contracts
-  const city = cities.get(cityKey);
+  /**
+   * Returns the value of a city
+   * 
+   * @param {*} G
+   * @param {string} cityKey 
+   * @returns {number | undefined}
+   */
+  static valueOfCity(G, cityKey) {
+    const city = cities.get(cityKey);
 
-  if (city === undefined) {
-    console.error(`valueOfCity("${cityKey}"): could not find cityKey)`);
-    return 0;
-  }
+    if (city === undefined) {
+      console.error(`valueOfCity("${cityKey}"): could not find cityKey)`);
+      return undefined;
+    }
 
-  return 2 * (1 + (city.commodities.length > 0) + city.large + (3 * city.westCoast));
-};
+    let contractsFulfilledHere = 0, commoditiesDeliveredFromHere = new Set();
+
+    G.contracts.forEach(contractJSON => {
+      const contract = Contract.fromJSON(contractJSON);
+      if (contract.type === "fulfilled") {
+        contractsFulfilledHere += (contract.destinationKey === cityKey);
+        if (city.commodities.includes(contract.commodity)) commoditiesDeliveredFromHere.add(contract.commodity);
+      }
+    });
+
+    return 2 * (1 + 
+      (city.commodities.length > 0) + 
+      city.large + 
+      (3 * city.westCoast)) +
+      (2 * contractsFulfilledHere) +
+      commoditiesDeliveredFromHere.size;
+  };
   
-// Fields
+  // Fields
 
   set destinationKey(k) { 
     if (cities.get(k)) {
@@ -129,14 +144,16 @@ static valueOfCity(cityKey) {
     return shortestDistance(this.#destinationKey, c => cities.get(c)?.commodities.includes(this.#commodity)) * 3000;
   }
   
+
   /**
    * Create a starting private contract for a given pair of starting cities
    *
    * @export
+   * @param {*} G                             - boardgame.io global state
    * @param {string[2]} activeCitiesKeys      - Keys of two starting cities
    * @returns {Contract}
    */
-  static generateStartingContract(activeCitiesKeys) {  
+  static generateStartingContract(G, activeCitiesKeys) {  
     if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length !== 2) {
       console.error(`generateStartingContract(${activeCitiesKeys}): not an Array(2)`);
       return undefined;
@@ -208,12 +225,11 @@ static valueOfCity(cityKey) {
       candidatesInChosenDirection
         .filter(candidate => !cities.get(candidate).commodities.includes(contractCommodity))
         .map(candidate => {
-          sumValues += Contract.valueOfCity(candidate);
-          return [candidate, Contract.valueOfCity(candidate)];
+          const val = this.valueOfCity(G, candidate);
+          sumValues += val;
+          return [candidate, val];
         })
     );
-  
-    console.log(`weightedCandidates:\n${[...weightedCandidates]}`);
   
     // TODO: Write a test that exercises all paths to make sure this case can't happen
     if (weightedCandidates.size === 0) {
@@ -237,8 +253,8 @@ static valueOfCity(cityKey) {
   
     return startingContract;  
   };
-
 }
+
 
 /**
  * Groups candidates into a Map of cardinal direction buckets. Candidates can appear in more than one bucket if there's 

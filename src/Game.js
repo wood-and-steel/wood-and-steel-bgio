@@ -7,8 +7,8 @@ export const WoodAndSteel = {
 
   moves: {
     generateContract: ({ G }, activeCities) => {
-    // TODO: Remove generateContract. Wired it up this way for now to work around my lack of React skill.
-    const contract = Contract.generateStartingContract(activeCities);
+      // TODO: Remove generateContract. Wired it up this way for now to work around my lack of React skill.
+      const contract = Contract.generateStartingContract(G, activeCities);
       G.contracts.push(contract.toJSON());
     },
   },
