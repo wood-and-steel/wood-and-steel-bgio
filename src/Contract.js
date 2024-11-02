@@ -47,11 +47,7 @@ export default class Contract {
 
   // Instance methods
   
-  toString() { return `${this.#commodity} -> ${this.#destinationKey} (${this.#type}${(this.#player ? `, ${this.#player}` : "")})`; }
-
-  // Need explicit JSON rendering to support being in G (see https://boardgame.io/documentation/#/?id=state)
-  toJSON() { return `{ "destinationKey": "${this.#destinationKey}", "commodity:" "${this.#commodity}", "type": "${this.#type}", "player": ${this.#player} }`};
-  // TODO: Deserialize from JSON to a Contract object in the right way
+  toString() { return `${this.#commodity} -> ${this.#destinationKey} (${this.#type}${(this.#player ? `, ${this.#player}` : "")}) for $${this.rewardValue}`; }
 
   equals(that) {
     return that instanceof Contract &&
@@ -61,8 +57,18 @@ export default class Contract {
       this.#player === that.player;
   }
 
+  // Need explicit JSON rendering to support being in G (see https://boardgame.io/documentation/#/?id=state)
+  toJSON() { 
+    return `{ "destinationKey": "${this.#destinationKey}", "commodity": "${this.#commodity}", "type": "${this.#type}", "player": ${this.#player} }`
+  };
+
   // Static methods
-  // static foo(c) {  }
+
+  static fromJSON(s) {
+    // TODO: Add error handling
+    const temp = JSON.parse(s);
+    return new Contract(temp?.destinationKey, temp?.commodity, temp?.type, temp?.player);
+  };
 
   // Fields
 

@@ -1,5 +1,8 @@
 import React from "react";
 
+// Following imports are for generating test output
+import Contract from "./Contract";
+
 export function WoodAndSteelState({ ctx, G, moves }) {
 
   const pageStyle = {
@@ -33,6 +36,7 @@ export function WoodAndSteelState({ ctx, G, moves }) {
     backgroundColor: '#f0f0f0',
   };
 
+  let contractDescription = G.contracts.length > 0 ? Contract.fromJSON(G.contracts[G.contracts.length - 1]).toString() : "no contracts yet";
   
   function handleSubmit(e) {
     // Prevent the browser from reloading the page
@@ -56,8 +60,8 @@ export function WoodAndSteelState({ ctx, G, moves }) {
           <button style={buttonStyle}>Generate Starting Contract</button>
         </div>
       </form>
-      <div style={G.contractsGenerated.length > 0 ? contractStyle : {display: 'none'}}>
-        <span>{G.contractsGenerated[G.contractsGenerated.length - 1]}</span>
+      <div style={contractStyle}>
+        <span>{contractDescription}</span>
       </div>
     </div>
   );
