@@ -148,7 +148,7 @@ export default class Contract {
   /**
    * Create a starting private contract for a given pair of starting cities
    *
-   * @export
+   * @static
    * @param {*} G                             - boardgame.io global state
    * @param {string[2]} activeCitiesKeys      - Keys of two starting cities
    * @returns {Contract}
@@ -252,6 +252,77 @@ export default class Contract {
     const startingContract = new Contract(contractCity, contractCommodity, "private");
   
     return startingContract;  
+  };
+
+  /**
+   * Create a market contract from the given active cities
+   *
+   * @static
+   * @param {*} G                             - boardgame.io global state
+   * @param {string[]} activeCitiesKeys       - Keys of all active cities
+   * @returns {Contract}
+   */
+  static generateMarketContract(G, activeCitiesKeys) {  
+    if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length === 0) {
+      console.error(`generateMarketContract(${activeCitiesKeys}): not an array with at least 1 city`);
+      return undefined;
+    }
+  
+    // Throughout this function, "candidate" is always a city key, for a city being considered as a destination for the contract
+  
+    // Get all cities within 2 hops of active cities (and not currently active)
+    const candidates = citiesConnectedTo(activeCitiesKeys, 2);
+  
+    // Choose the destination, part 1: build list of candidates and their values
+    
+    let sumValues = 0;
+    const weightedCandidates = new Map(
+      [...candidates].map(candidate => {
+        const val = this.valueOfCity(G, candidate);
+        sumValues += val;
+        return [candidate, val];
+      })
+    );
+  
+    // Choose the destination, part 2: randomly pick the destination, weighted by their values
+    
+    let contractCity = "";
+    const finalCityDieRoll = Math.floor(Math.random() * sumValues);
+    let skipped = 0;
+    weightedCandidates.forEach((cityValue, candidate) => {
+      if (finalCityDieRoll < cityValue + skipped && contractCity === "")
+        contractCity = candidate
+      else
+        skipped += cityValue;
+    });
+  
+    // Choose a commodity at random from those that are:
+    //  - not available in the desintation city
+    //  - available within any active city or 1 away from them
+    
+    const citiesWithinOneHop = [ ...(citiesConnectedTo(activeCitiesKeys, 1)), ...activeCitiesKeys ];
+    console.log(`citiesWithinOneHop\n${citiesWithinOneHop}`);
+
+    const possibleCommodities = new Set();
+    citiesWithinOneHop.forEach(cityWithinOneHop => {
+      cities.get(cityWithinOneHop).commodities
+        .filter(commodity => !cities.get(contractCity).commodities.includes(commodity))
+        .forEach(commodityNotInContractCity => possibleCommodities.add(commodityNotInContractCity));
+    });
+    console.log(`possibleCommodities\n${[...possibleCommodities]}`);
+
+    if (possibleCommodities.size === 0) {
+      console.error(`generateMarketContract: no possible commodities`);
+      return undefined;
+    }
+
+    // Randomly pick a commodity for the contract
+    
+    const contractCommodity = [...possibleCommodities][Math.floor(Math.random() * possibleCommodities.size)];
+  
+    const marketContract = new Contract(contractCity, contractCommodity, "market");
+  
+    return marketContract;  
   };
 }
 

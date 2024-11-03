@@ -31,13 +31,17 @@ export function WoodAndSteelState({ ctx, G, moves }) {
     paddingRight: '1rem',
   };
   const contractStyle = {
-    padding: '1rem',
-    margin: '1rem',
+    padding: '0.25rem',
+    margin: '0rem',
     backgroundColor: '#f0f0f0',
   };
 
-  let contractDescription = G.contracts.length > 0 ? Contract.fromJSON(G.contracts[G.contracts.length - 1]).toString() : "no contracts yet";
-  
+  const contractsList = G.contracts.map((contract, index) => 
+    <div key={index} style={contractStyle}>
+      {Contract.fromJSON(contract).toString()}
+    </div>
+  );
+
   function handleSubmit(e) {
     // Prevent the browser from reloading the page
     e.preventDefault();
@@ -46,7 +50,13 @@ export function WoodAndSteelState({ ctx, G, moves }) {
     const formData = new FormData(form);
     const activeCities = Object.fromEntries(formData.entries()).activeCities.split(',').map(i => i.trim());
 
-    moves.generateContract(activeCities);
+    switch (e.nativeEvent.submitter.name) {
+      case "startingContract":
+        moves.generateStartingContract(activeCities);
+        break;
+      default:
+        moves.generateMarketContract(activeCities);
+    }
   }
 
   return (
@@ -57,12 +67,11 @@ export function WoodAndSteelState({ ctx, G, moves }) {
           <input name="activeCities" autoFocus={true} defaultValue="Jacksonville,Tallahassee" />
         </label>
         <div style={buttonBarStyle}>
-          <button style={buttonStyle}>Generate Starting Contract</button>
+          <button name="startingContract" style={buttonStyle}>Generate Starting Contract</button>
+          <button name="marketContract" style={buttonStyle}>Generate Market Contract</button>
         </div>
-      </form>
-      <div style={contractStyle}>
-        <span>{contractDescription}</span>
-      </div>
+        {contractsList}
+        </form>
     </div>
   );
 }
