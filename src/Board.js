@@ -54,6 +54,9 @@ export function WoodAndSteelState({ ctx, G, moves }) {
       case "startingContract":
         moves.generateStartingContract(activeCities);
         break;
+      case "privateContract":
+        moves.generatePrivateContract(activeCities, activeCities[0]);
+        break;
       default:
         moves.generateMarketContract(activeCities);
     }
@@ -68,8 +71,10 @@ export function WoodAndSteelState({ ctx, G, moves }) {
         </label>
         <div style={buttonBarStyle}>
           <button name="startingContract" style={buttonStyle}>Generate Starting Contract</button>
+          <button name="privateContract" style={buttonStyle}>Generate Private Contract</button>
           <button name="marketContract" style={buttonStyle}>Generate Market Contract</button>
         </div>
+        <div>Private contracts use the first listed city as the one with the latest delivery completed.</div>
         {contractsList}
         </form>
     </div>

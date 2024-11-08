@@ -168,23 +168,18 @@ export default class Contract {
     // If only two of the directions have cities, choose between those two directions 50/50
     // If all four directions have cities, choose one of them by these odds: N 20%, S 20%, E 30%, or W 30%
   
-    let candidatesInChosenDirection = [];
+    const weightedDirections = new Map();
     
     if (candidatesByDirection.get("north").size === 0) {
-      candidatesInChosenDirection.push(...(candidatesByDirection.get( Math.random() < 0.5 ? "east" : "west" )));
+      weightedDirections.set("east", 1).set("west", 1);
     } else if (candidatesByDirection.get("east").size === 0) {
-      candidatesInChosenDirection.push(...(candidatesByDirection.get( Math.random() < 0.5 ? "north" : "south" )));
+      weightedDirections.set("north", 1).set("south", 1);
     } else {
-      const rand = Math.random();
-      let randomDirection = "";
-      
-      if (rand < 0.2) randomDirection = "north"
-      else if (rand < 0.4) randomDirection = "south"
-      else if (rand < 0.7) randomDirection = "east"
-      else randomDirection = "west";
-      candidatesInChosenDirection.push(...(candidatesByDirection.get(randomDirection)));
+      weightedDirections.set("north", 2).set("south", 2).set("east", 3).set("west", 3);
     }
-  
+
+    const candidatesInChosenDirection = Array.from(candidatesByDirection.get(weightedRandom(weightedDirections)));
+
     // Choose a commodity at random from those that are:
     //  - not available in every candidate desintation city
     //  - available in the starting cities
@@ -202,56 +197,77 @@ export default class Contract {
     });
   
     // Remember which commodities are available in all cities (thus not valid for delivery to this set of cities)
-    
     const commoditiesInEveryCandidate = new Set();
     candidateCountByCommodity.forEach((count, commodity) => {
       if (count === candidatesInChosenDirection.length) commoditiesInEveryCandidate.add(commodity) 
     });
     
     // List all commodities available in active cities and remove the ones available in every potential destination
-    
     const activeCitiesKeysCommodities = new Set();
     activeCitiesKeys.forEach(city => cities.get(city).commodities.forEach(commodity => activeCitiesKeysCommodities.add(commodity)));
     const validCommodities = activeCitiesKeysCommodities.difference(commoditiesInEveryCandidate);
   
-    // Randomly pick a commodity for the contract
-    
+    // Pick a commodity for the contract
     const contractCommodity = [...validCommodities][Math.floor(Math.random() * validCommodities.size)];
   
-    // Choose the destination, part 1: list candidates that don't supply the contractCommodity by their value
-    
-    let sumValues = 0;
-    const weightedCandidates = new Map(
-      candidatesInChosenDirection
-        .filter(candidate => !cities.get(candidate).commodities.includes(contractCommodity))
-        .map(candidate => {
-          const val = this.valueOfCity(G, candidate);
-          sumValues += val;
-          return [candidate, val];
-        })
+    // Pick the destination, excluding candidate that supply the selected commodity
+    const contractCity = weightedRandomCity(
+      G,
+      candidatesInChosenDirection.filter(candidate => !cities.get(candidate).commodities.includes(contractCommodity))
     );
   
-    // TODO: Write a test that exercises all paths to make sure this case can't happen
-    if (weightedCandidates.size === 0) {
-      console.error("generateStartingContract: no candidate cities survived");
+    return new Contract(contractCity, contractCommodity, "private");  
+  };
+
+  /**
+   * Create a private contract from the given active cities and the starting city
+   *
+   * @static
+   * @param {*} G                             - boardgame.io global state
+   * @param {string[]} activeCitiesKeys       - Keys of all active cities
+   * @param {string} currentCityKey           - Key of the city to determine direction from
+   * @returns {Contract}
+   */
+  static generatePrivateContract(G, activeCitiesKeys, currentCityKey) {  
+    if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length === 0) {
+      console.error(`generateMarketContract(${activeCitiesKeys}): not an array with at least 1 city`);
       return undefined;
     }
-  
-    // Choose the destination, part 2: randomly pick the destination, weighted by their values
+
+    // Set odds for direction from currentCityKey, biased away from creating coastal connections
+
+    const weightedDirections = new Map([ ["north", 2], ["south", 2] ]);
+    if (cities.get(currentCityKey).nearEastCoast) {
+      weightedDirections.set("east", 2).set("west", 4);
+    } else if (cities.get(currentCityKey).nearWestCoast) {
+      weightedDirections.set("east", 4).set("west", 2);
+    } else {
+      weightedDirections.set("east", 3).set("west", 3);
+    }
+
+    // Get all cities within 2 hops of current city, split by direction
+    const candidatesByDirection = citiesByDirection( [ currentCityKey ], citiesConnectedTo(activeCitiesKeys, 2) );
     
-    let contractCity = "";
-    const finalCityDieRoll = Math.floor(Math.random() * sumValues);
-    let skipped = 0;
-    weightedCandidates.forEach((cityValue, candidate) => {
-      if (finalCityDieRoll < cityValue + skipped && contractCity === "")
-        contractCity = candidate
-      else
-        skipped += cityValue;
-    });
-  
-    const startingContract = new Contract(contractCity, contractCommodity, "private");
-  
-    return startingContract;  
+    // Pick a direction and a city
+    // TODO: Make sure these don't return any empty arrays
+    const candidatesInChosenDirection = Array.from(candidatesByDirection.get(weightedRandom(weightedDirections)));
+    const contractCity = weightedRandomCity(G, candidatesInChosenDirection);
+
+    // Choose a commodity at random from those that are:
+    //  - available within 1 hop of active cities
+    //  - not avilable in destination city
+    const availableCommodities = new Set();
+    activeCitiesKeys.forEach(activeCity => {
+      cities.get(activeCity).commodities.forEach(commodity => {
+        availableCommodities.add(commodity);
+      })
+    })
+    cities.get(contractCity).commodities.forEach(commodity => { availableCommodities.delete(commodity); });
+
+    // Pick a commodity for the contract
+    const contractCommodity = [...availableCommodities][Math.floor(Math.random() * availableCommodities.size)];
+
+    return new Contract(contractCity, contractCommodity, "private");  
   };
 
   /**
@@ -268,33 +284,8 @@ export default class Contract {
       return undefined;
     }
   
-    // Throughout this function, "candidate" is always a city key, for a city being considered as a destination for the contract
-  
-    // Get all cities within 2 hops of active cities (and not currently active)
-    const candidates = citiesConnectedTo(activeCitiesKeys, 2);
-  
-    // Choose the destination, part 1: build list of candidates and their values
-    
-    let sumValues = 0;
-    const weightedCandidates = new Map(
-      [...candidates].map(candidate => {
-        const val = this.valueOfCity(G, candidate);
-        sumValues += val;
-        return [candidate, val];
-      })
-    );
-  
-    // Choose the destination, part 2: randomly pick the destination, weighted by their values
-    
-    let contractCity = "";
-    const finalCityDieRoll = Math.floor(Math.random() * sumValues);
-    let skipped = 0;
-    weightedCandidates.forEach((cityValue, candidate) => {
-      if (finalCityDieRoll < cityValue + skipped && contractCity === "")
-        contractCity = candidate
-      else
-        skipped += cityValue;
-    });
+    // Choose a city within 2 hops of active cities (but not an active city), randomly weighted by value
+    const contractCity = weightedRandomCity(G, citiesConnectedTo(activeCitiesKeys, 2));
   
     // Choose a commodity at random from those that are:
     //  - not available in the desintation city
@@ -304,7 +295,8 @@ export default class Contract {
 
     const possibleCommodities = new Set();
     citiesWithinOneHop.forEach(cityWithinOneHop => {
-      cities.get(cityWithinOneHop).commodities
+      const commodities = cities.get(cityWithinOneHop).commodities;
+      commodities
         .filter(commodity => !cities.get(contractCity).commodities.includes(commodity))
         .forEach(commodityNotInContractCity => possibleCommodities.add(commodityNotInContractCity));
     });
@@ -315,15 +307,47 @@ export default class Contract {
       return undefined;
     }
 
-    // Randomly pick a commodity for the contract
-    
+    // Pick a commodity for the contract
     const contractCommodity = [...possibleCommodities][Math.floor(Math.random() * possibleCommodities.size)];
   
-    const marketContract = new Contract(contractCity, contractCommodity, "market");
-  
-    return marketContract;  
+    return new Contract(contractCity, contractCommodity, "market");  
   };
 }
+
+
+/**
+ * Randomly pick a city, weighted by the relative value of the cities
+ *
+ * @param {*} G                                   - boardgame.io global state
+ * @param {Array<String>|Set<String>} cities      - Keys of cities to select from
+ * @returns {String}                              - Key of randomly selected city
+ */
+function weightedRandomCity(G, cities) {
+  return weightedRandom(new Map([...cities].map(city => [city, Contract.valueOfCity(G, city)])));
+}
+
+
+/**
+ * Randomly pick a key from a map, weighted by the relative integer value of the keys
+ *
+ * @param {Map<any, number>} weightedMap    - Map where the keys are the choices and values are their integer weights
+ * @returns {any}                           - Randomly selected key from weightedMap
+ */
+function weightedRandom(weightedMap) {
+  let chosenKey = undefined;
+  const sumValues = weightedMap.values().reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+  const finalDieRoll = Math.floor(Math.random() * sumValues);
+  let skipped = 0;
+  weightedMap.forEach((value, choice) => {
+    if (finalDieRoll < value + skipped && !chosenKey)
+      chosenKey = choice
+    else
+      skipped += value;
+  });
+
+  return chosenKey;
+  }
 
 
 /**
@@ -344,9 +368,11 @@ function citiesByDirection(fromCitiesKeys, candidateCitiesKeys)
   ]);
   candidateCitiesKeys.forEach(candidate => {
     fromCitiesKeys.forEach(activeCity => {
-      candidatesByDirection.get(cardinalDirection(activeCity, candidate))?.add(candidate)
+      if (candidate !== activeCity) {
+        candidatesByDirection.get(cardinalDirection(activeCity, candidate))?.add(candidate);
+      }
     })
-  });
+  })
 
   // If a list in one direction is empty, copy the opposite direction’s list into it
   // Thie implements the requirement "If there are no cities in the selected direction, choose the opposite direction instead."
