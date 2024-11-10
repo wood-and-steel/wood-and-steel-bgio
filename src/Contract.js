@@ -8,11 +8,12 @@ import { cardinalDirection } from "./geo";
  * @export
  * @class Contract
  * @typedef {Contract}
- * @property {string} destinationKey    - Key of the destination city
- * @property {string} commodity         - Name of the commodity
- * @property {string} type              - One of ["market", "private", "fulfilled"]
- * @property {string} [player]          - Key of the destination city
- * @property {number} rewardValue       - Monetary value of contract upon fulfillment (read-only)
+ * @property {string} destinationKey        - Key of the destination city
+ * @property {string} commodity             - Name of the commodity
+ * @property {["market", "private"]} type   - Type of contract
+ * @property {string} [player]              - ID of player holding or that fulfilled the contract
+ * @property {boolean} fulfilled            - Delivery complete
+ * @property {number} rewardValue           - Monetary value of contract upon fulfillment
 */
 export default class Contract {
 
@@ -20,15 +21,17 @@ export default class Contract {
   #commodity;
   #player;
   #type;
+  #fulfilled;
   
   /**
-   * Creates an instance of Contract.
+   * Creates an instance of Contract
    *
    * @constructor
-   * @param {string} destinationKey     - Key of the destination city
-   * @param {string} commodity          - Name of the commodity
-   * @param {string} [type="market"]    - One of ["market", "private", "fulfilled"]
-   * @param {*} [player=null]           - ID of the player who holds it or has fulfilled it
+   * @param {string} destinationKey                   - Key of the destination city
+   * @param {string} commodity                        - Name of the commodity
+   * @param {["market", "private"]} [type="market"]   - Type of contract
+   * @param {*} [player=null]                         - ID of player holding or that fulfilled the contract
+   * @param {boolean} [fulfilled=false]               - Delivery complete
    */
   constructor(destinationKey, commodity, type = "market", player = null) {
     if (
@@ -44,23 +47,29 @@ export default class Contract {
     this.#commodity = commodity;
     this.#type = type;
     this.#player = player;
+    this.#fulfilled = false;
   }
 
   // Instance methods
   
-  toString() { return `${this.#commodity} -> ${this.#destinationKey} (${this.#type}${(this.#player ? `, ${this.#player}` : "")}) for $${this.rewardValue}`; }
+  toString() { return `${this.#commodity} -> ${this.#destinationKey} ${this.fulfilled ? "FULFILLED " : ""}(${this.#type}${(this.#player ? `, ${this.#player}` : "")}) for $${this.rewardValue}`; }
 
   equals(that) {
     return that instanceof Contract &&
       this.#destinationKey === that.destinationKey &&
       this.#commodity === that.commodity &&
       this.#type === that.type &&
-      this.#player === that.player;
+      this.#player === that.player &&
+      this.#fulfilled === that.fulfilled;
   }
 
   toJSON() { 
     // Function exists because we render contracts as JSON so they can live in G (see https://boardgame.io/documentation/#/?id=state)
-    return `{ "destinationKey": "${this.#destinationKey}", "commodity": "${this.#commodity}", "type": "${this.#type}", "player": ${this.#player} }`
+    return `{ "destinationKey": "${this.#destinationKey}", ` +
+      `"commodity": "${this.#commodity}", ` + 
+      `"type": "${this.#type}", ` +
+      `"player": ${this.#player}, ` +
+      `"fulfilled": ${this.#fulfilled} }`
   };
 
   // Static methods
@@ -68,7 +77,7 @@ export default class Contract {
   static fromJSON(s) {
     // TODO: Add error handling
     const temp = JSON.parse(s);
-    return new Contract(temp?.destinationKey, temp?.commodity, temp?.type, temp?.player);
+    return new Contract(temp?.destinationKey, temp?.commodity, temp?.type, temp?.player, temp?.fulfilled);
   };
 
   /**
@@ -90,7 +99,7 @@ export default class Contract {
 
     G.contracts.forEach(contractJSON => {
       const contract = Contract.fromJSON(contractJSON);
-      if (contract.type === "fulfilled") {
+      if (contract.fulfilled) {
         contractsFulfilledHere += (contract.destinationKey === cityKey);
         if (city.commodities.includes(contract.commodity)) commoditiesDeliveredFromHere.add(contract.commodity);
       }
@@ -130,6 +139,17 @@ export default class Contract {
   }
   get player() { return this.#player; }
 
+  set fulfilled(b) {
+    this.#fulfilled = (b === true);
+  }
+  get fulfilled() { return this.#fulfilled; }
+
+  
+  /**
+   * Type of contract
+   *
+   * @type {["market", "private"]}
+   */
   set type(t) { 
     if (["market", "private", "fulfilled"].includes(t)) {
       this.#type = t;
@@ -139,7 +159,12 @@ export default class Contract {
   }
   get type() { return this.#type; }
 
-  // rewardValue is read-only; setter is undefined
+  /**
+   * Dollar value of this contract if fulfilled
+   *
+   * @readonly
+   * @type {number}
+   */
   get rewardValue() {
     return shortestDistance(this.#destinationKey, c => cities.get(c)?.commodities.includes(this.#commodity)) * 3000;
   }
