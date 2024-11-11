@@ -30,25 +30,34 @@ export function WoodAndSteelState({ ctx, G, moves }) {
     paddingRight: '1rem',
   };
   const contractStyle = {
-    padding: '0.25rem',
+    padding: '0.25rem 0.75rem',
     margin: '0rem',
     backgroundColor: '#f0f0f0',
     textAlign: 'left', 
-    border: 'solid 1px rgba(0, 0, 0, 0.2)'
+    border: 'solid 1px rgba(0, 0, 0, 0.2)',
+    cursor: 'pointer',
   };
 
   const contractsList = G.contracts.map((contract, index) => 
-    <button id={index} style={contractStyle} name="toggleContractFulfilled">
-      <span style={contract.fulfilled ? {textDecoration: 'line-through'} : null}>
-        {contract.commodity} to {contract.destinationKey} ({contract.type})
-      </span> 
-      {contract.fulfilled ? " FULFILLED " : " "}
-      ${`${rewardValue(contract)/1000}`}K
-    </button>
+    <div>
+      <button id={index} style={contractStyle} name="toggleContractFulfilled">
+        <span style={contract.fulfilled ? {textDecoration: 'line-through'} : null}>
+          {contract.commodity} to {contract.destinationKey} ({contract.type})
+        </span> 
+        {contract.fulfilled ? " FULFILLED " : " "}
+        ${`${rewardValue(contract)/1000}`}K
+      </button>
+      <button id={index} style={{fontSize: '120%', backgroundColor: 'Window', border: 'none', cursor: 'pointer' }} name="deleteContract">
+        ✕
+      </button>
+    </div>
   );
 
   const cityValues = [...cities].map(([key, ...rest]) =>
-    <div style={{width: '140px', display: 'inline-block'}}>{key} {valueOfCity(G, key)}</div>
+    <div style={{width: '140px', display: 'inline-block', opacity: '0.8'}}>
+      <span style={{opacity: '0.65', paddingRight: '0.4rem'}}>{key}</span> 
+      <span style={{fontWeight: '600'}}>{valueOfCity(G, key)}</span>
+    </div>
   );
 
   function handleSubmit(e) {
@@ -72,7 +81,12 @@ export function WoodAndSteelState({ ctx, G, moves }) {
       case "toggleContractFulfilled":
         moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
         break;
-      default:
+      case "deleteContract":
+        if (window.confirm("Delete this contract?")) {
+          moves.deleteContract(e.nativeEvent.submitter.id);
+        }
+        break;
+        default:
       }
   }
 

@@ -42,6 +42,10 @@ export const WoodAndSteel = {
       G.contracts[contractIndex].fulfilled = !G.contracts[contractIndex].fulfilled;
     },
 
+    deleteContract: ({ G, playerID }, contractIndex) => {
+      G.contracts.splice(contractIndex, 1);
+    },
+
   },
 
   turn: {
