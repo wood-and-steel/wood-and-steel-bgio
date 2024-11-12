@@ -26,12 +26,12 @@ export function valueOfCity(G, cityKey) {
     return undefined;
   }
 
-  let contractsFulfilledHere = 0, commoditiesDeliveredFromHere = new Set();
+  let contractsFulfilledHere = 0, contractsWithCommoditiesFromHere = 0;
 
   G.contracts.forEach(contract => {
     if (contract.fulfilled) {
       contractsFulfilledHere += (contract.destinationKey === cityKey);
-      if (city.commodities.includes(contract.commodity)) commoditiesDeliveredFromHere.add(contract.commodity);
+      contractsWithCommoditiesFromHere += (city.commodities.includes(contract.commodity));
     }
   });
 
@@ -40,7 +40,7 @@ export function valueOfCity(G, cityKey) {
     city.large + 
     (3 * city.westCoast)) +
     (2 * contractsFulfilledHere) +
-    commoditiesDeliveredFromHere.size;
+    contractsWithCommoditiesFromHere;
   
   return value;
 }
