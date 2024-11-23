@@ -13,6 +13,7 @@
  * value: {
  *  state           string
  *  country         string
+ *  region          ["Eastern", "Central", "Western"]
  *  label           string (can be null) - prettier version of key
  *  latitude        number
  *  longitude       number
@@ -20,7 +21,7 @@
  *  westCoast       boolean
  *  nearWestCoast   boolean
  *  nearEastCoast   boolean
- *  goods           string[] - called commodities in the rules, using goods in code so they have a different first letter than cities
+ *  commodities     string[]
  *  routes          string[] - keys for routes Map
  * }
  */
