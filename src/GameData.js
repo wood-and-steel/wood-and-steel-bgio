@@ -268,37 +268,45 @@ export const routes = new Map([
   [ "Thunder Bay-Winnipeg", { "length": 4, "mountainous": false, cities: ["Thunder Bay", "Winnipeg"] } ]
 ])
 
+/*
+ * commodities
+ * 
+ * key:           name of commodity
+ * value: {
+ *  regions       [String] - regions with cities that supply the commodity
+ * }
+ */
 export const commodities = new Map([
-  [ "coal", "coal" ],
-  [ "copper", "copper" ],
-  [ "lead", "lead" ],
-  [ "oil", "oil" ],
-  [ "nickel", "nickel" ],
-  [ "iron ore", "iron ore" ],
-  [ "bauxite", "bauxite" ],
-  [ "potash", "potash" ],
-  [ "salt", "salt" ],
-  [ "precious metals", "precious metals" ],
-  [ "wood", "wood" ],
-  [ "aluminum", "aluminum" ],
-  [ "steel", "steel" ],
-  [ "machinery", "machinery" ],
-  [ "cars", "cars" ],
-  [ "textiles", "textiles" ],
-  [ "paper", "paper" ],
-  [ "wine", "wine" ],
-  [ "beer", "beer" ],
-  [ "fish", "fish" ],
-  [ "pork", "pork" ],
-  [ "cattle", "cattle" ],
-  [ "sheep", "sheep" ],
-  [ "fruit", "fruit" ],
-  [ "tobacco", "tobacco" ],
-  [ "cotton", "cotton" ],
-  [ "wheat", "wheat" ],
-  [ "oats", "oats" ],
-  [ "rice", "rice" ],
-  [ "corn", "corn" ],
-  [ "imports", "imports" ],
-  [ "tourists", "tourists" ]
+  [ "coal", { "regions": ["Western", "Central", "Eastern"] } ],
+  [ "copper", { "regions": ["Western"] } ],
+  [ "lead", { "regions": ["Western"] } ],
+  [ "oil", { "regions": ["Western", "Central"] } ],
+  [ "nickel", { "regions": ["Western", "Central"] } ],
+  [ "iron ore", { "regions": ["Western", "Central"] } ],
+  [ "bauxite", { "regions": ["Central"] } ],
+  [ "potash", { "regions": ["Western"] } ],
+  [ "salt", { "regions": ["Western", "Central", "Eastern"] } ],
+  [ "precious metals", { "regions": ["Western"] } ],
+  [ "wood", { "regions": ["Western", "Eastern"] } ],
+  [ "aluminum", { "regions": ["Eastern"] } ],
+  [ "steel", { "regions": ["Central", "Eastern"] } ],
+  [ "machinery", { "regions": ["Central", "Eastern"] } ],
+  [ "cars", { "regions": ["Central"] } ],
+  [ "textiles", { "regions": ["Western", "Eastern"] } ],
+  [ "paper", { "regions": ["Central"] } ],
+  [ "wine", { "regions": ["Western"] } ],
+  [ "beer", { "regions": ["Central"] } ],
+  [ "fish", { "regions": ["Western", "Central"] } ],
+  [ "pork", { "regions": ["Central"] } ],
+  [ "cattle", { "regions": ["Western", "Central", "Eastern"] } ],
+  [ "sheep", { "regions": ["Western"] } ],
+  [ "fruit", { "regions": ["Western", "Eastern"] } ],
+  [ "tobacco", { "regions": ["Central", "Eastern"] } ],
+  [ "cotton", { "regions": ["Central", "Eastern"] } ],
+  [ "wheat", { "regions": ["Central"] } ],
+  [ "oats", { "regions": ["Western", "Central"] } ],
+  [ "rice", { "regions": ["Central"] } ],
+  [ "corn", { "regions": ["Central"] } ],
+  [ "imports", { "regions": ["Western", "Eastern"] } ],
+  [ "tourists", { "regions": ["Central", "Eastern"] } ]
 ]);
