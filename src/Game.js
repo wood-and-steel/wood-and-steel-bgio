@@ -47,12 +47,14 @@ export const WoodAndSteel = {
       }
     },
 
-    toggleContractFulfilled: ({ G, playerID }, contractIndex) => {
-      G.contracts[contractIndex].fulfilled = !G.contracts[contractIndex].fulfilled;
+    toggleContractFulfilled: ({ G, playerID }, contractId) => {
+      const contractIndex = G.contracts.findIndex(c => c.id === contractId);
+      if (contractIndex !== -1) G.contracts[contractIndex].fulfilled = !G.contracts[contractIndex].fulfilled;
     },
 
-    deleteContract: ({ G, playerID }, contractIndex) => {
-      G.contracts.splice(contractIndex, 1);
+    deleteContract: ({ G, playerID }, contractId) => {
+      const contractIndex = G.contracts.findIndex(c => c.id === contractId);
+      if (contractIndex !== -1) G.contracts.splice(contractIndex, 1);
     },
 
   },

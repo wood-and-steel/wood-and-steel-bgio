@@ -53,23 +53,34 @@ export function WoodAndSteelState({ ctx, G, moves }) {
     opacity: '0.8',
   };
 
-  const contractsList = G.contracts.map((contract, index) => 
-    <div>
-      <button id={index} style={contractStyle} name="toggleContractFulfilled">
-        <span style={contract.fulfilled ? {textDecoration: 'line-through'} : null}>
+  function compareContractsFn(a , b) {
+    const aValue = (a.type === "private" ? 10 : 0) + (a.fulfilled ? 100 : 0);
+    const bValue = (b.type === "private" ? 10 : 0) + (b.fulfilled ? 100 : 0);
+    if (aValue < bValue) return -1;
+    if (aValue > bValue) return 1;
+    else return 0;
+  }
+
+  var contractsList = G.contracts.toSorted(compareContractsFn).map((contract, index) => 
+    <div key={index}>
+      <button id={contract.id} style={contractStyle} name="toggleContractFulfilled">
+        <span style={{
+          textDecoration: contract.fulfilled ? 'line-through' : 'none', 
+          color: contract.type === "market" ? "blue" : "black",
+        }}>
           {contract.commodity} to {contract.destinationKey} ({contract.type})
-          ${`${rewardValue(contract)/1000}`}K + {railroadTieValue(contract)} {railroadTieValue(contract) > 1 ? "ties" : "tie"} 
+          ${`${rewardValue(contract)/1000}`}K + {railroadTieValue(contract)} {railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"} 
         </span> 
         {contract.fulfilled ? " FULFILLED " : " "}
       </button>
-      <button id={index} style={{fontSize: '120%', backgroundColor: 'Window', border: 'none', cursor: 'pointer' }} name="deleteContract">
+      <button id={contract.id} style={{fontSize: '120%', backgroundColor: 'Window', border: 'none', cursor: 'pointer' }} name="deleteContract">
         ✕
       </button>
     </div>
   );
 
   const cityValues = [...cities].map(([key, ...rest]) =>
-    <div style={cityCellStyle}>
+    <div key={key} style={cityCellStyle}>
       <span style={{opacity: '0.65', paddingRight: '0.4rem'}}>{key}</span> 
       <span style={{fontWeight: '600'}}>{valueOfCity(G, key)}</span>
     </div>
@@ -117,9 +128,9 @@ export function WoodAndSteelState({ ctx, G, moves }) {
         </label>
         <div style={buttonBarStyle}>
           <span style={{alignSelf: 'center'}}>Generate a contract:</span>
-          <button name="startingContract" style={buttonStyle}>Starting</button>
           <button name="privateContract" style={buttonStyle}>Private</button>
           <button name="marketContract" style={buttonStyle}>Market</button>
+          <button name="startingContract" style={{marginLeft: '2rem', ...buttonStyle}}>Starting</button>
           <button name="manualContract" style={{marginLeft: '2rem', ...buttonStyle}}>Add Manual</button>
         </div>
         <div>

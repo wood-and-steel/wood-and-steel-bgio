@@ -5,6 +5,7 @@ import { cardinalDirection } from "./geo";
 /**
  * @typedef {Object} Contract
  * 
+ * @property {string} id
  * @property {string} destinationKey
  * @property {string} commodity
  * @property {boolean} fulfilled
@@ -289,6 +290,7 @@ export function newContract(destinationKey, commodity, options = {
   }
 
   return {
+    id: `${commodity.substring(0, 3)}-${cities.get(destinationKey).id}-${Date.now().toString(16)}`,
     destinationKey: destinationKey, 
     commodity: commodity, 
     type: options.type,
