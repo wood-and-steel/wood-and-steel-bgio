@@ -28,7 +28,10 @@ export function generateStartingContract(G, activeCitiesKeys) {
   // Throughout this function, "candidate" is always a city key, for a city being considered as a destination for the contract
 
   // Get all cities within 2 hops of active (starting) cities without crossing mountains
-  const candidates = citiesConnectedTo(activeCitiesKeys, 2, (r => !r.mountainous));
+  const candidates = citiesConnectedTo(activeCitiesKeys, {
+    distance: 2, 
+    routeTestFn: (r => !r.mountainous),
+  }); 
   const candidatesByDirection = citiesByDirection(activeCitiesKeys, candidates);
   
   // If only two of the directions have cities, choose between those two directions 50/50
@@ -112,7 +115,7 @@ export function generatePrivateContract(G, activeCitiesKeys, currentCityKey) {
   }
 
   // Get all cities within 2 hops of current city, split by direction
-  const candidatesByDirection = citiesByDirection( [ currentCityKey ], citiesConnectedTo(activeCitiesKeys, 2) );
+  const candidatesByDirection = citiesByDirection( [ currentCityKey ], citiesConnectedTo(activeCitiesKeys, { distance: 2 }) );
   
   // Pick a direction and a city
   // TODO: Make sure these don't return any empty arrays
@@ -151,13 +154,16 @@ export function generateMarketContract(G, activeCitiesKeys) {
   }
 
   // Choose a city within 2 hops of active cities (but not an active city), randomly weighted by value
-  const contractCity = weightedRandomCity(G, citiesConnectedTo(activeCitiesKeys, 2));
+  const contractCity = weightedRandomCity(G, citiesConnectedTo(activeCitiesKeys, { distance: 2 }));
 
   // Choose a commodity at random from those that are:
   //  - not available in the desintation city
   //  - available within any active city or 1 away from them
   
-  const citiesWithinOneHop = [ ...(citiesConnectedTo(activeCitiesKeys, 1)), ...activeCitiesKeys ];
+  const citiesWithinOneHop = citiesConnectedTo(activeCitiesKeys, {
+    distance: 1,
+    includeFromCities: true,
+  });
 
   const possibleCommodities = new Set();
   citiesWithinOneHop.forEach(cityWithinOneHop => {

@@ -3,17 +3,25 @@ import { cities, routes } from "./GameData";
 /**
  * Returns all cities connected to one or more cities within a number of segments
  * 
- * @param {string[]|Set} fromCitiesKeys           - Keys of cities from which to traverse the map
- * @param {*} [distance = 1]                      - Maximum number of segments to traverse
- * @param {*} [routeTestFn = () => true]          - Function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
- * @returns {Set}                                 - City keys with origin cities removed
+ * @param {string[]|Set} fromCitiesKeys - Keys of cities from which to traverse the map
+ * @param {Object} options
+*  @param {number} [options.distance = 1] Maximum number of segments to traverse
+*  @param {function} [options.routeTestFn = () => true] Function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
+*  @param {boolean} [options.includeFromCities = false] Whether to include fromCitiesKeys in return value
+ * @returns {Set} City keys with origin cities removed
  */
-export function citiesConnectedTo(fromCitiesKeys, distance = 1, routeTestFn = () => true) {
-  
+export function citiesConnectedTo(fromCitiesKeys, options = {}) {
+  const {
+    distance = 1,
+    routeTestFn = () => true,
+    includeFromCities = false,
+  } = options;
+
   const connectedCities = new Set([...fromCitiesKeys]);
   
   let iteratorCities = new Set([...fromCitiesKeys]);
-  while ((distance-- > 0) && (iteratorCities.size < cities.size)) {
+  let distanceCountdown = distance;
+  while ((distanceCountdown-- > 0) && (iteratorCities.size < cities.size)) {
     iteratorCities.forEach((iteratorCity) => {
       cities.get(iteratorCity)?.routes.forEach(routeKey => {
         const route = routes.get(routeKey)
@@ -25,7 +33,7 @@ export function citiesConnectedTo(fromCitiesKeys, distance = 1, routeTestFn = ()
     iteratorCities = new Set([...connectedCities]);
   }
   
-  fromCitiesKeys.forEach(fromCity => connectedCities.delete(fromCity));
+  if (!includeFromCities) fromCitiesKeys.forEach(fromCity => connectedCities.delete(fromCity));
   
   return connectedCities;
 }
