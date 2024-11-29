@@ -291,32 +291,32 @@ function generateRailroadName(state) {
   const stateCharacteristics = {
     "AL": {
       name: "Alabama",
-      features: ["Valley", "Ridge", "Hills", "River", "Bay"],
+      features: ["Valley", "Ridge", "Hills", "River", "Talladega", "Black Belt"],
       industries: ["Cotton", "Iron", "Mining", "Lumber", "Agricultural"]
     },
     "AZ": {
       name: "Arizona",
       features: ["Mesa", "Canyon", "Desert", "Mountain", "Basin"],
-      industries: ["Mining", "Copper", "Trading", "Express"]
+      industries: ["Mining", "Copper", "Trading"]
     },
     "AR": {
       name: "Arkansas",
-      features: ["Mountain", "Valley", "River", "Prairie"],
+      features: ["Mountain", "Highlands", "Ridge", "Ozark", "Plains"],
       industries: ["Lumber", "Cotton", "Mining", "Agricultural"]
     },
     "CA": {
       name: "California",
-      features: ["Mountain", "Valley", "Coast", "Bay", "Desert"],
+      features: ["Mountain", "Valley", "Coast", "Bay", "Desert", "Pacific"],
       industries: ["Mining", "Lumber", "Agricultural", "Maritime", "Express"]
     },
     "CO": {
       name: "Colorado",
-      features: ["Mountain", "Peak", "Valley", "Canyon", "Mesa"],
+      features: ["Mountain", "Peak", "Valley", "Canyon", "Mesa", "Rocky Mountain"],
       industries: ["Mining", "Express", "Trading"]
     },
     "CT": {
       name: "Connecticut",
-      features: ["River", "Valley", "Sound", "Harbor"],
+      features: ["River", "Valley", "Sound", "Harbor", "Atlantic", "Brownstone"],
       industries: ["Industrial", "Maritime", "Commercial", "Transportation"]
     },
     "DE": {
@@ -326,12 +326,12 @@ function generateRailroadName(state) {
     },
     "FL": {
       name: "Florida",
-      features: ["Coast", "Bay", "River", "Harbor"],
+      features: ["Coast", "Bay", "River", "Harbor", "Atlantic"],
       industries: ["Maritime", "Lumber", "Agricultural", "Commercial"]
     },
     "GA": {
       name: "Georgia",
-      features: ["Mountain", "River", "Coast", "Valley"],
+      features: ["Mountain", "River", "Coast", "Valley", "Atlantic"],
       industries: ["Cotton", "Lumber", "Agricultural", "Maritime"]
     },
     "ID": {
@@ -341,13 +341,13 @@ function generateRailroadName(state) {
     },
     "IL": {
       name: "Illinois",
-      features: ["Prairie", "Valley", "River", "Lake"],
-      industries: ["Agricultural", "Industrial", "Commercial", "Transportation"]
+      features: ["Prairie", "Valley", "River", "Lake", "Shawnee"],
+      industries: ["Agricultural", "Industrial", "Commercial"]
     },
     "IN": {
       name: "Indiana",
       features: ["Prairie", "Valley", "River", "Lake"],
-      industries: ["Industrial", "Agricultural", "Commercial", "Transportation"]
+      industries: ["Industrial", "Agricultural", "Commercial"]
     },
     "IA": {
       name: "Iowa",
@@ -356,13 +356,13 @@ function generateRailroadName(state) {
     },
     "KS": {
       name: "Kansas",
-      features: ["Prairie", "Plains", "River", "Valley"],
+      features: ["Prairie", "Plains", "River", "Valley", "Junction"],
       industries: ["Agricultural", "Cattle", "Express", "Trading"]
     },
     "KY": {
       name: "Kentucky",
       features: ["Mountain", "Valley", "River", "Hills"],
-      industries: ["Coal", "Agricultural", "Industrial", "Transportation"]
+      industries: ["Coal", "Agricultural", "Industrial"]
     },
     "LA": {
       name: "Lousiana",
@@ -371,28 +371,28 @@ function generateRailroadName(state) {
     },
     "ME": {
       name: "Maine",
-      features: ["Coast", "Bay", "Harbor", "Lake", "Forest"],
-      industries: ["Lumber", "Maritime", "Industrial", "Commercial"]
+      features: ["Coast", "Bay", "Harbor", "Lake", "Forest", "Atlantic"],
+      industries: ["Lumber", "Maritime", "Industrial"]
     },
     "MD": {
       name: "Maryland",
-      features: ["Bay", "River", "Harbor", "Valley"],
-      industries: ["Maritime", "Industrial", "Commercial", "Transportation"]
+      features: ["Bay", "Harbor", "Chesapeake", "Piedmont"],
+      industries: ["Maritime", "Industrial", "Commercial"]
     },
     "MA": {
       name: "Massachusetts",
-      features: ["Bay", "Harbor", "Coast", "Valley"],
-      industries: ["Maritime", "Industrial", "Commercial", "Transportation"]
+      features: ["Bay", "Harbor", "Cape", "Berkshire", "Granite", "Plymouth", "Housatonic"],
+      industries: ["Maritime", "Industrial", "Commercial"]
     },
     "MI": {
       name: "Michigan",
-      features: ["Lake", "Peninsula", "Bay", "Forest"],
+      features: ["Lake", "Peninsula", "Forest", "Superior"],
       industries: ["Lumber", "Mining", "Industrial", "Maritime"]
     },
     "MN": {
       name: "Minnesota",
-      features: ["Lake", "Prairie", "Forest", "Valley"],
-      industries: ["Lumber", "Mining", "Agricultural", "Transportation"]
+      features: ["Lake", "Arrowhead", "Forest", "Plains", "Superior"],
+      industries: ["Lumber", "Mining", "Agricultural"]
     },
     "MS": {
       name: "Mississippi",
@@ -406,7 +406,7 @@ function generateRailroadName(state) {
     },
     "MT": {
       name: "Montana",
-      features: ["Mountain", "Valley", "Prairie", "Canyon"],
+      features: ["Mountain", "Prairie", "Canyon", "Big Sky", "Glocier"],
       industries: ["Mining", "Cattle", "Express", "Trading"]
     },
     "NE": {
@@ -416,32 +416,32 @@ function generateRailroadName(state) {
     },
     "NV": {
       name: "Nevada",
-      features: ["Mountain", "Desert", "Valley", "Basin"],
+      features: ["Mountain", "Desert", "Basin", "Humboldt", "Sierra"],
       industries: ["Mining", "Express", "Trading"]
     },
     "NH": {
       name: "New Hampshire",
-      features: ["Mountain", "Valley", "Lake", "Forest"],
-      industries: ["Lumber", "Industrial", "Transportation"]
+      features: ["Mountain", "Valley", "Monadnock", "Timberland", "Granite"],
+      industries: ["Lumber", "Industrial", "Mining"]
     },
     "NJ": {
       name: "New Jersey",
-      features: ["Coast", "Bay", "Harbor", "Valley"],
+      features: ["Coast", "Bay", "Harbor", "Valley", "Atlantic", "Pine"],
       industries: ["Industrial", "Maritime", "Commercial", "Transportation"]
     },
     "NM": {
       name: "New Hampshire",
-      features: ["Mesa", "Mountain", "Desert", "Canyon"],
-      industries: ["Mining", "Express", "Trading"]
+      features: ["River", "Forest", "Appalachian", "Merrimack", "Mountain"],
+      industries: ["Mining", "Textiles", "Express", "Trading"]
     },
     "NY": {
       name: "New York",
-      features: ["Lake", "Valley", "Mountain", "Harbor"],
-      industries: ["Industrial", "Maritime", "Commercial", "Transportation"]
+      features: ["Lake", "Valley", "Mountain", "Harbor", "Upstate", "Taconic", "Erie"],
+      industries: ["Agriculture", "Maritime", "Commercial"]
     },
     "NC": {
       name: "North Carolina",
-      features: ["Mountain", "Valley", "Coast", "Sound"],
+      features: ["Blue Ridge", "Piedmont", "Coast", "Sound", "Atlantic"],
       industries: ["Lumber", "Cotton", "Maritime", "Industrial"]
     },
     "ND": {
@@ -456,17 +456,17 @@ function generateRailroadName(state) {
     },
     "OK": {
       name: "Oklahoma",
-      features: ["Prairie", "Plains", "River", "Valley"],
+      features: ["Prairie", "Great Plains", "Mesa", "Panhandle"],
       industries: ["Agricultural", "Express", "Trading"]
     },
     "OR": {
       name: "Oregon",
-      features: ["Mountain", "Valley", "Coast", "Forest"],
-      industries: ["Lumber", "Maritime", "Express", "Transportation"]
+      features: ["Cascades", "Columbia", "Coast", "Forest", "Pacific", "Willamette"],
+      industries: ["Lumber", "Maritime", "Transportation"]
     },
     "PA": {
       name: "Pennsylvnia",
-      features: ["Mountain", "Valley", "River", "Forest"],
+      features: ["Mountain", "Valley", "River", "Forest", "Keystone", "Allegheny"],
       industries: ["Coal", "Industrial", "Commercial", "Transportation"]
     },
     "RI": {
@@ -476,7 +476,7 @@ function generateRailroadName(state) {
     },
     "SC": {
       name: "South Carolina",
-      features: ["Coast", "Valley", "Harbor", "River"],
+      features: ["Coast", "Valley", "Harbor", "River", "Canal"],
       industries: ["Cotton", "Maritime", "Agricultural", "Industrial"]
     },
     "SD": {
@@ -486,23 +486,23 @@ function generateRailroadName(state) {
     },
     "TN": {
       name: "Tennessee",
-      features: ["Mountain", "Valley", "River", "Plains"],
+      features: ["Mountain", "Valley", "River", "Upland", "Blue Ridge"],
       industries: ["Coal", "Agricultural", "Industrial", "Transportation"]
     },
     "TX": {
       name: "Texas",
-      features: ["Plains", "Coast", "Valley", "Desert"],
-      industries: ["Cattle", "Cotton", "Express", "Trading"]
+      features: ["Plains", "Coast", "Valley", "Plains", "Rio Grande"],
+      industries: ["Cattle", "Cotton", "Petroleum", "Trading"]
     },
     "UT": {
       name: "Utah",
-      features: ["Mountain", "Valley", "Desert", "Lake"],
-      industries: ["Mining", "Express", "Trading"]
+      features: ["Mountain", "Valley", "Desert", "Glen Canyon", "Four Corners", "Wasatch"],
+      industries: ["Mining", "Cattle", "Trading"]
     },
     "VT": {
       name: "Vermont",
-      features: ["Mountain", "Valley", "Lake", "Forest"],
-      industries: ["Lumber", "Agricultural", "Transportation"]
+      features: ["Green Mountain", "Valley", "Champlain", "Timberline", "Burlington", "River"],
+      industries: ["Lumber", "Agricultural", "Granite"]
     },
     "VA": {
       name: "Virginia",
@@ -511,7 +511,7 @@ function generateRailroadName(state) {
     },
     "WA": {
       name: "Washington",
-      features: ["Mountain", "Sound", "Coast", "Forest"],
+      features: ["Mountain", "Puget Sound", "Coast", "Forest", "Pacific", "Cascadia"],
       industries: ["Lumber", "Maritime", "Express", "Transportation"]
     },
     "WV": {
@@ -521,8 +521,8 @@ function generateRailroadName(state) {
     },
     "WI": {
       name: "Wisconsin",
-      features: ["Lake", "Valley", "Forest", "Prairie"],
-      industries: ["Lumber", "Agricultural", "Industrial", "Transportation"]
+      features: ["Great Lakes", "Ridge", "Forest", "Midwest"],
+      industries: ["Lumber", "Agricultural", "Manufacturing", "Dairy"]
     },
     "WY": {
       name: "Wyoming",
@@ -531,7 +531,7 @@ function generateRailroadName(state) {
     },
     "BC": {
       name: "British Columbia",
-      features: ["Coast", "Mountain", "Forest", "Valley", "Island"],
+      features: ["Coast", "Okanagan", "Plateau", "Valley", "Island", "Pacific", "Glacier"],
       industries: ["Lumber", "Maritime", "Mining", "Fishing", "Tourism"]
     },
     "AB": {
@@ -541,7 +541,7 @@ function generateRailroadName(state) {
     },
     "SK": {
       name: "Saskatchewan",
-      features: ["Prairie", "Plains", "River", "Lake"],
+      features: ["Prairie", "Forest", "Aspen", "Athabasca", "Basin"],
       industries: ["Agriculture", "Wheat", "Potash", "Mining", "Cattle"]
     },
     "MB": {
@@ -552,12 +552,12 @@ function generateRailroadName(state) {
     "ON": {
       name: "Ontario",
       features: ["Great Lakes", "River", "Forest", "Valley"],
-      industries: ["Manufacturing", "Technology", "Agriculture", "Mining", "Automotive"]
+      industries: ["Manufacturing", "Agriculture", "Mining"]
     },
     "QC": {
       name: "Quebec",
-      features: ["River", "Forest", "Mountain", "Coast", "Lake"],
-      industries: ["Hydro-electric", "Forestry", "Mining", "Agriculture", "Manufacturing"]
+      features: ["River", "Forest", "Bay", "Coast", "Pine"],
+      industries: ["Hydro-Electric", "Forestry", "Mining", "Agriculture", "Manufacturing"]
     },
     "NB": {
       name: "New Brunswick",
