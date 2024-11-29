@@ -1,16 +1,27 @@
 import { cities, routes } from "./GameData";
 import { citiesConnectedTo } from "./graph";
 
+
+/**
+ * Player or independent company
+ *
+ * @class RailroadCompany
+ * @typedef {RailroadCompany}
+ * @property {string} name - name of the company
+ * @property {*} player - ID of the player, or null if an independent RR
+ * @property {Set<string>} routes - keys of routes held by the company
+ */
 class RailroadCompany {
-  constructor(name) {
+  constructor(name, player = null) {
     this.name = name;
+    this.player = player;
     this.routes = new Set();
   }
 
   /**
    * Adds a route to the railroad network if it's valid
-   * @param {string} routeKey - The key of the route (e.g., "Albany-Boston")
-   * @returns {boolean} - Whether the route was successfully added
+   * @param {string} routeKey - key of the route (e.g., "Albany-Boston")
+   * @returns {boolean} - hether the route was successfully added
    */
   addRoute(routeKey) {
     // If this is our first route, we can always add it
