@@ -5,7 +5,7 @@ import { cardinalDirection } from "./geo";
 /**
  * @typedef {Object} Contract
  * 
- * @property {string} id
+ * @property {string} id - unique ID of the contract
  * @property {string} destinationKey
  * @property {string} commodity
  * @property {boolean} fulfilled
@@ -15,8 +15,8 @@ import { cardinalDirection } from "./geo";
 /**
  * Create a starting private contract for a given pair of starting cities
  *
- * @param {*} G                             - boardgame.io global state
- * @param {string[2]} activeCitiesKeys      - Keys of two starting cities
+ * @param {*} G - boardgame.io global state
+ * @param {string[2]} activeCitiesKeys - Keys of two starting cities
  * @returns {Contract}
  */
 export function generateStartingContract(G, activeCitiesKeys) {  
@@ -92,9 +92,9 @@ export function generateStartingContract(G, activeCitiesKeys) {
 /**
  * Create a private contract from the given active cities and the starting city
  *
- * @param {*} G                             - boardgame.io global state
- * @param {string[]} activeCitiesKeys       - Keys of all active cities
- * @param {string} currentCityKey           - Key of the city to determine direction from
+ * @param {*} G - boardgame.io global state
+ * @param {string[]} activeCitiesKeys - Keys of all active cities
+ * @param {string} currentCityKey - Key of the city to determine direction from
  * @returns {Contract}
  */
 export function generatePrivateContract(G, activeCitiesKeys, currentCityKey) {  
@@ -143,8 +143,8 @@ export function generatePrivateContract(G, activeCitiesKeys, currentCityKey) {
 /**
  * Create a market contract from the given active cities
  *
- * @param {*} G                             - boardgame.io global state
- * @param {string[]} activeCitiesKeys       - Keys of all active cities
+ * @param {*} G - boardgame.io global state
+ * @param {string[]} activeCitiesKeys - Keys of all active cities
  * @returns {Contract}
  */
 export function generateMarketContract(G, activeCitiesKeys) {  
@@ -188,10 +188,9 @@ export function generateMarketContract(G, activeCitiesKeys) {
 
 /**
  * Randomly pick a city, weighted by the relative value of the cities
- *
- * @param {*} G                                   - boardgame.io global state
- * @param {Array<String>|Set<String>} cities      - Keys of cities to select from
- * @returns {String}                              - Key of randomly selected city
+ * @param {*} G - boardgame.io global state
+ * @param {Array<String>|Set<String>} cities - Keys of cities to select from
+ * @returns {String} - Key of randomly selected city
  */
 function weightedRandomCity(G, cities) {
   return weightedRandom(new Map([...cities].map(city => [city, valueOfCity(G, city)])));
@@ -201,8 +200,8 @@ function weightedRandomCity(G, cities) {
 /**
  * Randomly pick a key from a map, weighted by the relative integer value of the keys
  *
- * @param {Map<any, number>} weightedMap    - Map where the keys are the choices and values are their integer weights
- * @returns {any}                           - Randomly selected key from weightedMap
+ * @param {Map<any, number>} weightedMap - Map where the keys are the choices and values are their integer weights
+ * @returns {any} - Randomly selected key from weightedMap
  */
 function weightedRandom(weightedMap) {
   let chosenKey = undefined;
@@ -268,20 +267,21 @@ function citiesByDirection(fromCitiesKeys, candidateCitiesKeys)
  * Validates parameters and returns a contract object
  *
  * @export
- * @param {string} destinationKey
- * @param {string} commodity
- * @param {{ type: string; fulfilled: boolean; }} [options={
- *   type: "market",
- *   fulfilled: false,
- *   player: null
- * }]
+ * @param {string} destinationKey = City of destination city
+ * @param {string} commodity - Name of commodity
+ * @param {Object} options
+ * @param {"market"|"private"} [options.type="market"] - Type of contract
+ * @param {boolean} [options.fulfilled=false] - Whether it has been fulfilled
+ * @param {*} [options.player=null] - ID of player who fulfilled commodity
  * @returns {Contract|undefined} - contract object if successful, or undefined if not
  */
-export function newContract(destinationKey, commodity, options = {
-  type: "market",
-  fulfilled: false,
-  player: null,
-}) {
+export function newContract(destinationKey, commodity, options = {}) {
+  const {
+    type = "market",
+    fulfilled = false,
+    player = null,
+  } = options;
+
   if ((typeof destinationKey !== "string") || !cities.get(destinationKey)) {
     console.error(`newContract: "${destinationKey}" is not a city`);
     return undefined;
@@ -290,8 +290,8 @@ export function newContract(destinationKey, commodity, options = {
     console.error(`newContract: "${commodity}" is not a commodity`);
     return undefined;
   }
-  if (!(["market", "private"].includes(options.type))) {
-    console.error(`newContract: "${options.type}" is not a valid type`);
+  if (!(["market", "private"].includes(type))) {
+    console.error(`newContract: "${type}" is not a valid type`);
     return undefined;
   }
 
@@ -299,9 +299,9 @@ export function newContract(destinationKey, commodity, options = {
     id: `${commodity.substring(0, 3)}-${cities.get(destinationKey).id}-${Date.now().toString(16)}`,
     destinationKey: destinationKey, 
     commodity: commodity, 
-    type: options.type,
-    fulfilled: options.fulfilled,
-    player: null,
+    type: type,
+    fulfilled: fulfilled,
+    player: player,
   }
 }
 
