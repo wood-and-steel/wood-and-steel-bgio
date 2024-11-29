@@ -596,25 +596,26 @@ function generateRailroadName(state) {
   // Helper function to get random item from array
   const random = arr => arr[Math.floor(Math.random() * arr.length)];
   
-  // Determine name style (33% chance for each type)
-  const nameStyle = Math.random();
   const suffix = weightedRandom(new Map([
     ["Railway", 10], ["Railroad", 10], ["Line", 5], ["Transportation Company", 1], ["Rail Road", 1], ["Rail Company", 1]
   ]));
   
+  // Determine name style
+  const nameStyle = Math.random();
+
   if (typeof state !== "string" || nameStyle < 0.2) {
-      // Generate grand single name (these are universal)
+      // 20% chance: Grand single name (e.g. Enterprise)
       const prefix = Math.random() < 0.5 ? "The " : "";
       return `${prefix}${random(grandNames)} ${suffix}`;
   } 
   else if (nameStyle < 0.6) {
-      // Generate industry/regional name using state-specific industries
+      // 40% chance: Industry/regional name (e.g. Michigan Lumber)
       const direction = Math.random() < 0.5 ? `${random(directions)} ` : '';
       const industry = random(stateCharacteristics[state]?.industries);
       return `${stateCharacteristics[state].name} ${direction}${industry} ${suffix}`;
   }
   else {
-      // Generate paired geographic name using state-specific features
+      // 40% chance: Paired geographic name (e.g. Valley & River)
       const firstPart = random(stateCharacteristics[state].features);
       let secondPart = firstPart;
       while (secondPart === firstPart) { 
