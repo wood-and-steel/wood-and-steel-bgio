@@ -11,13 +11,8 @@ export const WoodAndSteel = {
     const stats = initializeIndependentRailroads();
 
     // Log the results
-    console.log(`Initialization complete:
-    Companies created: ${stats.companiesCreated}
-    Routes assigned: ${stats.routesAssigned}
-    Total routes: ${stats.totalRoutes}
-    Percentage assigned: ${stats.percentageAssigned}%
-
-    Companies and their routes:`);
+    console.log(`Companies created: ${stats.companiesCreated}
+Percentage of routes assigned: ${stats.percentageAssigned}%`);
 
     // Log each company and its route
     for (const [name, company] of railroadManager.getCompanies()) {
@@ -25,7 +20,7 @@ export const WoodAndSteel = {
       console.log(`\n${name}:`);
       routes.forEach(route => console.log(`  ${route}`));
     }
-    initializeIndependentRailroads();
+
     return { 
       contracts: Array(0),
     }

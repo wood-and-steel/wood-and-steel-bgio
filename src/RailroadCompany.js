@@ -1,6 +1,6 @@
 import { cities, routes } from "./GameData";
 import { citiesConnectedTo } from "./graph";
-
+import { weightedRandom } from "./utils";
 
 /**
  * Player or independent company
@@ -89,25 +89,36 @@ export class RailroadManager {
     this.cityOwnership = new Map(); // Tracks which company owns each city
   }
 
+
   /**
    * Creates a new railroad company
    * @param {string} name - Name of the company
    * @returns {boolean} - Whether company was successfully created
    */
   createCompany(name) {
-    if (this.companies.has(name)) {
+    if (this.getCompany(name)) {
       return false;
     }
     this.companies.set(name, new RailroadCompany(name));
     return true;
   }
 
+  
+  /**
+   * Deletes a railroad company if one with the given name exists
+   * @param {string} name - name of company to delete
+   * @returns {boolean} - whether the company was deleted
+   */
+  deleteCompany(name) {
+    return this.companies.delete(name);
+  }
 
+  
   /**
    * Checks if any city in a route is owned by another company
-   * @param {string} companyName - Name of the company trying to claim the route
-   * @param {Array<string>} cities - Array of cities in the route
-   * @returns {boolean} - Whether any city is owned by another company
+   * @param {string} companyName - name of the company trying to claim the route
+   * @param {Array<string>} cities - keys of cities in the route
+   * @returns {boolean} - whether any city is owned by another company
    */
   isCityOwnedByOther(companyName, cityKeys) {
     return cityKeys.some(cityKey => {
@@ -225,11 +236,11 @@ export function initializeIndependentRailroads() {
   
   // Shuffle the routes array
   function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
   
   const shuffledRoutes = shuffle([...routeEntries]);
@@ -239,25 +250,30 @@ export function initializeIndependentRailroads() {
   let companyCounter = 1;
   
   while (assignedCount < numberOfRoutesToAssign && shuffledRoutes.length > 0) {
-      const [routeKey, routeData] = shuffledRoutes.pop();
-      
-      // Create a new company name
-      const companyName = generateRailroadName(cities.get(routes.get(routeKey).cities[0]).state);
-      
-      // Try to create company and assign the route
-      if (railroadManager.createCompany(companyName) && 
-          railroadManager.assignRoute(companyName, routeKey, routeData)) {
-          assignedCount++;
-          companyCounter++;
-      }
+    const [routeKey, routeData] = shuffledRoutes.pop();
+    
+    // Create a new company name
+    let companyCreated = false, companyName;
+    while (!companyCreated) {
+      companyName = generateRailroadName(cities.get(routes.get(routeKey).cities[0]).state);
+      companyCreated = railroadManager.createCompany(companyName);
+    }
+
+    // Try to create company and assign the route
+    if (railroadManager.assignRoute(companyName, routeKey, routeData)) {
+      assignedCount++;
+      companyCounter++;
+    } else {
+      railroadManager.deleteCompany(companyName);
+    }
   }
   
   // Return statistics about the initialization
   return {
-      companiesCreated: companyCounter - 1,
-      routesAssigned: assignedCount,
-      totalRoutes: routesAvailableToIndies.size,
-      percentageAssigned: (assignedCount / routesAvailableToIndies.size * 100).toFixed(1)
+    companiesCreated: companyCounter - 1,
+    routesAssigned: assignedCount,
+    totalRoutes: routesAvailableToIndies.size,
+    percentageAssigned: (assignedCount / routesAvailableToIndies.size * 100).toFixed(1)
   };
 }
 
@@ -323,17 +339,17 @@ function generateRailroadName(state) {
     "CO": {
       name: "Colorado",
       features: ["Mountain", "Peak", "Valley", "Canyon", "Mesa", "Rocky Mountain"],
-      industries: ["Mining", "Express", "Trading"]
+      industries: ["Mining", "Trading"]
     },
     "CT": {
       name: "Connecticut",
       features: ["River", "Valley", "Sound", "Harbor", "Atlantic", "Brownstone"],
-      industries: ["Industrial", "Maritime", "Commercial", "Transportation"]
+      industries: ["Industrial", "Maritime", "Commercial"]
     },
     "DE": {
       name: "Delaware",
       features: ["Bay", "River", "Coast", "Harbor"],
-      industries: ["Maritime", "Industrial", "Commercial", "Transportation"]
+      industries: ["Maritime", "Industrial", "Commercial"]
     },
     "FL": {
       name: "Florida",
@@ -348,7 +364,7 @@ function generateRailroadName(state) {
     "ID": {
       name: "Idaho",
       features: ["Mountain", "Valley", "River", "Canyon"],
-      industries: ["Mining", "Lumber", "Express", "Trading"]
+      industries: ["Mining", "Lumber", "Trading"]
     },
     "IL": {
       name: "Illinois",
@@ -363,12 +379,12 @@ function generateRailroadName(state) {
     "IA": {
       name: "Iowa",
       features: ["Prairie", "Valley", "River", "Hills"],
-      industries: ["Agricultural", "Industrial", "Commercial", "Transportation"]
+      industries: ["Agricultural", "Industrial", "Commercial"]
     },
     "KS": {
       name: "Kansas",
       features: ["Prairie", "Plains", "River", "Valley", "Junction"],
-      industries: ["Agricultural", "Cattle", "Express", "Trading"]
+      industries: ["Agricultural", "Cattle", "Trading"]
     },
     "KY": {
       name: "Kentucky",
@@ -413,22 +429,22 @@ function generateRailroadName(state) {
     "MO": {
       name: "Missouri",
       features: ["River", "Valley", "Prairie", "Hills"],
-      industries: ["Mining", "Agricultural", "Industrial", "Transportation"]
+      industries: ["Mining", "Agricultural", "Industrial"]
     },
     "MT": {
       name: "Montana",
       features: ["Mountain", "Prairie", "Canyon", "Big Sky", "Glocier"],
-      industries: ["Mining", "Cattle", "Express", "Trading"]
+      industries: ["Mining", "Cattle", "Trading"]
     },
     "NE": {
       name: "Nebraska",
       features: ["Prairie", "Plains", "River", "Valley"],
-      industries: ["Agricultural", "Cattle", "Express", "Transportation"]
+      industries: ["Agricultural", "Cattle"]
     },
     "NV": {
       name: "Nevada",
       features: ["Mountain", "Desert", "Basin", "Humboldt", "Sierra"],
-      industries: ["Mining", "Express", "Trading"]
+      industries: ["Mining", "Trading"]
     },
     "NH": {
       name: "New Hampshire",
@@ -438,17 +454,17 @@ function generateRailroadName(state) {
     "NJ": {
       name: "New Jersey",
       features: ["Coast", "Bay", "Harbor", "Valley", "Atlantic", "Pine"],
-      industries: ["Industrial", "Maritime", "Commercial", "Transportation"]
+      industries: ["Industrial", "Maritime", "Commercial"]
     },
     "NM": {
       name: "New Hampshire",
       features: ["River", "Forest", "Appalachian", "Merrimack", "Mountain"],
-      industries: ["Mining", "Textiles", "Express", "Trading"]
+      industries: ["Mining", "Textiles", "Trading"]
     },
     "NY": {
       name: "New York",
       features: ["Lake", "Valley", "Mountain", "Harbor", "Upstate", "Taconic", "Erie"],
-      industries: ["Agriculture", "Maritime", "Commercial"]
+      industries: ["Agricultural", "Maritime", "Commercial"]
     },
     "NC": {
       name: "North Carolina",
@@ -458,32 +474,32 @@ function generateRailroadName(state) {
     "ND": {
       name: "North Dakota",
       features: ["Prairie", "Plains", "Valley", "River"],
-      industries: ["Agricultural", "Express", "Trading"]
+      industries: ["Agricultural", "Trading"]
     },
     "OH": {
       name: "Ohio",
       features: ["River", "Valley", "Lake", "Hills"],
-      industries: ["Industrial", "Agricultural", "Commercial", "Transportation"]
+      industries: ["Industrial", "Agricultural", "Commercial"]
     },
     "OK": {
       name: "Oklahoma",
       features: ["Prairie", "Great Plains", "Mesa", "Panhandle"],
-      industries: ["Agricultural", "Express", "Trading"]
+      industries: ["Agricultural", "Trading"]
     },
     "OR": {
       name: "Oregon",
       features: ["Cascades", "Columbia", "Coast", "Forest", "Pacific", "Willamette"],
-      industries: ["Lumber", "Maritime", "Transportation"]
+      industries: ["Lumber", "Maritime"]
     },
     "PA": {
       name: "Pennsylvnia",
       features: ["Mountain", "Valley", "River", "Forest", "Keystone", "Allegheny"],
-      industries: ["Coal", "Industrial", "Commercial", "Transportation"]
+      industries: ["Coal", "Industrial", "Commercial"]
     },
     "RI": {
       name: "Rhode Island",
       features: ["Bay", "Harbor", "Sound", "Coast"],
-      industries: ["Maritime", "Industrial", "Commercial", "Transportation"]
+      industries: ["Maritime", "Industrial", "Commercial"]
     },
     "SC": {
       name: "South Carolina",
@@ -493,12 +509,12 @@ function generateRailroadName(state) {
     "SD": {
       name: "South Dakota",
       features: ["Prairie", "Plains", "Valley", "Hills"],
-      industries: ["Agricultural", "Mining", "Express", "Trading"]
+      industries: ["Agricultural", "Mining", "Trading"]
     },
     "TN": {
       name: "Tennessee",
       features: ["Mountain", "Valley", "River", "Upland", "Blue Ridge"],
-      industries: ["Coal", "Agricultural", "Industrial", "Transportation"]
+      industries: ["Coal", "Agricultural", "Industrial"]
     },
     "TX": {
       name: "Texas",
@@ -518,17 +534,17 @@ function generateRailroadName(state) {
     "VA": {
       name: "Virginia",
       features: ["Mountain", "Valley", "Coast", "Bay"],
-      industries: ["Coal", "Maritime", "Agricultural", "Transportation"]
+      industries: ["Coal", "Maritime", "Agricultural"]
     },
     "WA": {
       name: "Washington",
       features: ["Mountain", "Puget Sound", "Coast", "Forest", "Pacific", "Cascadia"],
-      industries: ["Lumber", "Maritime", "Express", "Transportation"]
+      industries: ["Lumber", "Maritime"]
     },
     "WV": {
       name: "West Virginia",
       features: ["Mountain", "Valley", "River", "Forest"],
-      industries: ["Coal", "Industrial", "Transportation"]
+      industries: ["Coal", "Industrial"]
     },
     "WI": {
       name: "Wisconsin",
@@ -538,42 +554,42 @@ function generateRailroadName(state) {
     "WY": {
       name: "Wyoming",
       features: ["Mountain", "Valley", "Plains", "Basin"],
-      industries: ["Mining", "Cattle", "Express", "Trading"]
+      industries: ["Mining", "Cattle", "Trading"]
     },
     "BC": {
       name: "British Columbia",
       features: ["Coast", "Okanagan", "Plateau", "Valley", "Island", "Pacific", "Glacier"],
-      industries: ["Lumber", "Maritime", "Mining", "Fishing", "Tourism"]
+      industries: ["Lumber", "Maritime", "Mining", "Fishing"]
     },
     "AB": {
       name: "Alberta",
       features: ["Prairie", "Mountain", "Foothills", "River", "Canyon"],
-      industries: ["Oil", "Gas", "Agriculture", "Mining", "Cattle"]
+      industries: ["Oil", "Gas", "Agricultural", "Mining", "Cattle"]
     },
     "SK": {
       name: "Saskatchewan",
       features: ["Prairie", "Forest", "Aspen", "Athabasca", "Basin"],
-      industries: ["Agriculture", "Wheat", "Potash", "Mining", "Cattle"]
+      industries: ["Agricultural", "Wheat", "Potash", "Mining", "Cattle"]
     },
     "MB": {
       name: "Manitoba",
       features: ["Prairie", "Lake", "Forest", "River"],
-      industries: ["Agriculture", "Mining", "Hydro-electric", "Transportation"]
+      industries: ["Agricultural", "Mining", "Hydro-electric"]
     },
     "ON": {
       name: "Ontario",
       features: ["Great Lakes", "River", "Forest", "Valley"],
-      industries: ["Manufacturing", "Agriculture", "Mining"]
+      industries: ["Manufacturing", "Agricultural", "Mining"]
     },
     "QC": {
       name: "Quebec",
       features: ["River", "Forest", "Bay", "Coast", "Pine"],
-      industries: ["Hydro-Electric", "Forestry", "Mining", "Agriculture", "Manufacturing"]
+      industries: ["Hydro-Electric", "Forestry", "Mining", "Manufacturing"]
     },
     "NB": {
       name: "New Brunswick",
       features: ["Coast", "Bay", "Forest", "River", "Hill"],
-      industries: ["Forestry", "Fishing", "Agriculture", "Mining", "Maritime"]
+      industries: ["Forestry", "Fishing", "Mining", "Maritime"]
     },
   };
 
@@ -582,23 +598,28 @@ function generateRailroadName(state) {
   
   // Determine name style (33% chance for each type)
   const nameStyle = Math.random();
+  const suffix = weightedRandom(new Map([
+    ["Railway", 10], ["Railroad", 10], ["Line", 5], ["Transportation Company", 1], ["Rail Road", 1], ["Rail Company", 1]
+  ]));
   
-  if (typeof state !== "string" || nameStyle < 0.33) {
+  if (typeof state !== "string" || nameStyle < 0.2) {
       // Generate grand single name (these are universal)
       const prefix = Math.random() < 0.5 ? "The " : "";
-      const suffix = random(["Railway", "Railroad", "Line", "Express"]);
       return `${prefix}${random(grandNames)} ${suffix}`;
   } 
-  else if (nameStyle < 0.66) {
+  else if (nameStyle < 0.6) {
       // Generate industry/regional name using state-specific industries
-      const direction = random(directions);
+      const direction = Math.random() < 0.5 ? `${random(directions)} ` : '';
       const industry = random(stateCharacteristics[state]?.industries);
-      return `${stateCharacteristics[state].name} ${direction} ${industry} Line`;
+      return `${stateCharacteristics[state].name} ${direction}${industry} ${suffix}`;
   }
   else {
       // Generate paired geographic name using state-specific features
       const firstPart = random(stateCharacteristics[state].features);
-      const secondPart = random([...directions, ...stateCharacteristics[state].features]);
-      return `${firstPart} & ${secondPart} Railroad`;
+      let secondPart = firstPart;
+      while (secondPart === firstPart) { 
+        secondPart = random([...directions, ...stateCharacteristics[state].features]);
+      }
+      return `${firstPart} & ${secondPart} ${suffix}`;
   }
 }
