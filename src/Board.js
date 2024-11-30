@@ -106,12 +106,11 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         ...styles.contract.type[contract.type], 
         ...(contract.player === ctx.currentPlayer || contract.type === "market" ? styles.contract.enabled : styles.contract.disabled)
       };
-      const holder = contract.type === "market" ? "(market)" : "";
-      const value = `$${rewardValue(contract)/1000}K ${railroadTieValue(contract)} + ${railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"}`;
+      const value = `$${rewardValue(contract)/1000}K + ${railroadTieValue(contract)} ${railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"}`;
 
       return (<div key={index}>
         <button id={contract.id} style={style} name="toggleContractFulfilled">
-          {contract.commodity} to {contract.destinationKey} {holder} {value} {contract.fulfilled ? " FULFILLED " : " "}
+          {contract.commodity} to {contract.destinationKey} ({value}) {contract.fulfilled ? " FULFILLED " : " "}
         </button>
         <button id={contract.id} style={styles.contract.deleteButton} name="deleteContract">✕</button>
       </div>);
@@ -198,15 +197,16 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             <span style={{ color: "white" }}>Generate contract:</span>
             <button name="privateContract" style={styles.button}>Private</button>
             <button name="marketContract" style={styles.button}>Market</button>
-            <button name="endTurn" style={{marginLeft: "2em", ...styles.button}}>End Turn</button>
-            <span style={{ color: "white", paddingLeft: "2em" }}>Starting city 1, city 2:</span>
-            <input name="inputParameters" style={{width: "15em", height: "20px"}} defaultValue="Jacksonville, Tallahassee" />
+            <button name="endTurn" style={{marginLeft: "1rem", ...styles.button}}>End Turn</button>
+            <span style={{ color: "white", paddingLeft: "1.5rem" }}>Starting city 1, city 2:</span>
+            <input name="inputParameters" style={{width: "15rem", height: "20px"}} defaultValue="Jacksonville, Tallahassee" />
             <button name="startingContract" style={styles.button}>Starting</button>
           </div>
           {playerBoard}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", margin: "auto", padding: "0.5rem"} }>
+          <div style={{fontWeight: "bold", width: "18rem", paddingBottom: "0.25rem"}}>Market contracts</div>
           {marketContractsList}
         </div>
         <div style={styles.cityTable}>{cityValues}</div>
