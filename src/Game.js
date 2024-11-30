@@ -40,8 +40,8 @@ export const WoodAndSteel = {
       }
     },
 
-    generatePrivateContract: ({ G, ctx }, activeCities, currentCityKey) => {
-      const contract = generatePrivateContract(G, activeCities, currentCityKey, ctx.currentPlayer);
+    generatePrivateContract: ({ G, ctx }) => {
+      const contract = generatePrivateContract(G, ctx);
       if (contract) {
         G.contracts.unshift(contract);
       } else {
@@ -49,8 +49,8 @@ export const WoodAndSteel = {
       }
     },
 
-    generateMarketContract: ({ G }, activeCities) => {
-      const contract = generateMarketContract(G, activeCities);
+    generateMarketContract: ({ G }) => {
+      const contract = generateMarketContract(G);
       if (contract) {
         G.contracts.unshift(contract);
       } else {
@@ -70,7 +70,8 @@ export const WoodAndSteel = {
     toggleContractFulfilled: ({ G, ctx }, contractId) => {
       // Get this contract
       const contractIndex = G.contracts.findIndex(c => c.id === contractId);
-      if (contractIndex !== -1) {
+
+      if (contractIndex !== -1 && G.contracts[contractIndex].player === ctx.currentPlayer) {
         // Toggle the fulfilled state
         G.contracts[contractIndex].fulfilled = !G.contracts[contractIndex].fulfilled;
 

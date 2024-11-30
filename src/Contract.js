@@ -101,11 +101,9 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
  * @param {string} currentCityKey - Key of the city to determine direction from
  * @returns {Contract}
  */
-export function generatePrivateContract(G, activeCitiesKeys, currentCityKey, playerID) {  
-  if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length === 0) {
-    console.error(`generateMarketContract(${activeCitiesKeys}): not an array of non-zero length`);
-    return undefined;
-  }
+export function generatePrivateContract(G, ctx) {  
+  const activeCitiesKeys = Array.from(G.players.find(([id, props]) => id === ctx.currentPlayer)[1].activeCities);
+  const currentCityKey = activeCitiesKeys[activeCitiesKeys.length - 1];
 
   // Set odds for direction from currentCityKey, biased away from creating coastal connections
 
@@ -140,7 +138,7 @@ export function generatePrivateContract(G, activeCitiesKeys, currentCityKey, pla
   // Pick a commodity for the contract
   const contractCommodity = [...availableCommodities][Math.floor(Math.random() * availableCommodities.size)];
 
-  return newContract(contractCity, contractCommodity, { type: "private", player: playerID });
+  return newContract(contractCity, contractCommodity, { type: "private", player: ctx.currentPlayer });
 };
 
 
@@ -151,11 +149,12 @@ export function generatePrivateContract(G, activeCitiesKeys, currentCityKey, pla
  * @param {string[]} activeCitiesKeys - Keys of all active cities
  * @returns {Contract}
  */
-export function generateMarketContract(G, activeCitiesKeys) {  
-  if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length === 0) {
-    console.error(`generateMarketContract(${activeCitiesKeys}): not an array with at least 1 city`);
-    return undefined;
-  }
+export function generateMarketContract(G) {
+  const activeCitiesSet = new Set();
+  G.players.forEach(([key, value]) => {
+    value.activeCities.forEach(city => { activeCitiesSet.add(city); });
+  })
+  const activeCitiesKeys = [...activeCitiesSet];
 
   // Choose a city within 2 hops of active cities (but not an active city), randomly weighted by value
   const contractCity = weightedRandomCity(G, citiesConnectedTo(activeCitiesKeys, { distance: 2 }));
