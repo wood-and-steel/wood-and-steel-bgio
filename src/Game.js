@@ -71,7 +71,9 @@ export const WoodAndSteel = {
       // Get this contract
       const contractIndex = G.contracts.findIndex(c => c.id === contractId);
 
-      if (contractIndex !== -1 && G.contracts[contractIndex].player === ctx.currentPlayer) {
+      if (contractIndex !== -1)
+        if ((G.contracts[contractIndex].player === ctx.currentPlayer) || G.contracts[contractIndex].type === "market") {
+          
         // Toggle the fulfilled state
         G.contracts[contractIndex].fulfilled = !G.contracts[contractIndex].fulfilled;
 
