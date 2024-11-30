@@ -86,7 +86,25 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
     </div>
   );
 
-  const playerBoard = G.players.map(([key, {name}]) => <div style={{fontWeight: (ctx.currentPlayer === key) ? "bold" : "400"}}>{name}</div> );
+  const playerBoard = 
+    <div style={{
+      display: "flex",
+      gap: "1rem",
+      marginBottom: "1rem",
+    }}>
+      {G.players.map(([key, {name, activeCities}]) => 
+        <div style={{
+          backgroundColor: (ctx.currentPlayer === key) ? "#f0f2ff" : "transparent",
+          padding: "0.5rem",
+          flexGrow: 1,
+        }}>
+          <div style={{
+            fontWeight: (ctx.currentPlayer === key) ? "bold" : "400",
+            marginBottom: "0.25rem",
+          }}>{name}</div>
+          {activeCities.map(city => <div>{city}</div>)}
+        </div> )}
+    </div>;
 
   function handleSubmit(e) {
     // Prevent the browser from reloading the page

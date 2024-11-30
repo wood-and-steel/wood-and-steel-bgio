@@ -22,8 +22,8 @@ export const WoodAndSteel = {
     return { 
       contracts: Array(0),
       players: [
-        [ '0', { name: "Player 0", activeCities: [] } ],
-        [ '1', { name: "Player 1", activeCities: [] } ],
+        [ '0', { name: "Player 0", activeCities: ["Jacksonville", "Tallahassee"] } ],
+        [ '1', { name: "Player 1", activeCities: ["New York", "Philadelphia"] } ],
       ],
     }
   },
