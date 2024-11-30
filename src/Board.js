@@ -68,7 +68,8 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
           textDecoration: contract.fulfilled ? 'line-through' : 'none', 
           color: contract.type === "market" ? "blue" : "black",
         }}>
-          {contract.commodity} to {contract.destinationKey} ({contract.type})
+          {contract.commodity} to {contract.destinationKey} 
+          {contract.type === "market" ? " (market) " : ` (private to ${G.players.find(([id, props]) => id === contract.player)[1].name}) `}
           ${`${rewardValue(contract)/1000}`}K + {railroadTieValue(contract)} {railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"} 
         </span> 
         {contract.fulfilled ? " FULFILLED " : " "}

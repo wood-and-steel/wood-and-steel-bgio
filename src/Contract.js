@@ -89,7 +89,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   // Make the two starting cities the active cities for this player
   G.players.find(([id, props]) => id === playerID)[1].activeCities = activeCitiesKeys;
 
-  return newContract(contractCity, contractCommodity, { type: "private" });
+  return newContract(contractCity, contractCommodity, { type: "private", player: playerID });
 };
 
 
@@ -101,7 +101,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
  * @param {string} currentCityKey - Key of the city to determine direction from
  * @returns {Contract}
  */
-export function generatePrivateContract(G, activeCitiesKeys, currentCityKey) {  
+export function generatePrivateContract(G, activeCitiesKeys, currentCityKey, playerID) {  
   if (!Array.isArray(activeCitiesKeys) || activeCitiesKeys.length === 0) {
     console.error(`generateMarketContract(${activeCitiesKeys}): not an array of non-zero length`);
     return undefined;
@@ -140,7 +140,7 @@ export function generatePrivateContract(G, activeCitiesKeys, currentCityKey) {
   // Pick a commodity for the contract
   const contractCommodity = [...availableCommodities][Math.floor(Math.random() * availableCommodities.size)];
 
-  return newContract(contractCity, contractCommodity, { type: "private" });
+  return newContract(contractCity, contractCommodity, { type: "private", player: playerID });
 };
 
 

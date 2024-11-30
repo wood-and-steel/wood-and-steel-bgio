@@ -40,8 +40,8 @@ export const WoodAndSteel = {
       }
     },
 
-    generatePrivateContract: ({ G }, activeCities, currentCityKey) => {
-      const contract = generatePrivateContract(G, activeCities, currentCityKey);
+    generatePrivateContract: ({ G, ctx }, activeCities, currentCityKey) => {
+      const contract = generatePrivateContract(G, activeCities, currentCityKey, ctx.currentPlayer);
       if (contract) {
         G.contracts.unshift(contract);
       } else {
