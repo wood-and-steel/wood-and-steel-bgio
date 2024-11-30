@@ -150,24 +150,22 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         
         <div>
           {playerBoard}
-          <div style={{textAlign: "center"}}>
-            <button name="endTurn" style={buttonStyle}>End Turn</button>
+          <div style={{justifyContent: "center", borderBottom: "solid 1px silver", paddingTop: "0.5em", paddingBottom: "1em", ...buttonBarStyle}}>
+            <button name="privateContract" style={buttonStyle}>Private</button>
+            <button name="marketContract" style={buttonStyle}>Market</button>
+            <button name="endTurn" style={{marginLeft: "2em", ...buttonStyle}}>End Turn</button>
           </div>
         </div>
 
-        <label style={textBoxStyle}>
-          <span>Active cities, or <em>destination, commodity, type</em> for manual contracts:</span>
-          <input name="inputParameters" autoFocus={true} defaultValue="Jacksonville,Tallahassee" />
-        </label>
-        <div style={buttonBarStyle}>
-          <span style={{alignSelf: 'center'}}>Generate a contract:</span>
-          <button name="privateContract" style={buttonStyle}>Private</button>
-          <button name="marketContract" style={buttonStyle}>Market</button>
-          <button name="startingContract" style={{marginLeft: '2rem', ...buttonStyle}}>Starting</button>
-          <button name="manualContract" style={{marginLeft: '2rem', ...buttonStyle}}>Add Manual</button>
-        </div>
-        <div>
-          <div><span style={{fontWeight: 600}}>Private</span>: First listed city should be the one with the latest delivery completed.</div>
+        <div style={{display: "flex", paddingTop: "0.5em", paddingBottom: "1em", borderBottom: "solid 1px silver"}}>
+          <label style={textBoxStyle}>
+            <span><b>City 1, City 2</b> for Starting contracts, or <b>destination, commodity, type</b> for Manual contracts:</span>
+            <input name="inputParameters" autoFocus={true} defaultValue="Jacksonville,Tallahassee" />
+          </label>
+          <div style={{paddingLeft: "2em", ...buttonBarStyle}}>
+            <button name="startingContract" style={buttonStyle}>Starting</button>
+            <button name="manualContract" style={buttonStyle}>Manual</button>
+          </div>
         </div>
         <div style={cityTableStyle}>{cityValues}</div>
         {contractsList}
