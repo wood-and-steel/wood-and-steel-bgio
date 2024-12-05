@@ -58,8 +58,8 @@ export const WoodAndSteel = {
       }
     },
 
-    addManualContract: ({ G }, destinationKey, commodity, type) => {
-      const contract = newContract(destinationKey, commodity, { type: type })
+    addManualContract: ({ G, ctx }, commodity, destinationKey, type) => {
+      const contract = newContract(destinationKey, commodity, { type: type, player: ctx.currentPlayer })
       if (contract) {
         G.contracts.unshift(contract);
       } else {

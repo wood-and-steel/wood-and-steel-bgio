@@ -1,5 +1,5 @@
 import React from "react";
-import { cities } from "./GameData";
+import { cities, commodities } from "./GameData";
 import { valueOfCity, rewardValue, railroadTieValue } from "./Contract";
 
 export function WoodAndSteelState({ ctx, G, moves, playerID }) {
@@ -117,11 +117,20 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
     });
   }
 
-  const cityValues = [...cities].map(([key, ...rest]) =>
+  const cityValues = [...cities].map(([key, value]) =>
     <div key={key} style={styles.cityCell}>
-      <span style={{opacity: '0.65', paddingRight: '0.4rem'}}>{key}</span> 
+      <span 
+        style={{opacity: '0.65', paddingRight: '0.4rem', cursor: 'default'}} 
+        title={value.commodities.length === 0 ? "(no commodities)" : value.commodities.toString().replaceAll(',', ", ")}
+      >
+        {key}
+      </span> 
       <span style={{fontWeight: '600'}}>{valueOfCity(G, key)}</span>
     </div>
+  );
+
+  const commodityList = [...commodities].map(([key, value]) =>
+    <div key={key}>{key} <span style={{opacity: "0.6"}}>• {value.cities.toString().replaceAll(',', ", ")}</span></div>
   );
 
   const playerBoard = 
@@ -172,7 +181,9 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         moves.addManualContract(inputParameters[0], inputParameters[1], inputParameters[2]);
         break;
       case "toggleContractFulfilled":
-        moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
+        if (window.confirm("Toggle fulfillment for this contract?")) {
+          moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
+        }
         break;
       case "deleteContract":
         if (window.confirm("Delete this contract?")) {
@@ -198,9 +209,10 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             <button name="privateContract" style={styles.button}>Private</button>
             <button name="marketContract" style={styles.button}>Market</button>
             <button name="endTurn" style={{marginLeft: "1rem", ...styles.button}}>End Turn</button>
-            <span style={{ color: "white", paddingLeft: "1.5rem" }}>Starting city 1, city 2:</span>
+            <span style={{ color: "white", paddingLeft: "1.5rem", fontSize: "90%" }}>Starting city 1, city 2, or<br />Manual commodity, destination, type:</span>
             <input name="inputParameters" style={{width: "15rem", height: "20px"}} defaultValue="Jacksonville, Tallahassee" />
             <button name="startingContract" style={styles.button}>Starting</button>
+            <button name="manualContract" style={styles.button}>Manual</button>
           </div>
           {playerBoard}
         </div>
@@ -210,6 +222,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
           {marketContractsList}
         </div>
         <div style={styles.cityTable}>{cityValues}</div>
+        <div style={styles.cityTable}>{commodityList}</div>
       </form>
     </div>
   );
