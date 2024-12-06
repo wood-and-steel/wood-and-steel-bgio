@@ -57,7 +57,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         <button className="contract" id={contract.id} style={style} name="toggleContractFulfilled">
           {contract.commodity} to {contract.destinationKey} ({value}) {contract.fulfilled ? " FULFILLED " : " "}
         </button>
-        <button className="deleteButton" id={contract.id} name="deleteContract">✕</button>
+        <button className="deleteButton" id={contract.id} style={{display: contract.fulfilled ? "none" : "inline"}} name="deleteContract">✕</button>
       </div>);
     });
   }

@@ -117,7 +117,7 @@ export const WoodAndSteel = {
 
     deleteContract: ({ G }, contractID) => {
       const contractIndex = G.contracts.findIndex(c => c.id === contractID);
-      if (contractIndex !== -1) G.contracts.splice(contractIndex, 1);
+      if (contractIndex !== -1 && !G.contracts[contractID].fulfilled) G.contracts.splice(contractIndex, 1);
     },
 
     endTurn: ({ events }) => {
