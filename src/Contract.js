@@ -18,6 +18,7 @@ import { weightedRandom } from "./utils";
  *
  * @param {*} G - boardgame.io global state
  * @param {string[2]} activeCitiesKeys - Keys of two starting cities
+ * @param {*} playerID - player who will hold this contract
  * @returns {Contract}
  */
 export function generateStartingContract(G, activeCitiesKeys, playerID) {  
@@ -89,7 +90,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   // Make the two starting cities the active cities for this player
   G.players.find(([id, props]) => id === playerID)[1].activeCities = activeCitiesKeys;
 
-  return newContract(contractCity, contractCommodity, { type: "private", player: playerID });
+  return newContract(contractCity, contractCommodity, { type: "private", playerID: playerID });
 };
 
 
@@ -138,7 +139,7 @@ export function generatePrivateContract(G, ctx) {
   // Pick a commodity for the contract
   const contractCommodity = [...availableCommodities][Math.floor(Math.random() * availableCommodities.size)];
 
-  return newContract(contractCity, contractCommodity, { type: "private", player: ctx.currentPlayer });
+  return newContract(contractCity, contractCommodity, { type: "private", playerID: ctx.currentPlayer });
 };
 
 
@@ -252,14 +253,14 @@ function citiesByDirection(fromCitiesKeys, candidateCitiesKeys)
  * @param {Object} options
  * @param {"market"|"private"} [options.type="market"] - Type of contract
  * @param {boolean} [options.fulfilled=false] - Whether it has been fulfilled
- * @param {*} [options.player=null] - ID of player who fulfilled commodity
+ * @param {*} [options.playerID=null] - ID of player who fulfilled commodity
  * @returns {Contract|undefined} - contract object if successful, or undefined if not
  */
 export function newContract(destinationKey, commodity, options = {}) {
   const {
     type = "market",
     fulfilled = false,
-    player = null,
+    playerID = null,
   } = options;
 
   if ((typeof destinationKey !== "string") || !cities.get(destinationKey)) {
@@ -281,7 +282,7 @@ export function newContract(destinationKey, commodity, options = {}) {
     commodity: commodity, 
     type: type,
     fulfilled: fulfilled,
-    player: player,
+    playerID: playerID,
   }
 }
 

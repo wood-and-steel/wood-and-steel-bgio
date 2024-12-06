@@ -12,9 +12,9 @@ import { weightedRandom } from "./utils";
  * @property {Set<string>} routes - keys of routes held by the company
  */
 class RailroadCompany {
-  constructor(name, player = null) {
+  constructor(name, playerID = null) {
     this.name = name;
-    this.player = player;
+    this.playerID = playerID;
     this.routes = new Set();
   }
 

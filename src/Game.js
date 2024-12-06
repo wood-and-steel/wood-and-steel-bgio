@@ -59,7 +59,7 @@ export const WoodAndSteel = {
     },
 
     addManualContract: ({ G, ctx }, commodity, destinationKey, type) => {
-      const contract = newContract(destinationKey, commodity, { type: type, player: ctx.currentPlayer })
+      const contract = newContract(destinationKey, commodity, { type: type, playerID: ctx.currentPlayer })
       if (contract) {
         G.contracts.unshift(contract);
       } else {
@@ -67,33 +67,56 @@ export const WoodAndSteel = {
       }
     },
 
-    toggleContractFulfilled: ({ G, ctx }, contractId) => {
+    toggleContractFulfilled: ({ G, ctx }, contractID) => {
       // Get this contract
-      const index = G.contracts.findIndex(c => c.id === contractId);
+      const thisContract = G.contracts.find(c => c.id === contractID);
+      if (thisContract) {
 
-      if (index !== -1)
-        if ((G.contracts[index].player === ctx.currentPlayer) || G.contracts[index].type === "market") {
+        // Only toggle if it's the current player's contract or an unfulfilled market contract
+        if (
+          (thisContract.playerID === ctx.currentPlayer) || 
+          (thisContract.type === "market" && !thisContract.fulfilled) ||
+          (thisContract.type === "market" && thisContract.fulfilled && thisContract.playerID === ctx.currentPlayer)
+        ) {
           
-        // Toggle the fulfilled state
-        G.contracts[index].fulfilled = !G.contracts[index].fulfilled;
+          // Toggle the fulfilled state
+          thisContract.fulfilled = !thisContract.fulfilled;
 
-        // If it's a market contract, add the current player if it's being fulfilled, or remove them otherwise
-        if (G.contracts[index].type === "market") {
-          G.contracts[index].player = G.contracts[index].fulfilled ? ctx.currentPlayer : null;
-        }
+          const currentPlayersCities = G.players.find(([id, props]) => id === ctx.currentPlayer)[1].activeCities;
 
-        // Add the destination city to this player's active cities
-        if (G.contracts[index].fulfilled) {
-          const thisPlayersCities = G.players.find(([id, props]) => id === ctx.currentPlayer)[1].activeCities;
-          if (!thisPlayersCities.includes(G.contracts[index].destinationKey)) {
-            thisPlayersCities.push(G.contracts[index].destinationKey);
-          } 
+          if (thisContract.fulfilled) {
+            // Put the playerID on a market contract
+            if (thisContract.type === "market") {
+              thisContract.playerID = ctx.currentPlayer;
+            }
+  
+            // Add the destination city to this player's active cities if it's not already there
+            if (!currentPlayersCities.includes(thisContract.destinationKey)) {
+              currentPlayersCities.push(thisContract.destinationKey);
+            } 
+          } else {
+            if (thisContract.type === "market") {
+              thisContract.playerID = null;
+            }
+
+            // Remove the destination city from this player's active cities if this was their only fulfilled contract with it
+            if (!G.contracts.find(contract => 
+              contract.playerID === ctx.currentPlayer && 
+              contract.fulfilled && 
+              contract.destinationKey === thisContract.destinationKey
+            )) {
+              let indexToDelete = -1;
+              while ((indexToDelete = currentPlayersCities.indexOf(thisContract.destinationKey)) !== -1) {
+                currentPlayersCities.splice(indexToDelete, 1);
+              }
+            }
+          }
         }
       }
     },
 
-    deleteContract: ({ G }, contractId) => {
-      const contractIndex = G.contracts.findIndex(c => c.id === contractId);
+    deleteContract: ({ G }, contractID) => {
+      const contractIndex = G.contracts.findIndex(c => c.id === contractID);
       if (contractIndex !== -1) G.contracts.splice(contractIndex, 1);
     },
 

@@ -29,7 +29,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
   function filteredContractsList(options={}) {
     const {
       type = "market",
-      player = null,
+      playerID = null,
     } = options;
   
     function compareContractsFn(a , b) {
@@ -41,15 +41,15 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
     }
 
     let filteredContracts = G.contracts.filter(contract => contract.type === type);
-    if (type === "private" && player) {
-      filteredContracts = filteredContracts.filter(contract => contract.player === player);
+    if (type === "private" && playerID) {
+      filteredContracts = filteredContracts.filter(contract => contract.playerID === playerID);
     }
 
     return filteredContracts.toSorted(compareContractsFn).map((contract, index) => {
       let style = {
         ...contractStyles.fulfilled[contract.fulfilled], 
         ...contractStyles.type[contract.type], 
-        ...(contract.player === ctx.currentPlayer || contract.type === "market" ? contractStyles.enabled : contractStyles.disabled)
+        ...(contract.playerID === ctx.currentPlayer || contract.type === "market" ? contractStyles.enabled : contractStyles.disabled)
       };
       const value = `$${rewardValue(contract)/1000}K + ${railroadTieValue(contract)} ${railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"}`;
 
@@ -81,7 +81,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
   const playerBoard = 
     <div className="playerBoard">
       {G.players.map(([key, {name, activeCities}]) => {
-        const contractsList = filteredContractsList({ type: "private", player: key })
+        const contractsList = filteredContractsList({ type: "private", playerID: key })
         return (<div style={{flexGrow: 1}}>
           <div style={{
             backgroundColor: (ctx.currentPlayer === key) ? "#f0f2ff" : "transparent",
@@ -125,9 +125,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         moves.addManualContract(inputParameters[0], inputParameters[1], inputParameters[2]);
         break;
       case "toggleContractFulfilled":
-        if (window.confirm("Toggle fulfillment for this contract?")) {
-          moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
-        }
+        moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
         break;
       case "deleteContract":
         if (window.confirm("Delete this contract?")) {
