@@ -16,6 +16,48 @@ code {
     padding: 1rem;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 14px;
+}
+
+.buttonBar {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.button {
+  height: 26px;
+  text-align: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  align-items: center;
+}
+
+.contract {
+  padding: 0.25rem 0.75rem;
+  margin: 0rem;
+  text-align: left; 
+  width: fit-content;
+}
+
+.deleteButton {
+  font-size: 120%; 
+  background-color: transparent; 
+  border: none; 
+  cursor: pointer;
+}
+
+.playerBoard {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+}
+
 .cityTable {
   margin: 1rem 0rem; 
   display: flex; 

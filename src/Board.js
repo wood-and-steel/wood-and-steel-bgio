@@ -4,67 +4,26 @@ import { valueOfCity, rewardValue, railroadTieValue } from "./Contract";
 
 export function WoodAndSteelState({ ctx, G, moves, playerID }) {
 
-  const styles = {
-    page: {
-      padding: '1rem',
+  const contractStyles = {
+    enabled: {
+      backgroundColor: '#f0f0f0',
+      border: 'solid 1px rgba(0, 0, 0, 0.2)',
+      cursor: 'pointer',
     },
-    form: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-      fontSize: '14px',
+    disabled: {
+      backgroundColor: 'transparent',
+      border: 'solid 1px rgba(0, 0, 0, 0.2)',
+      cursor: 'default',
+      opacity: '0.6',
     },
-    buttonBar: {
-      display: 'flex',
-      flexDirection: 'row',
-      gap: '0.5rem',
-      alignItems: 'center',
+    fulfilled: {
+      true: { textDecoration: 'line-through' },
+      false: { textDecoration: 'none' },
     },
-    button: {
-      height: '26px',
-      textAlign: 'center',
-      paddingLeft: '1rem',
-      paddingRight: '1rem',
-      alignItems: 'center',
-    },
-    contract: {
-      base: {
-        padding: '0.25rem 0.75rem',
-        margin: '0rem',
-        textAlign: 'left', 
-        width: 'fit-content',
-      },
-      deleteButton: {
-        fontSize: '120%', 
-        backgroundColor: 'transparent', 
-        border: 'none', 
-        cursor: 'pointer',
-      },
-      enabled: {
-        backgroundColor: '#f0f0f0',
-        border: 'solid 1px rgba(0, 0, 0, 0.2)',
-        cursor: 'pointer',
-      },
-      disabled: {
-        backgroundColor: 'transparent',
-        border: 'solid 1px rgba(0, 0, 0, 0.2)',
-        cursor: 'default',
-        opacity: '0.6',
-      },
-      fulfilled: {
-        true: { textDecoration: 'line-through' },
-        false: { textDecoration: 'none' },
-      },
-      type: {
-        market: { color: 'blue' },
-        private: { color: 'black' },
-      }
-    },
-    playerBoard: {
-      display: "flex",
-      gap: "1rem",
-      margin: "0.5rem 0",
-    },
+    type: {
+      market: { color: 'blue' },
+      private: { color: 'black' },
+    }
   };
 
   function filteredContractsList(options={}) {
@@ -88,18 +47,17 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
 
     return filteredContracts.toSorted(compareContractsFn).map((contract, index) => {
       let style = {
-        ...styles.contract.base,
-        ...styles.contract.fulfilled[contract.fulfilled], 
-        ...styles.contract.type[contract.type], 
-        ...(contract.player === ctx.currentPlayer || contract.type === "market" ? styles.contract.enabled : styles.contract.disabled)
+        ...contractStyles.fulfilled[contract.fulfilled], 
+        ...contractStyles.type[contract.type], 
+        ...(contract.player === ctx.currentPlayer || contract.type === "market" ? contractStyles.enabled : contractStyles.disabled)
       };
       const value = `$${rewardValue(contract)/1000}K + ${railroadTieValue(contract)} ${railroadTieValue(contract) > 1 ? "RR ties" : "RR tie"}`;
 
       return (<div key={index}>
-        <button id={contract.id} style={style} name="toggleContractFulfilled">
+        <button className="contract" id={contract.id} style={style} name="toggleContractFulfilled">
           {contract.commodity} to {contract.destinationKey} ({value}) {contract.fulfilled ? " FULFILLED " : " "}
         </button>
-        <button id={contract.id} style={styles.contract.deleteButton} name="deleteContract">✕</button>
+        <button className="deleteButton" id={contract.id} name="deleteContract">✕</button>
       </div>);
     });
   }
@@ -121,8 +79,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
   );
 
   const playerBoard = 
-    <div style={styles.playerBoard}>
-
+    <div className="playerBoard">
       {G.players.map(([key, {name, activeCities}]) => {
         const contractsList = filteredContractsList({ type: "private", player: key })
         return (<div style={{flexGrow: 1}}>
@@ -188,18 +145,18 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
 
   return (
     <div className="boardPage" style={{display: (ctx.currentPlayer === playerID ? "block" : "none")}}>
-      <form style={styles.form} method="post" onSubmit={handleSubmit}>
+      <form className="form" method="post" onSubmit={handleSubmit}>
         
         <div>
-          <div style={{ backgroundColor: "#606060", padding: "0.75em", ...styles.buttonBar}}>
+          <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em"}}>
             <span style={{ color: "white" }}>Generate contract:</span>
-            <button name="privateContract" style={styles.button}>Private</button>
-            <button name="marketContract" style={styles.button}>Market</button>
-            <button name="endTurn" style={{marginLeft: "1rem", ...styles.button}}>End Turn</button>
+            <button name="privateContract" className="button">Private</button>
+            <button name="marketContract" className="button">Market</button>
+            <button name="endTurn" className="button" style={{marginLeft: "1rem"}}>End Turn</button>
             <span style={{ color: "white", paddingLeft: "1.5rem", fontSize: "90%" }}>Starting city 1, city 2, or<br />Manual commodity, destination, type:</span>
-            <input name="inputParameters" style={{width: "15rem", height: "20px"}} defaultValue="Jacksonville, Tallahassee" />
-            <button name="startingContract" style={styles.button}>Starting</button>
-            <button name="manualContract" style={styles.button}>Manual</button>
+            <input name="inputParameters" style={{width: "15rem", height: "20px"}} />
+            <button name="startingContract" className="button">Starting</button>
+            <button name="manualContract" className="button">Manual</button>
           </div>
           {playerBoard}
         </div>
