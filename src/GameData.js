@@ -1,9 +1,9 @@
 /* Exports:
- *   cities     the cities, their commodities, and their connected routes
- *   routes     tracks between the cities
+ *   cities       the cities, their commodities, and their connected routes
+ *   routes       segments of track between the cities
+ *   commodities  what each city supplies
  * 
  * source: https://docs.google.com/spreadsheets/d/1r1ffSOFxTSjz-kltB9eLAaIVIo5z_CFEEDkP6zkNr0g/edit?usp=sharing
- *   see "Cities for export" and "Routes for export" tabs
  */
 
 /*
@@ -15,7 +15,7 @@
  *  state           string
  *  country         string
  *  region          ["Eastern", "Central", "Western"]
- *  label           string (can be null) - prettier version of key
+ *  label           string (can be null) - prettier version of key, or null if the key is already pretty to humans
  *  latitude        number
  *  longitude       number
  *  large           boolean
@@ -29,7 +29,7 @@
 
 export const cities = new Map([
   [ "Albany", { "id": "alb", "state": "NY", "country": "US", "region": "Eastern", "label": null, "latitude": 42.6512, "longitude": -73.755, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": [], "routes": ["Albany-Boston", "Albany-Montreal", "Albany-New York", "Albany-Syracuse"]} ],
-  [ "Atlanta", { "id": "atl", "state": "GA", "country": "US", "region": "Eastern", "label": null, "latitude": 33.7491, "longitude": -84.3902, "large": true, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": ["cotton", "textiles", "coal"], "routes": ["Atlanta-Birmingham", "Atlanta-Nashville", "Atlanta-Raleigh", "Atlanta-Savannah", "Atlanta-Tallahassee"]} ],
+  [ "Atlanta", { "id": "atl", "state": "GA", "country": "US", "region": "Eastern", "label": null, "latitude": 33.7491, "longitude": -84.3902, "large": true, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": ["coal", "cotton", "textiles"], "routes": ["Atlanta-Birmingham", "Atlanta-Nashville", "Atlanta-Raleigh", "Atlanta-Savannah", "Atlanta-Tallahassee"]} ],
   [ "Billings", { "id": "bil", "state": "MT", "country": "US", "region": "Western", "label": null, "latitude": 45.7875, "longitude": -108.4961, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["copper", "lead"], "routes": ["Billings-Bismarck", "Billings-Butte"]} ],
   [ "Birmingham", { "id": "bir", "state": "AL", "country": "US", "region": "Central", "label": null, "latitude": 33.5207, "longitude": -86.8024, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["steel"], "routes": ["Atlanta-Birmingham", "Birmingham-Memphis", "Birmingham-Mobile", "Birmingham-Nashville"]} ],
   [ "Bismarck", { "id": "bis", "state": "ND", "country": "US", "region": "Western", "label": null, "latitude": 46.8083, "longitude": -100.7837, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": [], "routes": ["Billings-Bismarck", "Bismarck-Fargo", "Bismarck-Rapid City", "Bismarck-Regina"]} ],
@@ -53,21 +53,21 @@ export const cities = new Map([
   [ "Fargo", { "id": "far", "state": "ND", "country": "US", "region": "Central", "label": null, "latitude": 46.8772, "longitude": -96.7898, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["pork"], "routes": ["Bismarck-Fargo", "Duluth-Fargo", "Fargo-Minneapolis", "Fargo-Sioux City", "Fargo-Winnipeg"]} ],
   [ "Flagstaff", { "id": "fla", "state": "AZ", "country": "US", "region": "Western", "label": null, "latitude": 35.1995, "longitude": -111.6514, "large": false, "westCoast": false, "nearWestCoast": true, "nearEastCoast": false, "commodities": ["copper"], "routes": ["Flagstaff-Los Angeles", "Flagstaff-Phoenix", "Flagstaff-Santa Fe"]} ],
   [ "Grand Rapids", { "id": "gr", "state": "MI", "country": "US", "region": "Central", "label": null, "latitude": 42.9632, "longitude": -85.6679, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["iron ore"], "routes": ["Detroit-Grand Rapids", "Grand Rapids-Toledo"]} ],
-  [ "Houston", { "id": "hou", "state": "TX", "country": "US", "region": "Central", "label": null, "latitude": 29.7589, "longitude": -95.3677, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["rice", "oil"], "routes": ["Dallas-Houston", "Houston-Memphis", "Houston-New Orleans", "Houston-San Antonio"]} ],
+  [ "Houston", { "id": "hou", "state": "TX", "country": "US", "region": "Central", "label": null, "latitude": 29.7589, "longitude": -95.3677, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["oil", "rice"], "routes": ["Dallas-Houston", "Houston-Memphis", "Houston-New Orleans", "Houston-San Antonio"]} ],
   [ "Indianapolis", { "id": "ind", "state": "IN", "country": "US", "region": "Central", "label": null, "latitude": 39.7683, "longitude": -86.1584, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["corn", "pork"], "routes": ["Chicago-Indianapolis", "Cincinnati-Indianapolis", "Indianapolis-Louisville", "Indianapolis-Saint Louis", "Indianapolis-Toledo"]} ],
   [ "Jacksonville", { "id": "jac", "state": "FL", "country": "US", "region": "Eastern", "label": null, "latitude": 30.3322, "longitude": -81.6557, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": [], "routes": ["Jacksonville-Miami", "Jacksonville-Savannah", "Jacksonville-Tallahassee", "Jacksonville-Tampa"]} ],
-  [ "Kansas City", { "id": "kc", "state": "KS", "country": "US", "region": "Central", "label": null, "latitude": 39.1147, "longitude": -94.7495, "large": true, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["wheat", "salt", "cattle"], "routes": ["Des Moines-Kansas City", "Dodge City-Kansas City", "Kansas City-Oklahoma City", "Kansas City-Omaha", "Kansas City-Saint Louis"]} ],
+  [ "Kansas City", { "id": "kc", "state": "KS", "country": "US", "region": "Central", "label": null, "latitude": 39.1147, "longitude": -94.7495, "large": true, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["cattle", "salt", "wheat"], "routes": ["Des Moines-Kansas City", "Dodge City-Kansas City", "Kansas City-Oklahoma City", "Kansas City-Omaha", "Kansas City-Saint Louis"]} ],
   [ "Los Angeles", { "id": "la", "state": "CA", "country": "US", "region": "Western", "label": null, "latitude": 34.0544, "longitude": -118.2439, "large": true, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["fruit", "imports", "wine"], "routes": ["Flagstaff-Los Angeles", "Los Angeles-San Diego", "Los Angeles-San Francisco"]} ],
   [ "Louisville", { "id": "lou", "state": "KY", "country": "US", "region": "Central", "label": null, "latitude": 38.2542, "longitude": -85.7594, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["tobacco"], "routes": ["Cincinnati-Louisville", "Indianapolis-Louisville", "Louisville-Nashville", "Louisville-Saint Louis"]} ],
   [ "Medford", { "id": "med", "state": "OR", "country": "US", "region": "Western", "label": null, "latitude": 42.3264, "longitude": -122.8719, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": [], "routes": ["Medford-Redding", "Medford-Salem"]} ],
   [ "Memphis", { "id": "mem", "state": "TN", "country": "US", "region": "Central", "label": null, "latitude": 35.149, "longitude": -90.0516, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["bauxite", "paper"], "routes": ["Birmingham-Memphis", "Dallas-Memphis", "Houston-Memphis", "Memphis-Nashville", "Memphis-New Orleans", "Memphis-Oklahoma City", "Memphis-Saint Louis"]} ],
   [ "Miami", { "id": "mia", "state": "FL", "country": "US", "region": "Eastern", "label": null, "latitude": 25.7743, "longitude": -80.1937, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["cattle"], "routes": ["Jacksonville-Miami", "Miami-Tampa"]} ],
-  [ "Milwaukee", { "id": "mil", "state": "WI", "country": "US", "region": "Central", "label": null, "latitude": 43.0115, "longitude": -87.9735, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["machinery", "beer"], "routes": ["Chicago-Milwaukee", "Des Moines-Milwaukee", "Duluth-Milwaukee", "Milwaukee-Minneapolis"]} ],
-  [ "Minneapolis", { "id": "min", "state": "MN", "country": "US", "region": "Central", "label": null, "latitude": 44.9773, "longitude": -93.2655, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["iron ore", "corn", "pork"], "routes": ["Des Moines-Minneapolis", "Duluth-Minneapolis", "Fargo-Minneapolis", "Milwaukee-Minneapolis", "Minneapolis-Sioux City"]} ],
+  [ "Milwaukee", { "id": "mil", "state": "WI", "country": "US", "region": "Central", "label": null, "latitude": 43.0115, "longitude": -87.9735, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["beer", "machinery"], "routes": ["Chicago-Milwaukee", "Des Moines-Milwaukee", "Duluth-Milwaukee", "Milwaukee-Minneapolis"]} ],
+  [ "Minneapolis", { "id": "min", "state": "MN", "country": "US", "region": "Central", "label": null, "latitude": 44.9773, "longitude": -93.2655, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["corn", "iron ore", "pork"], "routes": ["Des Moines-Minneapolis", "Duluth-Minneapolis", "Fargo-Minneapolis", "Milwaukee-Minneapolis", "Minneapolis-Sioux City"]} ],
   [ "Mobile", { "id": "mob", "state": "AL", "country": "US", "region": "Central", "label": null, "latitude": 30.6488, "longitude": -88.1946, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["rice"], "routes": ["Birmingham-Mobile", "Mobile-New Orleans", "Mobile-Tallahassee"]} ],
   [ "Montreal", { "id": "mon", "state": "QC", "country": "CA", "region": "Eastern", "label": null, "latitude": 45.5088, "longitude": -73.554, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["imports"], "routes": ["Albany-Montreal", "Montreal-Ottawa", "Montreal-Quebec City"]} ],
   [ "Nashville", { "id": "nas", "state": "TN", "country": "US", "region": "Central", "label": null, "latitude": 36.1622, "longitude": -86.7744, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["coal"], "routes": ["Atlanta-Nashville", "Birmingham-Nashville", "Louisville-Nashville", "Memphis-Nashville", "Nashville-Saint Louis"]} ],
-  [ "New Orleans", { "id": "no", "state": "LA", "country": "US", "region": "Central", "label": null, "latitude": 29.9499, "longitude": -90.0701, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["salt", "rice", "fish"], "routes": ["Houston-New Orleans", "Memphis-New Orleans", "Mobile-New Orleans"]} ],
+  [ "New Orleans", { "id": "no", "state": "LA", "country": "US", "region": "Central", "label": null, "latitude": 29.9499, "longitude": -90.0701, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["fish", "rice", "salt"], "routes": ["Houston-New Orleans", "Memphis-New Orleans", "Mobile-New Orleans"]} ],
   [ "New York", { "id": "ny", "state": "NY", "country": "US", "region": "Eastern", "label": null, "latitude": 40.7648, "longitude": -73.9808, "large": true, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["imports", "salt", "tourists"], "routes": ["Albany-New York", "Boston-New York", "Cleveland-New York", "New York-Philadelphia", "New York-Syracuse"]} ],
   [ "Norfolk", { "id": "nor", "state": "VA", "country": "US", "region": "Eastern", "label": null, "latitude": 36.8465, "longitude": -76.2916, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["tobacco"], "routes": ["Norfolk-Raleigh", "Norfolk-Richmond"]} ],
   [ "Oklahoma City", { "id": "oc", "state": "OK", "country": "US", "region": "Central", "label": null, "latitude": 35.473, "longitude": -97.5171, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["oil"], "routes": ["Dallas-Oklahoma City", "Dodge City-Oklahoma City", "El Paso-Oklahoma City", "Kansas City-Oklahoma City", "Memphis-Oklahoma City"]} ],
@@ -75,11 +75,11 @@ export const cities = new Map([
   [ "Ottawa", { "id": "ott", "state": "ON", "country": "CA", "region": "Eastern", "label": null, "latitude": 45.421, "longitude": -75.69, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["wood"], "routes": ["Montreal-Ottawa", "Ottawa-Sudbury", "Ottawa-Syracuse", "Ottawa-Toronto"]} ],
   [ "Philadelphia", { "id": "phi", "state": "PA", "country": "US", "region": "Eastern", "label": null, "latitude": 40.0115, "longitude": -75.1327, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["imports", "salt", "tourists"], "routes": ["New York-Philadelphia", "Philadelphia-Pittsburgh", "Philadelphia-Washington"]} ],
   [ "Phoenix", { "id": "pho", "state": "AZ", "country": "US", "region": "Western", "label": null, "latitude": 33.4486, "longitude": -112.0773, "large": false, "westCoast": false, "nearWestCoast": true, "nearEastCoast": false, "commodities": ["copper"], "routes": ["El Paso-Phoenix", "Flagstaff-Phoenix", "Phoenix-San Diego"]} ],
-  [ "Pittsburgh", { "id": "pit", "state": "PA", "country": "US", "region": "Eastern", "label": null, "latitude": 40.4417, "longitude": -79.9901, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": ["steel", "coal"], "routes": ["Cincinnati-Pittsburgh", "Cleveland-Pittsburgh", "Philadelphia-Pittsburgh", "Pittsburgh-Washington"]} ],
-  [ "Portland ME", { "id": "porm", "state": "ME", "country": "US", "region": "Eastern", "label": "Portland, Maine", "latitude": 43.661, "longitude": -70.2549, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["wood", "aluminum"], "routes": ["Boston-Portland ME", "Portland ME-Quebec City", "Portland ME-Saint John"]} ],
+  [ "Pittsburgh", { "id": "pit", "state": "PA", "country": "US", "region": "Eastern", "label": null, "latitude": 40.4417, "longitude": -79.9901, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": ["coal", "steel"], "routes": ["Cincinnati-Pittsburgh", "Cleveland-Pittsburgh", "Philadelphia-Pittsburgh", "Pittsburgh-Washington"]} ],
+  [ "Portland ME", { "id": "porm", "state": "ME", "country": "US", "region": "Eastern", "label": "Portland, Maine", "latitude": 43.661, "longitude": -70.2549, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["aluminum", "wood"], "routes": ["Boston-Portland ME", "Portland ME-Quebec City", "Portland ME-Saint John"]} ],
   [ "Portland OR", { "id": "poro", "state": "OR", "country": "US", "region": "Western", "label": "Portland, Ore.", "latitude": 45.5202, "longitude": -122.6742, "large": false, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["wood"], "routes": ["Boise-Portland OR", "Portland OR-Salem", "Portland OR-Seattle", "Portland OR-Spokane"]} ],
   [ "Quebec City", { "id": "que", "state": "QC", "country": "CA", "region": "Eastern", "label": null, "latitude": 46.8257, "longitude": -71.2349, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": true, "commodities": ["imports", "wood"], "routes": ["Montreal-Quebec City", "Portland ME-Quebec City", "Quebec City-Saint John"]} ],
-  [ "Raleigh", { "id": "ral", "state": "NC", "country": "US", "region": "Eastern", "label": null, "latitude": 35.7804, "longitude": -78.6391, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["tobacco", "textiles"], "routes": ["Atlanta-Raleigh", "Charleston-Raleigh", "Norfolk-Raleigh", "Raleigh-Richmond"]} ],
+  [ "Raleigh", { "id": "ral", "state": "NC", "country": "US", "region": "Eastern", "label": null, "latitude": 35.7804, "longitude": -78.6391, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["textiles", "tobacco"], "routes": ["Atlanta-Raleigh", "Charleston-Raleigh", "Norfolk-Raleigh", "Raleigh-Richmond"]} ],
   [ "Rapid City", { "id": "rap", "state": "SD", "country": "US", "region": "Western", "label": null, "latitude": 44.0812, "longitude": -103.228, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["cattle"], "routes": ["Bismarck-Rapid City", "Rapid City-Sioux City"]} ],
   [ "Redding", { "id": "red", "state": "CA", "country": "US", "region": "Western", "label": null, "latitude": 40.5864, "longitude": -122.3917, "large": false, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["iron ore"], "routes": ["Medford-Redding", "Redding-Reno", "Redding-San Francisco"]} ],
   [ "Regina", { "id": "reg", "state": "SK", "country": "CA", "region": "Western", "label": null, "latitude": 50.4481, "longitude": -104.6158, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["lead", "nickel", "oats"], "routes": ["Bismarck-Regina", "Calgary-Regina", "Regina-Saskatoon", "Regina-Winnipeg"]} ],
@@ -88,7 +88,7 @@ export const cities = new Map([
   [ "Saint John", { "id": "sj", "state": "NB", "country": "CA", "region": "Eastern", "label": null, "latitude": 45.278, "longitude": -66.0559, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["coal"], "routes": ["Portland ME-Saint John", "Quebec City-Saint John"]} ],
   [ "Saint Louis", { "id": "sl", "state": "MO", "country": "US", "region": "Central", "label": null, "latitude": 38.63, "longitude": -90.19, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["beer", "paper"], "routes": ["Chicago-Saint Louis", "Des Moines-Saint Louis", "Indianapolis-Saint Louis", "Kansas City-Saint Louis", "Louisville-Saint Louis", "Memphis-Saint Louis", "Nashville-Saint Louis"]} ],
   [ "Salem", { "id": "sal", "state": "OR", "country": "US", "region": "Western", "label": null, "latitude": 44.9392, "longitude": -123.0331, "large": false, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["wood"], "routes": ["Medford-Salem", "Portland OR-Salem"]} ],
-  [ "Salt Lake City", { "id": "slc", "state": "UT", "country": "US", "region": "Western", "label": null, "latitude": 40.767, "longitude": -111.8904, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["sheep", "iron ore", "salt"], "routes": ["Boise-Salt Lake City", "Denver-Salt Lake City", "Reno-Salt Lake City"]} ],
+  [ "Salt Lake City", { "id": "slc", "state": "UT", "country": "US", "region": "Western", "label": null, "latitude": 40.767, "longitude": -111.8904, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["iron ore", "salt", "sheep"], "routes": ["Boise-Salt Lake City", "Denver-Salt Lake City", "Reno-Salt Lake City"]} ],
   [ "San Antonio", { "id": "sa", "state": "TX", "country": "US", "region": "Central", "label": null, "latitude": 29.4246, "longitude": -98.4951, "large": false, "westCoast": false, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["salt"], "routes": ["Dallas-San Antonio", "El Paso-San Antonio", "Houston-San Antonio"]} ],
   [ "San Diego", { "id": "sd", "state": "CA", "country": "US", "region": "Western", "label": null, "latitude": 32.7174, "longitude": -117.1628, "large": false, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["fruit", "salt"], "routes": ["Los Angeles-San Diego", "Phoenix-San Diego"]} ],
   [ "San Francisco", { "id": "sfo", "state": "CA", "country": "US", "region": "Western", "label": null, "latitude": 37.7648, "longitude": -122.463, "large": true, "westCoast": true, "nearWestCoast": false, "nearEastCoast": false, "commodities": ["imports", "precious metals", "wine"], "routes": ["Los Angeles-San Francisco", "Redding-San Francisco", "Reno-San Francisco"]} ],
@@ -275,6 +275,7 @@ export const routes = new Map([
  * key:           name of commodity
  * value: {
  *  regions       [String] - regions with cities that supply the commodity
+ *  cities        [String] - cities that supply the commodity
  * }
  */
 export const commodities = new Map([
@@ -282,32 +283,32 @@ export const commodities = new Map([
   [ "bauxite", { "regions": ["Central"], "cities": ["Memphis"] } ],
   [ "beer", { "regions": ["Central"], "cities": ["Milwaukee", "Saint Louis"] } ],
   [ "cars", { "regions": ["Central"], "cities": ["Detroit", "Toronto"] } ],
-  [ "cattle", { "regions": ["Western", "Central", "Eastern"], "cities": ["Dodge City", "Kansas City", "Miami", "Rapid City", "Thunder Bay", "Winnipeg"] } ],
-  [ "coal", { "regions": ["Western", "Central", "Eastern"], "cities": ["Atlanta", "Butte", "Calgary", "Chicago", "Cincinnati", "Nashville", "Pittsburgh", "Richmond", "Saint John"] } ],
+  [ "cattle", { "regions": ["Central", "Eastern", "Western"], "cities": ["Dodge City", "Kansas City", "Miami", "Rapid City", "Thunder Bay", "Winnipeg"] } ],
+  [ "coal", { "regions": ["Central", "Eastern", "Western"], "cities": ["Atlanta", "Butte", "Calgary", "Chicago", "Cincinnati", "Nashville", "Pittsburgh", "Richmond", "Saint John"] } ],
   [ "copper", { "regions": ["Western"], "cities": ["Billings", "Boise", "Calgary", "El Paso", "Flagstaff", "Phoenix"] } ],
   [ "corn", { "regions": ["Central"], "cities": ["Des Moines", "Indianapolis", "Minneapolis"] } ],
   [ "cotton", { "regions": ["Central", "Eastern"], "cities": ["Atlanta", "Charleston", "Dallas"] } ],
-  [ "fish", { "regions": ["Western", "Central"], "cities": ["New Orleans", "Seattle", "Vancouver"] } ],
-  [ "fruit", { "regions": ["Western", "Eastern"], "cities": ["Los Angeles", "San Diego", "Tampa"] } ],
-  [ "imports", { "regions": ["Western", "Eastern"], "cities": ["Boston", "Los Angeles", "Montreal", "New York", "Philadelphia", "Quebec City", "San Francisco"] } ],
-  [ "iron ore", { "regions": ["Western", "Central"], "cities": ["Duluth", "Grand Rapids", "Minneapolis", "Redding", "Salt Lake City", "Thunder Bay"] } ],
+  [ "fish", { "regions": ["Central", "Western"], "cities": ["New Orleans", "Seattle", "Vancouver"] } ],
+  [ "fruit", { "regions": ["Eastern", "Western"], "cities": ["Los Angeles", "San Diego", "Tampa"] } ],
+  [ "imports", { "regions": ["Eastern", "Western"], "cities": ["Boston", "Los Angeles", "Montreal", "New York", "Philadelphia", "Quebec City", "San Francisco"] } ],
+  [ "iron ore", { "regions": ["Central", "Western"], "cities": ["Duluth", "Grand Rapids", "Minneapolis", "Redding", "Salt Lake City", "Thunder Bay"] } ],
   [ "lead", { "regions": ["Western"], "cities": ["Billings", "Butte", "Calgary", "Regina"] } ],
   [ "machinery", { "regions": ["Central", "Eastern"], "cities": ["Boston", "Buffalo", "Chicago", "Milwaukee", "Syracuse", "Toledo"] } ],
-  [ "nickel", { "regions": ["Western", "Central"], "cities": ["Regina", "Sudbury"] } ],
-  [ "oats", { "regions": ["Western", "Central"], "cities": ["Omaha", "Regina", "Sioux City", "Thunder Bay"] } ],
-  [ "oil", { "regions": ["Western", "Central"], "cities": ["Dallas", "Edmonton", "Houston", "Oklahoma City"] } ],
+  [ "nickel", { "regions": ["Central", "Western"], "cities": ["Regina", "Sudbury"] } ],
+  [ "oats", { "regions": ["Central", "Western"], "cities": ["Omaha", "Regina", "Sioux City", "Thunder Bay"] } ],
+  [ "oil", { "regions": ["Central", "Western"], "cities": ["Dallas", "Edmonton", "Houston", "Oklahoma City"] } ],
   [ "paper", { "regions": ["Central"], "cities": ["Memphis", "Saint Louis"] } ],
   [ "pork", { "regions": ["Central"], "cities": ["Fargo", "Indianapolis", "Minneapolis", "Sioux City"] } ],
   [ "potash", { "regions": ["Western"], "cities": ["Santa Fe", "Saskatoon"] } ],
   [ "precious metals", { "regions": ["Western"], "cities": ["Reno", "San Francisco", "Vancouver"] } ],
   [ "rice", { "regions": ["Central"], "cities": ["Houston", "Mobile", "New Orleans"] } ],
-  [ "salt", { "regions": ["Western", "Central", "Eastern"], "cities": ["Cleveland", "Kansas City", "New Orleans", "New York", "Philadelphia", "Salt Lake City", "San Antonio", "San Diego"] } ],
+  [ "salt", { "regions": ["Central", "Eastern", "Western"], "cities": ["Cleveland", "Kansas City", "New Orleans", "New York", "Philadelphia", "Salt Lake City", "San Antonio", "San Diego"] } ],
   [ "sheep", { "regions": ["Western"], "cities": ["Butte", "Denver", "Salt Lake City"] } ],
   [ "steel", { "regions": ["Central", "Eastern"], "cities": ["Birmingham", "Pittsburgh"] } ],
-  [ "textiles", { "regions": ["Western", "Eastern"], "cities": ["Atlanta", "El Paso", "Raleigh", "Savannah", "Tallahassee"] } ],
+  [ "textiles", { "regions": ["Eastern", "Western"], "cities": ["Atlanta", "El Paso", "Raleigh", "Savannah", "Tallahassee"] } ],
   [ "tobacco", { "regions": ["Central", "Eastern"], "cities": ["Charleston", "Louisville", "Norfolk", "Raleigh"] } ],
   [ "tourists", { "regions": ["Central", "Eastern"], "cities": ["Chicago", "New York", "Philadelphia"] } ],
   [ "wheat", { "regions": ["Central"], "cities": ["Cincinnati", "Des Moines", "Dodge City", "Kansas City", "Omaha", "Winnipeg"] } ],
   [ "wine", { "regions": ["Western"], "cities": ["Los Angeles", "San Francisco", "Spokane"] } ],
-  [ "wood", { "regions": ["Western", "Eastern"], "cities": ["Ottawa", "Portland ME", "Portland OR", "Quebec City", "Salem", "Seattle", "Vancouver"] } ]
+  [ "wood", { "regions": ["Eastern", "Western"], "cities": ["Ottawa", "Portland ME", "Portland OR", "Quebec City", "Salem", "Seattle", "Vancouver"] } ]
 ]);
