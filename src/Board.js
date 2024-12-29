@@ -88,6 +88,16 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
     <div key={key}>{key} <span style={{opacity: "0.6"}}>• {value.cities.toString().replaceAll(',', ", ")}</span></div>
   );
 
+  const independentRailroadList =
+    <div className="independentRailroads">
+      {G.independentRailroads.map(railroad =>
+        <div key={railroad.name}>
+          <span style={{opacity: "0.6"}}>{railroad.name}</span>
+          {railroad.routes.map(route => <span style={{margin: "0 0.3rem"}}>• {route}</span> )}
+        </div>
+      )}
+    </div>
+
   const startingContractExists = G.contracts.filter(contract => contract.playerID === playerID).length > 0;
 
   const playerBoard = 
@@ -202,8 +212,18 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             <button name="marketContract" className="button">Generate Market Contract</button>
             {marketContractsList}
           </div>
-        <div className="cityTable">{cityValues}</div>
-        <div className="cityTable">{commodityList}</div>
+        <div>
+          <div style={{fontWeight: "bold", paddingBottom: "0.5rem"}}>Independent railroads <span style={{fontWeight: "normal"}}>(starting only; growth is not yet implemented)</span></div>
+          {independentRailroadList}
+        </div>
+        <div>
+          <div style={{fontWeight: "bold", paddingTop: "1rem"}}>Commodities</div>
+          <div className="cityTable">{commodityList}</div>
+        </div>
+        <div>
+          <div style={{fontWeight: "bold"}}>Cities</div>
+          <div className="cityTable">{cityValues}</div>
+        </div>
       </form>
     </div>
   );
