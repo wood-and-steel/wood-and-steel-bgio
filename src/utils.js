@@ -20,17 +20,18 @@ export function weightedRandom(weightedMap) {
   return chosenKey;
 }
 
-/**
-* Like Math.random(), but with a Gaussian distribution
-*  
-* @returns {number} - Number between 0 and 1
- */
-export function gaussianRandom() {
-  const val = Math.sqrt( -2.0 * Math.log( 1 - Math.random() ) ) * Math.cos( 2.0 * Math.PI * Math.random() );
-  if (val < 0.0 || val > 1.0) {
-    // Happens <0.02% of the time
-    return Math.random();
-  } else {
-    return val;
+export function gaussianRandom(iterations = 0) {
+  const u = 1 - Math.random(); // Subtract to flip [0, 1) to (0, 1]
+  let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * Math.random());
+  num = num / 10.0 + 0.5; // Translate to [0, 1]
+
+  if (num > 1 || num < 0) { // Resample if outside the range (about 0.02% of the time)
+    if (iterations < 10) { // Make sure we don't recurse too many times
+      return gaussianRandom(iterations + 1);
+    } else {
+      return Math.random();
+    }
   }
+
+  return num;
 }
