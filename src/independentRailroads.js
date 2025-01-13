@@ -292,7 +292,8 @@ export function initializeIndependentRailroads(railroadManager) {
 
 
 /**
- * generateRailroadName - First version written by Claude.ai
+ * generateRailroadName - Create a thematically appropraite railroad company name. The first draft of this
+ * was written with the help of Claude.ai.
  * @param {string} [state] - State whose features or industries might be used in name
  * @returns {string} Generated name
  */
@@ -615,3 +616,31 @@ function generateRailroadName(state) {
       return `${firstPart} & ${secondPart} ${suffix}`;
   }
 }
+
+/* Odds of independent railroads growing by different amounts given starting sizes
+ *
+ * How to read the nested maps:
+ * - The key of the outer map is the percentage of available segments currently occupied by
+ *   independent RRs, from ≤5% to 15%.
+ * - The inner map works with weightedRandom to return the number of percentage points by which
+ *   the total indie network should grow.
+ * 
+ * For example, if the independent RRs currently occupy 11% of the available segments, there's a 
+ * 10% chance they not grow, a 70% chance they will grow to 11+1=12% occupancy and a 20% chance 
+ * they will grow to 11+2=13% occupancy.
+ */
+
+const independentRRGrowthProbabilities = new Map([
+  [  5, new Map(         [1, 10], [2, 20], [3, 30], [4, 40]) ],
+  [  6, new Map(         [1, 20], [2, 30], [3, 30], [4, 20]) ],
+  [  7, new Map([0,  5], [1, 30], [2, 30], [3, 25], [4, 10]) ],
+  [  8, new Map([0,  5], [1, 45], [2, 35], [3, 10], [4,  5]) ],
+  [  9, new Map([0,  5], [1, 55], [2, 30], [3, 10]         ) ],
+  [ 10, new Map([0, 10], [1, 60], [2, 25], [3,  5]         ) ],
+  [ 11, new Map([0, 10], [1, 70], [2, 20]                  ) ],
+  [ 12, new Map([0, 35], [1, 50], [2, 15]                  ) ],
+  [ 13, new Map([0, 50], [1, 40], [2, 10]                  ) ],
+  [ 14, new Map([0, 70], [1, 30]                           ) ],
+  [ 15, new Map([0, 95], [1,  5]                           ) ],
+]);
+

@@ -1,6 +1,6 @@
 import { generateMarketContract, generatePrivateContract, generateStartingContract, newContract } from './Contract';
 import { TurnOrder } from 'boardgame.io/core';
-import { initializeIndependentRailroads, RailroadManager } from './RailroadCompany';
+import { initializeIndependentRailroads, RailroadManager } from './independentRailroads';
 
 const railroadManager = new RailroadManager();
 
@@ -120,6 +120,12 @@ export const WoodAndSteel = {
   },
 
   turn: {
+    onEnd: (G, ctx) => {
+      // Do end of round actions if this is the last player's turn
+      if (ctx.playOrderPos === ctx.playOrder.length - 1) {
+        console.log("End of round")
+      }
+    },
     order: TurnOrder.DEFAULT,
   }
 };
