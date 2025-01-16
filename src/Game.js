@@ -2,15 +2,15 @@ import { generateMarketContract, generatePrivateContract, generateStartingContra
 import { TurnOrder } from 'boardgame.io/core';
 import { initializeIndependentRailroads, RailroadManager } from './independentRailroads';
 
-const railroadManager = new RailroadManager();
+const independentRailroadManager = new RailroadManager();
 
 export const WoodAndSteel = {
   name: "wood-and-steel",
   
   setup: () => {
 
-    initializeIndependentRailroads(railroadManager);
-    const independentRailroads = railroadManager.getCompanies();
+    initializeIndependentRailroads(independentRailroadManager);
+    const independentRailroads = independentRailroadManager.getCompanies();
 
     return { 
       contracts: Array(0),

@@ -3,18 +3,16 @@ import { citiesConnectedTo } from "./graph";
 import { weightedRandom } from "./utils";
 
 /**
- * Player or independent company
+ * Independent railroad company
  *
  * @class RailroadCompany
  * @typedef {RailroadCompany}
  * @property {string} name - name of the company
- * @property {*} player - ID of the player, or null if an independent RR
  * @property {Set<string>} routes - keys of routes held by the company
  */
 class RailroadCompany {
-  constructor(name, playerID = null) {
+  constructor(name) {
     this.name = name;
-    this.playerID = playerID;
     this.routes = new Set();
   }
 
@@ -180,7 +178,7 @@ export class RailroadManager {
 
   /**
    * Gets the company that owns a specific city
-   * @param {string} city - The city key
+   * @param {string} cityKey - The city key
    * @returns {string|null} - Name of the owning company or null
    */
   getCityOwner(cityKey) {
@@ -200,7 +198,6 @@ export class RailroadManager {
 
       return {
         name: company.name,
-        playerID: company.playerID,
         routes: [...company.getRoutes()],
       }
     } else {
@@ -223,7 +220,7 @@ export class RailroadManager {
 
 export function initializeIndependentRailroads(railroadManager) {
 
-  // Get the set of cities that are valid endpoints for independent railroads: everything not within 2 hops of possible startting cities
+  // Get the set of cities that are valid endpoints for independent railroads: everything not within 2 hops of possible starting cities
   const withinTwoOfStartingCities = citiesConnectedTo(
     [
       "Quebec City", "Montreal", "Boston", "Portland ME", "Philadelphia", "New York", "Washington", 
