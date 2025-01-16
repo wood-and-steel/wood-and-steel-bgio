@@ -1,6 +1,6 @@
 import { generateMarketContract, generatePrivateContract, generateStartingContract, newContract } from './Contract';
 import { TurnOrder } from 'boardgame.io/core';
-import { initializeIndependentRailroads, RailroadManager } from './independentRailroads';
+import { initializeIndependentRailroads, RailroadManager, growIndependentRailroads } from './independentRailroads';
 
 const independentRailroadManager = new RailroadManager();
 
@@ -24,7 +24,6 @@ export const WoodAndSteel = {
 
   moves: {
 
-    // TODO: Get rid of generate*Contract as moves; wired them up this way temporarily to work around my lack of React skill
     generateStartingContract: ({ G, ctx }, activeCities) => {
       const contract = generateStartingContract(G, activeCities, ctx.currentPlayer);
       if (contract) {
@@ -120,10 +119,10 @@ export const WoodAndSteel = {
   },
 
   turn: {
-    onEnd: (G, ctx) => {
-      // Do end of round actions if this is the last player's turn
+    onEnd: ({ G, ctx }) => {
+      // Do end of round actions if this is the end of the last player's turn
       if (ctx.playOrderPos === ctx.playOrder.length - 1) {
-        console.log("End of round")
+        growIndependentRailroads(G);
       }
     },
     order: TurnOrder.DEFAULT,

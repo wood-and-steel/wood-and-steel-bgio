@@ -289,8 +289,21 @@ export function initializeIndependentRailroads(railroadManager) {
 
 
 /**
+ * Called at the end of a round, this adds 0 or more segments and 0 or more independent railroad companies
+ *
+ * @export
+ * @param {G} G - global game state
+ * @returns {Object} - description of the expansion
+ */
+export function growIndependentRailroads(G) {
+  console.log(`${G.independentRailroads.length} indies`);
+}
+
+
+/**
  * generateRailroadName - Create a thematically appropraite railroad company name. The first draft of this
  * was written with the help of Claude.ai.
+ * 
  * @param {string} [state] - State whose features or industries might be used in name
  * @returns {string} Generated name
  */
