@@ -1,6 +1,6 @@
 import { cities, routes } from "./GameData";
 import { citiesConnectedTo } from "./graph";
-import { weightedRandom } from "./utils";
+import { weightedRandom, randomArrayItem } from "./utils";
 
 /**
  * Independent railroad company
@@ -218,6 +218,24 @@ export class RailroadManager {
 }
 
 
+
+/**
+ * Given a set of cities, return a set of all the routes that do not include those cities
+ *
+ * @param {Set} cities Set of IDs of cities to avoid
+ * @returns {Set} Set of IDs of routes that do not include these cities
+ */
+function routesWithoutTheseCities(cities) {
+  const routesFound = new Set();
+  routes.forEach((routeValue, routeKey) => { 
+    if (!cities.has(routeValue.cities[0]) && !cities.has(routeValue.cities[1]))
+      routesFound.add(routeKey);
+  })
+
+  return routesFound;
+}
+
+
 export function initializeIndependentRailroads(railroadManager) {
 
   // Get the set of cities that are valid endpoints for independent railroads: everything not within 2 hops of possible starting cities
@@ -232,11 +250,7 @@ export function initializeIndependentRailroads(railroadManager) {
     }
   );
 
-  const routesAvailableToIndies = new Set();
-  routes.forEach((routeValue, routeKey) => { 
-    if (!withinTwoOfStartingCities.has(routeValue.cities[0]) && !withinTwoOfStartingCities.has(routeValue.cities[1]))
-      routesAvailableToIndies.add(routeKey);
-  })
+  const routesAvailableToIndies = routesWithoutTheseCities(withinTwoOfStartingCities);
 
   // Calculate how many routes we want to assign (5% of total)
   const numberOfRoutesToAssign = Math.ceil(routesAvailableToIndies.size * 0.05);
@@ -293,10 +307,120 @@ export function initializeIndependentRailroads(railroadManager) {
  *
  * @export
  * @param {G} G - global game state
- * @returns {Object} - description of the expansion
+ * @returns {Set|undefined} - Set of IDs of added routes or undefined if none were added
  */
 export function growIndependentRailroads(G) {
-  console.log(`${G.independentRailroads.length} indies`);
+  /* Definitions used throughout this function
+   *  - available route: a route an independent railroad could occupy
+   *  - occupancy: percentage of available routes with independent railroads on them
+   */
+
+  /* Odds of independent railroads growing by different amounts given starting sizes
+  *
+  * How to read the nested maps:
+  * - The key of the outer map is the current occupancy.
+  * - The inner map works with weightedRandom to return the number of percentage points by which
+  *   the total indie network should grow.
+  * 
+  * For example, if the independent RRs currently occupy 11% of the available routes, there's a 
+  * 10% chance they not grow, a 70% chance they will grow to 11+1=12% occupancy and a 20% chance 
+  * they will grow to 11+2=13% occupancy.
+  */
+
+  const growthProbabilities = new Map([
+    [  5, new Map([          [1, 10], [2, 20], [3, 30], [4, 40] ]) ],
+    [  6, new Map([          [1, 20], [2, 30], [3, 30], [4, 20] ]) ],
+    [  7, new Map([ [0,  5], [1, 30], [2, 30], [3, 25], [4, 10] ]) ],
+    [  8, new Map([ [0,  5], [1, 45], [2, 35], [3, 10], [4,  5] ]) ],
+    [  9, new Map([ [0,  5], [1, 55], [2, 30], [3, 10]          ]) ],
+    [ 10, new Map([ [0, 10], [1, 60], [2, 25], [3,  5]          ]) ],
+    [ 11, new Map([ [0, 10], [1, 70], [2, 20]                   ]) ],
+    [ 12, new Map([ [0, 35], [1, 50], [2, 15]                   ]) ],
+    [ 13, new Map([ [0, 50], [1, 40], [2, 10]                   ]) ],
+    [ 14, new Map([ [0, 70], [1, 30]                            ]) ],
+    [ 15, new Map([ [0, 95], [1,  5]                            ]) ],
+  ]);
+
+  // Min and max key values from above
+  const smallestMappedOccupancy = Math.min(...[...growthProbabilities.keys()]);
+  const largestMappedOccupancy = Math.max(...[...growthProbabilities.keys()]);
+
+  // Collect keys of all active cities and what's adjacent to them
+  const activeCities = new Set();
+  G.players.forEach(([key, value]) => {
+    value.activeCities.forEach(city => { activeCities.add(city); });
+  })
+  const activeCitiesPlusOneHop = citiesConnectedTo(activeCities, { includeFromCities: true });
+
+  /* Independent railroads can only grow into routes that are not adjacent to player routes.
+   * We can't know all the players' routes, but hopefully everything within 1 of their active
+   * cities will make a decent approximation.
+   */
+  const routesNotNearActiveCities = routesWithoutTheseCities(activeCitiesPlusOneHop);
+  const startingRouteCount = G.independentRailroads.reduce((acc, current) => acc + current.routes.length, 0);
+  let startingOccupancy = Math.round(100 * startingRouteCount / routesNotNearActiveCities.size);
+
+  if (startingOccupancy < smallestMappedOccupancy)
+    startingOccupancy = smallestMappedOccupancy
+  else if (startingOccupancy > largestMappedOccupancy)
+    startingOccupancy = largestMappedOccupancy;
+
+  const occupancyGrowth = weightedRandom(growthProbabilities.get(startingOccupancy));
+
+  // If there's a zero growth rate picked at random, we're done
+  if (occupancyGrowth === 0) return undefined;
+
+  const newOccupancy = startingOccupancy + occupancyGrowth;
+  let newRouteCount = Math.round(0.01 * newOccupancy * routesNotNearActiveCities.size);
+
+  // Rounding might mean that a non-zero increase in occupancy would still result in no growth. If this happens,
+  // make it a 50/50 chance we'll grow by one route anyway.
+  if (newRouteCount === startingRouteCount) {
+    if (Math.random() > 0.5) {
+      newRouteCount++
+    } else {
+      // No new routes, so we're done
+      return undefined;
+    }
+  }
+
+  // Finally, we have the number of routes we're going to add during this independent growth action
+  const numberOfRoutesToAdd = newRouteCount - startingRouteCount;
+  const addedRoutes = new Set();
+
+  // Now we try to expand
+  while (addedRoutes.size < numberOfRoutesToAdd) {
+    // Pick an indepdendent RR at random
+    const railroadToExpandIndex = Math.floor(Math.random() * G.independentRailroads.length);
+    const railroadToExpand = G.independentRailroads[railroadToExpandIndex];
+
+    /*
+     *  Add one route
+     */
+
+    // Get all the cities in this RR
+    const citiesInRailroad = new Set();
+    [...railroadToExpand.routes].forEach(routeKey => {
+      const [city1, city2] = routes.get(routeKey).cities;
+      citiesInRailroad.add(city1).add(city2);
+    });
+
+    // Get all the routes attached to those cities
+    const routesSuperset = new Set();
+    [...citiesInRailroad].forEach(cityKey => {
+      cities.get(cityKey).routes.forEach(r => routesSuperset.add(r));
+    })
+
+    const possibleRoutes = routesSuperset.difference(new Set([...railroadToExpand.routes])).intersection(routesNotNearActiveCities);
+
+    if (possibleRoutes.size > 0) {
+      const routeToAdd = randomArrayItem([...possibleRoutes]);
+      railroadToExpand.routes.push(routeToAdd);
+      addedRoutes.add(routeToAdd);
+    }
+  }
+  
+  return addedRoutes;
 }
 
 
@@ -595,9 +719,6 @@ function generateRailroadName(state) {
     },
   };
 
-  // Helper function to get random item from array
-  const random = arr => arr[Math.floor(Math.random() * arr.length)];
-  
   const suffix = weightedRandom(new Map([
     ["Railway", 10], ["Railroad", 10], ["Line", 5], ["Transportation Company", 1], ["Rail Road", 1], ["Rail Company", 1]
   ]));
@@ -608,49 +729,21 @@ function generateRailroadName(state) {
   if (typeof state !== "string" || nameStyle < 0.2) {
       // 20% chance: Grand single name (e.g. Enterprise)
       const prefix = Math.random() < 0.5 ? "The " : "";
-      return `${prefix}${random(grandNames)} ${suffix}`;
+      return `${prefix}${randomArrayItem(grandNames)} ${suffix}`;
   } 
   else if (nameStyle < 0.6) {
       // 40% chance: Industry/regional name (e.g. Michigan Lumber)
-      const direction = Math.random() < 0.5 ? `${random(regions)} ` : '';
-      const industry = random(stateCharacteristics[state]?.industries);
+      const direction = Math.random() < 0.5 ? `${randomArrayItem(regions)} ` : '';
+      const industry = randomArrayItem(stateCharacteristics[state]?.industries);
       return `${stateCharacteristics[state].name} ${direction}${industry} ${suffix}`;
   }
   else {
       // 40% chance: Paired geographic name (e.g. Valley & River)
-      const firstPart = random(stateCharacteristics[state].features);
+      const firstPart = randomArrayItem(stateCharacteristics[state].features);
       let secondPart = firstPart;
       while (secondPart === firstPart) { 
-        secondPart = random([...regions, ...stateCharacteristics[state].features]);
+        secondPart = randomArrayItem([...regions, ...stateCharacteristics[state].features]);
       }
       return `${firstPart} & ${secondPart} ${suffix}`;
   }
 }
-
-/* Odds of independent railroads growing by different amounts given starting sizes
- *
- * How to read the nested maps:
- * - The key of the outer map is the percentage of available segments currently occupied by
- *   independent RRs, from ≤5% to 15%.
- * - The inner map works with weightedRandom to return the number of percentage points by which
- *   the total indie network should grow.
- * 
- * For example, if the independent RRs currently occupy 11% of the available segments, there's a 
- * 10% chance they not grow, a 70% chance they will grow to 11+1=12% occupancy and a 20% chance 
- * they will grow to 11+2=13% occupancy.
- */
-
-const growthProbabilities = new Map([
-  [  5, new Map([          [1, 10], [2, 20], [3, 30], [4, 40] ]) ],
-  [  6, new Map([          [1, 20], [2, 30], [3, 30], [4, 20] ]) ],
-  [  7, new Map([ [0,  5], [1, 30], [2, 30], [3, 25], [4, 10] ]) ],
-  [  8, new Map([ [0,  5], [1, 45], [2, 35], [3, 10], [4,  5] ]) ],
-  [  9, new Map([ [0,  5], [1, 55], [2, 30], [3, 10]          ]) ],
-  [ 10, new Map([ [0, 10], [1, 60], [2, 25], [3,  5]          ]) ],
-  [ 11, new Map([ [0, 10], [1, 70], [2, 20]                   ]) ],
-  [ 12, new Map([ [0, 35], [1, 50], [2, 15]                   ]) ],
-  [ 13, new Map([ [0, 50], [1, 40], [2, 10]                   ]) ],
-  [ 14, new Map([ [0, 70], [1, 30]                            ]) ],
-  [ 15, new Map([ [0, 95], [1,  5]                            ]) ],
-]);
-

@@ -147,10 +147,10 @@ export function generatePrivateContract(G, ctx) {
  * Create a market contract from the given active cities
  *
  * @param {*} G - boardgame.io global state
- * @param {string[]} activeCitiesKeys - Keys of all active cities
  * @returns {Contract}
  */
 export function generateMarketContract(G) {
+  // Collect keys of all active cities
   const activeCitiesSet = new Set();
   G.players.forEach(([key, value]) => {
     value.activeCities.forEach(city => { activeCitiesSet.add(city); });

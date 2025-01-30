@@ -35,3 +35,19 @@ export function gaussianRandom(iterations = 0) {
 
   return num;
 }
+
+
+/**
+ * Chooses a random item from an array
+ *
+ * @export
+ * @param {*} arr - Array of length 1+ 
+ * @returns {(arr: any) => any} - A random item from that array
+ */
+export function randomArrayItem(arr) {
+  if (arr && arr.length) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  } else {
+    return undefined;
+  }
+}

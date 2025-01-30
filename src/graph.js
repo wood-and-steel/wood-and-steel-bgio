@@ -5,9 +5,9 @@ import { cities, routes } from "./GameData";
  * 
  * @param {string[]|Set} fromCitiesKeys - Keys of cities from which to traverse the map
  * @param {Object} options
-*  @param {number} [options.distance = 1] Maximum number of segments to traverse
-*  @param {function} [options.routeTestFn = () => true] Function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
-*  @param {boolean} [options.includeFromCities = false] Whether to include fromCitiesKeys in return value
+*  @param {number} [options.distance=1] Maximum number of segments to traverse [1]
+*  @param {function} [options.routeTestFn] Function to filter routes (e.g. r => !r.mountainous to filter out mountainous routes)
+*  @param {boolean} [options.includeFromCities=false] Whether to include fromCitiesKeys in return value [false]
  * @returns {Set} City keys with origin cities removed
  */
 export function citiesConnectedTo(fromCitiesKeys, options = {}) {
@@ -17,6 +17,8 @@ export function citiesConnectedTo(fromCitiesKeys, options = {}) {
     includeFromCities = false,
   } = options;
 
+  if (!fromCitiesKeys) return new Set();
+  
   const connectedCities = new Set([...fromCitiesKeys]);
   
   let iteratorCities = new Set([...fromCitiesKeys]);

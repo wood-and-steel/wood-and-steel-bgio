@@ -213,7 +213,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             {marketContractsList}
           </div>
         <div>
-          <div style={{fontWeight: "bold", paddingBottom: "0.5rem"}}>Independent railroads <span style={{fontWeight: "normal"}}>(starting only; growth is not yet implemented)</span></div>
+          <div style={{fontWeight: "bold", paddingBottom: "0.5rem"}}>Independent railroads</div>
           {independentRailroadList}
         </div>
         <div>

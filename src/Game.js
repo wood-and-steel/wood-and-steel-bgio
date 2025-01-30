@@ -122,7 +122,7 @@ export const WoodAndSteel = {
     onEnd: ({ G, ctx }) => {
       // Do end of round actions if this is the end of the last player's turn
       if (ctx.playOrderPos === ctx.playOrder.length - 1) {
-        growIndependentRailroads(G);
+        console.log(growIndependentRailroads(G));
       }
     },
     order: TurnOrder.DEFAULT,
