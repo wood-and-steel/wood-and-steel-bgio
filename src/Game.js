@@ -1,36 +1,29 @@
 import { generateMarketContract, generatePrivateContract, generateStartingContract, newContract } from './Contract';
 import { TurnOrder } from 'boardgame.io/core';
-import { initializeIndependentRailroads, RailroadManager } from './RailroadCompany';
+import { initializeIndependentRailroads, RailroadManager, growIndependentRailroads } from './independentRailroads';
 
-const railroadManager = new RailroadManager();
+const independentRailroadManager = new RailroadManager();
 
 export const WoodAndSteel = {
   name: "wood-and-steel",
   
   setup: () => {
 
-    initializeIndependentRailroads(railroadManager);
+    initializeIndependentRailroads(independentRailroadManager);
+    const independentRailroads = independentRailroadManager.getCompanies();
 
-    console.log("Independent railroad companies:");
-
-    // Log each company and its route
-    for (const [name, company] of railroadManager.getCompanies()) {
-      const routes = Array.from(company.getRoutes().keys());
-      console.log(`\n${name}: ${routes.reduce((concat, route, index) => concat += (index === routes.length-1 ? route : `${route}, `))}`);
-    }
-    
     return { 
       contracts: Array(0),
       players: [
         [ '0', { name: "Player 0", activeCities: Array(0) } ],
         [ '1', { name: "Player 1", activeCities: Array(0) } ],
       ],
+      independentRailroads: independentRailroads,
     }
   },
 
   moves: {
 
-    // TODO: Get rid of generate*Contract as moves; wired them up this way temporarily to work around my lack of React skill
     generateStartingContract: ({ G, ctx }, activeCities) => {
       const contract = generateStartingContract(G, activeCities, ctx.currentPlayer);
       if (contract) {
@@ -126,6 +119,12 @@ export const WoodAndSteel = {
   },
 
   turn: {
+    onEnd: ({ G, ctx }) => {
+      // Do end of round actions if this is the end of the last player's turn
+      if (ctx.playOrderPos === ctx.playOrder.length - 1) {
+        console.log(growIndependentRailroads(G));
+      }
+    },
     order: TurnOrder.DEFAULT,
   }
 };

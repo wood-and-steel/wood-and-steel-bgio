@@ -8,7 +8,7 @@ const WoodAndSteelClient = Client({
   multiplayer: Local({ persist: false }),
   numPlayers: 2,
   board: WoodAndSteelState,
-  debug: false,
+  debug: true,
 });
 
 const App = () => (
