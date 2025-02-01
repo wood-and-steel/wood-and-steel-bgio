@@ -238,6 +238,9 @@ function routesWithoutTheseCities(cities) {
 
 export function initializeIndependentRailroads(railroadManager) {
 
+  /*
+   * TODO: Restore this if we want to
+   *
   // Get the set of cities that are valid endpoints for independent railroads: everything not within 2 hops of possible starting cities
   const withinTwoOfStartingCities = citiesConnectedTo(
     [
@@ -251,6 +254,11 @@ export function initializeIndependentRailroads(railroadManager) {
   );
 
   const routesAvailableToIndies = routesWithoutTheseCities(withinTwoOfStartingCities);
+   *
+   */
+
+  
+  const routesAvailableToIndies = new Set(routes.keys());
 
   // Calculate how many routes we want to assign (5% of total)
   const numberOfRoutesToAssign = Math.ceil(routesAvailableToIndies.size * 0.05);
