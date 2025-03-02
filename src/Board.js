@@ -182,6 +182,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
 
   const marketContractsList = filteredContractsList();
   const [input, setInput] = React.useState('');
+  const [cityInput, setCityInput] = React.useState('');
 
   return (
     <div className="boardPage" style={{display: (ctx.currentPlayer === playerID ? "block" : "none")}}>
@@ -189,7 +190,9 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         
         <div>
           <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em", position: "fixed", top: "0", left: "0", right: "0"}}>
+
             <button name="endTurn" className="button" style={{marginLeft: "1rem"}}>End Turn</button>
+
             <div style={{ display: "inline" }}>
             <span style={{ 
               color: "white", paddingLeft: "1.5rem", fontSize: "90%",
@@ -211,6 +214,18 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
               style={{ display: startingContractExists ? "none" : "block" }}
             >Starting</button>
             <button name="manualContract" className="button">Manual Contract</button>
+
+            <div style={{ display: "inline" }}>
+            <span style={{ color: "white", paddingLeft: " 1.5rem", fontSize: "90%" }}><b>Cities:</b></span>
+            <input 
+              value={cityInput}
+              onChange={e => setCityInput(e.target.value)}
+              name="cityList" 
+              style={{width: "15rem", height: "20px", margin: "0 0.5rem"}} 
+            />
+            <button name="addCities" className="button">Add Cities</button>
+            </div>
+          
           </div>
           {playerBoard}
         </div>
