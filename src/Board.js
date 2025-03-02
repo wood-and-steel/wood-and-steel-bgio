@@ -221,7 +221,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
               value={cityInput}
               onChange={e => setCityInput(e.target.value)}
               name="cityList" 
-              style={{width: "15rem", height: "20px", margin: "0 0.5rem"}} 
+              style={{width: "8rem", height: "20px", margin: "0 0.5rem"}} 
             />
             <button name="addCities" className="button">Add Cities</button>
             </div>
@@ -241,11 +241,11 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         </div>
         <div>
           <div style={{fontWeight: "bold", paddingTop: "1rem"}}>Commodities</div>
-          <div className="cityTable">{commodityList}</div>
+          <div className="referenceTable commodityTable">{commodityList}</div>
         </div>
         <div>
           <div style={{fontWeight: "bold"}}>Cities</div>
-          <div className="cityTable">{cityValues}</div>
+          <div className="referenceTable cityTable">{cityValues}</div>
         </div>
       </form>
     </div>

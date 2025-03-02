@@ -62,12 +62,19 @@ code {
   margin: 0.5rem 0;
 }
 
-.cityTable {
+.referenceTable {
   margin: 1rem 0rem; 
   display: flex; 
   flex-direction: column; 
   flex-wrap: wrap;
-  height: 280px;
+}
+
+.cityTable {
+  height: 134px;
+}
+
+.commodityTable {
+  height: 217px;
 }
 
 .cityCell {
