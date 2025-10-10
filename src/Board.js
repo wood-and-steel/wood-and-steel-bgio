@@ -207,8 +207,36 @@ function ReferenceTables({ G }) {
   );
 }
 
+// Available starting city pairs
+const STARTING_CITY_PAIRS = [
+  ["Quebec City", "Montreal"],
+  ["Boston", "Portland ME"],
+  ["Philadelphia", "New York"],
+  ["Washington", "Philadelphia"],
+  ["Raleigh", "Norfolk"],
+  ["Charleston", "Savannah"]
+];
+
 // Top Button Bar Component
-function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase }) {
+function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase, G }) {
+  // Get available starting pairs (filter out already chosen ones)
+  const getAvailableStartingPairs = () => {
+    if (currentPhase !== 'setup') return STARTING_CITY_PAIRS;
+    
+    // Get all starting cities that have been chosen
+    const chosenCities = new Set();
+    G.players.forEach(([id, player]) => {
+      player.activeCities.forEach(city => chosenCities.add(city));
+    });
+    
+    // Filter out pairs where any city has been chosen
+    return STARTING_CITY_PAIRS.filter(pair => 
+      !chosenCities.has(pair[0]) && !chosenCities.has(pair[1])
+    );
+  };
+  
+  const availablePairs = getAvailableStartingPairs();
+  
   return (
     <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em", position: "fixed", top: "0", left: "0", right: "0"}}>
       {/* Phase indicator */}
@@ -228,7 +256,7 @@ function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContra
           color: "white", paddingLeft: "1.5rem", fontSize: "90%",
           display: currentPhase === 'setup' ? "block" : "none",
         }}>
-          <b>Starting</b> city 1, city 2:
+          <b>Choose starting cities:</b>
         </span>
         <span style={{ 
           color: "white", paddingLeft: "1.5rem", fontSize: "90%",
@@ -237,6 +265,29 @@ function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContra
           <b>Manual</b> commodity, destination, type:
         </span>
       </div>
+      
+      {/* Dropdown for setup phase */}
+      {currentPhase === 'setup' && (
+        <select
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          name="startingPairSelector"
+          style={{
+            width: "15rem",
+            height: "24px",
+            marginLeft: "0.5rem"
+          }}
+        >
+          <option value="">-- Select a pair --</option>
+          {availablePairs.map((pair, index) => (
+            <option key={index} value={pair.join(', ')}>
+              {pair.join(' & ')}
+            </option>
+          ))}
+        </select>
+      )}
+      
+      {/* Text input for play phase */}
       <input 
         value={input}
         onChange={e => setInput(e.target.value)}
@@ -244,13 +295,15 @@ function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContra
         style={{
           width: "15rem", 
           height: "20px",
-          display: currentPhase === 'scoring' ? 'none' : 'inline-block'
+          display: currentPhase === 'play' ? 'inline-block' : 'none'
         }} 
       />
+      
       <button 
         name="startingContract" 
         className="button"
-        style={{ display: currentPhase === 'setup' ? "block" : "none" }}
+        style={{ display: currentPhase === 'setup' ? "inline-block" : "none" }}
+        disabled={!input || currentPhase !== 'setup'}
       >Choose Starting Cities</button>
       <button 
         name="manualContract" 
@@ -339,6 +392,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             setCityInput={setCityInput}
             startingContractExists={startingContractExists}
             currentPhase={currentPhase}
+            G={G}
           />
           <div style={{ padding: "5rem 2rem", textAlign: "center" }}>
             <h1>Scoring Phase</h1>
@@ -360,6 +414,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             setCityInput={setCityInput}
             startingContractExists={startingContractExists}
             currentPhase={currentPhase}
+            G={G}
           />
           <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
         </div>
