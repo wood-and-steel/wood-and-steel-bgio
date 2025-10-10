@@ -3,23 +3,32 @@
  *
  * @export
  * @param {Map<any, number>} weightedMap - Map where the keys are the choices and values are their integer weights
- * @returns {any} - Randomly selected key from weightedMap
+ * @returns {any} - Randomly selected key from weightedMap, or undefined if map is empty or all weights are zero
  */
 export function weightedRandom(weightedMap) {
-  let chosenKey = undefined;
+  if (!weightedMap || weightedMap.size === 0) {
+    return undefined;
+  }
+
   const sumValues = [...weightedMap.values()].reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+  if (sumValues <= 0) {
+    console.warn('weightedRandom: sum of weights is zero or negative');
+    return undefined;
+  }
 
   const finalDieRoll = Math.floor(Math.random() * sumValues);
   let skipped = 0;
-  weightedMap.forEach((value, choice) => {
-    if (finalDieRoll < value + skipped && !chosenKey) {
-      chosenKey = choice;
-    } else {
-      skipped += value;
+  
+  for (const [choice, value] of weightedMap) {
+    if (finalDieRoll < value + skipped) {
+      return choice;
     }
-  });
+    skipped += value;
+  }
 
-  return chosenKey;
+  // Fallback (should never reach here with valid input)
+  return undefined;
 }
 
 /**
