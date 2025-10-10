@@ -1,25 +1,34 @@
 /**
  * Randomly pick a key from a map, weighted by the relative integer value of the keys
  *
+ * @export
  * @param {Map<any, number>} weightedMap - Map where the keys are the choices and values are their integer weights
  * @returns {any} - Randomly selected key from weightedMap
  */
 export function weightedRandom(weightedMap) {
   let chosenKey = undefined;
-  const sumValues = weightedMap.values().reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+  const sumValues = [...weightedMap.values()].reduce((accumulator, currentValue) => accumulator + currentValue, 0);
 
   const finalDieRoll = Math.floor(Math.random() * sumValues);
   let skipped = 0;
   weightedMap.forEach((value, choice) => {
-    if (finalDieRoll < value + skipped && !chosenKey)
-      chosenKey = choice
-    else
+    if (finalDieRoll < value + skipped && !chosenKey) {
+      chosenKey = choice;
+    } else {
       skipped += value;
+    }
   });
 
   return chosenKey;
 }
 
+/**
+ * Generate a random number with a Gaussian (normal) distribution between 0 and 1
+ *
+ * @export
+ * @param {number} [iterations=0] - Internal counter to prevent infinite recursion
+ * @returns {number} - Random number between 0 and 1 with Gaussian distribution
+ */
 export function gaussianRandom(iterations = 0) {
   const u = 1 - Math.random(); // Subtract to flip [0, 1) to (0, 1]
   let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * Math.random());
@@ -41,11 +50,11 @@ export function gaussianRandom(iterations = 0) {
  * Chooses a random item from an array
  *
  * @export
- * @param {*} arr - Array of length 1+ 
- * @returns {(arr: any) => any} - A random item from that array
+ * @param {Array} arr - Array of length 1+ 
+ * @returns {*} - A random item from that array, or undefined if array is empty
  */
 export function randomArrayItem(arr) {
-  if (arr && arr.length) {
+  if (arr && arr.length > 0) {
     return arr[Math.floor(Math.random() * arr.length)];
   } else {
     return undefined;
