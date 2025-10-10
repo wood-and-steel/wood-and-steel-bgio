@@ -1,7 +1,7 @@
 import { cities, commodities } from "./GameData";
 import { shortestDistance, citiesConnectedTo } from "./graph";
 import { cardinalDirection } from "./geo";
-import { weightedRandom } from "./utils";
+import { weightedRandom, randomSetItem } from "./utils";
 
 /**
  * @typedef {Object} Contract
@@ -52,7 +52,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   const candidatesInChosenDirection = Array.from(candidatesByDirection.get(weightedRandom(weightedDirections)));
 
   // Choose a commodity at random from those that are:
-  //  - not available in every candidate desintation city
+  //  - not available in every candidate destination city
   //  - available in the starting cities
   
   // List and count commodities in candidate destinations
@@ -76,10 +76,10 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   // List all commodities available in active cities and remove the ones available in every potential destination
   const activeCitiesKeysCommodities = new Set();
   activeCitiesKeys.forEach(city => cities.get(city).commodities.forEach(commodity => activeCitiesKeysCommodities.add(commodity)));
-  const validCommodities = activeCitiesKeysCommodities.difference(commoditiesInEveryCandidate);
+  const validCommodities = new Set([...activeCitiesKeysCommodities].filter(c => !commoditiesInEveryCandidate.has(c)));
 
   // Pick a commodity for the contract
-  const contractCommodity = [...validCommodities][Math.floor(Math.random() * validCommodities.size)];
+  const contractCommodity = randomSetItem(validCommodities);
 
   // Pick the destination, excluding candidate that supply the selected commodity
   const contractCity = weightedRandomCity(
@@ -88,7 +88,10 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   );
 
   // Make the two starting cities the active cities for this player
-  G.players.find(([id, props]) => id === playerID)[1].activeCities = activeCitiesKeys;
+  const player = G.players.find(([id, props]) => id === playerID);
+  if (player) {
+    player[1].activeCities = activeCitiesKeys;
+  }
 
   return newContract(contractCity, contractCommodity, { type: "private", playerID: playerID });
 };
@@ -103,8 +106,13 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
  * @returns {Contract}
  */
 export function generatePrivateContract(G, ctx) {  
-  const activeCitiesKeys = Array.from(G.players.find(([id, props]) => id === ctx.currentPlayer)[1].activeCities);
-  const currentCityKey = activeCitiesKeys[activeCitiesKeys.length - 1];
+  const player = G.players.find(([id, props]) => id === ctx.currentPlayer);
+  if (!player) {
+    console.error(`generatePrivateContract: player ${ctx.currentPlayer} not found`);
+    return undefined;
+  }
+  const activeCitiesKeys = Array.from(player[1].activeCities);
+  const currentCityKey = activeCitiesKeys.at(-1);
 
   // Set odds for direction from currentCityKey, biased away from creating coastal connections
 
@@ -121,13 +129,16 @@ export function generatePrivateContract(G, ctx) {
   const candidatesByDirection = citiesByDirection( [ currentCityKey ], citiesConnectedTo(activeCitiesKeys, { distance: 2 }) );
   
   // Pick a direction and a city
-  // TODO: Make sure these don't return any empty arrays
   const candidatesInChosenDirection = Array.from(candidatesByDirection.get(weightedRandom(weightedDirections)));
+  if (candidatesInChosenDirection.length === 0) {
+    console.error(`generatePrivateContract: no candidates found in chosen direction`);
+    return undefined;
+  }
   const contractCity = weightedRandomCity(G, candidatesInChosenDirection);
 
   // Choose a commodity at random from those that are:
   //  - available within 1 hop of active cities
-  //  - not avilable in destination city
+  //  - not available in destination city
   const availableCommodities = new Set();
   activeCitiesKeys.forEach(activeCity => {
     cities.get(activeCity).commodities.forEach(commodity => {
@@ -137,7 +148,7 @@ export function generatePrivateContract(G, ctx) {
   cities.get(contractCity).commodities.forEach(commodity => { availableCommodities.delete(commodity); });
 
   // Pick a commodity for the contract
-  const contractCommodity = [...availableCommodities][Math.floor(Math.random() * availableCommodities.size)];
+  const contractCommodity = randomSetItem(availableCommodities);
 
   return newContract(contractCity, contractCommodity, { type: "private", playerID: ctx.currentPlayer });
 };
@@ -161,7 +172,7 @@ export function generateMarketContract(G) {
   const contractCity = weightedRandomCity(G, citiesConnectedTo(activeCitiesKeys, { distance: 2 }));
 
   // Choose a commodity at random from those that are:
-  //  - not available in the desintation city
+  //  - not available in the destination city
   //  - available within any active city or 1 away from them
   
   const citiesWithinOneHop = citiesConnectedTo(activeCitiesKeys, {
@@ -184,7 +195,7 @@ export function generateMarketContract(G) {
   }
 
   // Pick a commodity for the contract
-  const contractCommodity = [...possibleCommodities][Math.floor(Math.random() * possibleCommodities.size)];
+  const contractCommodity = randomSetItem(possibleCommodities);
 
   return newContract(contractCity, contractCommodity, { type: "market" });
 };
@@ -225,8 +236,8 @@ function citiesByDirection(fromCitiesKeys, candidateCitiesKeys)
     })
   })
 
-  // If a list in one direction is empty, copy the opposite direction’s list into it
-  // Thie implements the requirement "If there are no cities in the selected direction, choose the opposite direction instead."
+  // If a list in one direction is empty, copy the opposite direction's list into it
+  // This implements the requirement "If there are no cities in the selected direction, choose the opposite direction instead."
 
   if (candidatesByDirection.get("north").size === 0) {
     candidatesByDirection.set("north", candidatesByDirection.get("south"));
@@ -329,7 +340,7 @@ export function valueOfCity(G, cityKey) {
  * @type {number}
  */
 export function rewardValue(contract) {
-  // $3,000 per segment of the diwtance between the destination city and the closest city that provides the commodity
+  // $3,000 per segment of the distance between the destination city and the closest city that provides the commodity
   return shortestDistance(contract.destinationKey, c => cities.get(c)?.commodities.includes(contract.commodity)) * 3000;
 }
 
@@ -342,7 +353,7 @@ export function rewardValue(contract) {
  */
 export function railroadTieValue(contract) {
 
-  // 1 railroad tie if the commodity is available in the same region as the destintation, 2 ties if the closest supplying city
+  // 1 railroad tie if the commodity is available in the same region as the destination, 2 ties if the closest supplying city
   // is in an adjacent region, and 3 ties if it needs to move from Eastern to Western or vice versa
   const destinationRegion = cities.get(contract.destinationKey).region;
   const commodityRegions = commodities.get(contract.commodity).regions;

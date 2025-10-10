@@ -51,3 +51,20 @@ export function randomArrayItem(arr) {
     return undefined;
   }
 }
+
+
+/**
+ * Chooses a random item from a Set
+ *
+ * @export
+ * @param {Set} set - Set to select from
+ * @returns {*} - Randomly selected element, or undefined if set is empty
+ */
+export function randomSetItem(set) {
+  if (set && set.size > 0) {
+    const array = [...set];
+    return array[Math.floor(Math.random() * array.length)];
+  } else {
+    return undefined;
+  }
+}
