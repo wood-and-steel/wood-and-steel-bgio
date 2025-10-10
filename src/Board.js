@@ -208,19 +208,32 @@ function ReferenceTables({ G }) {
 }
 
 // Top Button Bar Component
-function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists }) {
+function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase }) {
   return (
     <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em", position: "fixed", top: "0", left: "0", right: "0"}}>
-      <button name="endTurn" className="button" style={{marginLeft: "1rem"}}>End Turn</button>
+      {/* Phase indicator */}
+      <span style={{ color: "white", fontWeight: "bold", marginLeft: "1rem", marginRight: "1rem" }}>
+        Phase: {currentPhase === 'setup' ? 'Setup' : currentPhase === 'play' ? 'Play' : 'Scoring'}
+      </span>
+
+      {/* End turn button - not shown during setup (auto-advances) */}
+      <button 
+        name="endTurn" 
+        className="button" 
+        style={{ display: currentPhase === 'play' ? 'inline-block' : 'none' }}
+      >End Turn</button>
 
       <div style={{ display: "inline" }}>
         <span style={{ 
           color: "white", paddingLeft: "1.5rem", fontSize: "90%",
-          display: startingContractExists ? "none" : "block",
+          display: currentPhase === 'setup' ? "block" : "none",
         }}>
-          <b>Starting</b> city 1, city 2, or<br />
+          <b>Starting</b> city 1, city 2:
         </span>
-        <span style={{ color: "white", paddingLeft: "1.5rem", fontSize: "90%" }}>
+        <span style={{ 
+          color: "white", paddingLeft: "1.5rem", fontSize: "90%",
+          display: currentPhase === 'play' ? "block" : "none",
+        }}>
           <b>Manual</b> commodity, destination, type:
         </span>
       </div>
@@ -228,16 +241,24 @@ function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContra
         value={input}
         onChange={e => setInput(e.target.value)}
         name="inputParameters" 
-        style={{width: "15rem", height: "20px"}} 
+        style={{
+          width: "15rem", 
+          height: "20px",
+          display: currentPhase === 'scoring' ? 'none' : 'inline-block'
+        }} 
       />
       <button 
         name="startingContract" 
         className="button"
-        style={{ display: startingContractExists ? "none" : "block" }}
-      >Starting</button>
-      <button name="manualContract" className="button">Manual Contract</button>
+        style={{ display: currentPhase === 'setup' ? "block" : "none" }}
+      >Choose Starting Cities</button>
+      <button 
+        name="manualContract" 
+        className="button"
+        style={{ display: currentPhase === 'play' ? "block" : "none" }}
+      >Manual Contract</button>
 
-      <div style={{ display: "inline" }}>
+      <div style={{ display: currentPhase === 'play' ? "inline" : "none" }}>
         <span style={{ color: "white", paddingLeft: " 1.5rem", fontSize: "90%" }}><b>Cities:</b></span>
         <input 
           value={cityInput}
@@ -258,6 +279,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
   const [cityInput, setCityInput] = React.useState('');
 
   const startingContractExists = G.contracts.filter(contract => contract.playerID === playerID).length > 0;
+  const currentPhase = ctx.phase;
 
   function handleSubmit(e) {
     // Prevent the browser from reloading the page
@@ -305,6 +327,28 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
     }
   }
 
+  // Render different UI based on phase
+  if (currentPhase === 'scoring') {
+    return (
+      <div className="boardPage" style={{display: (ctx.currentPlayer === playerID ? "block" : "none")}}>
+        <form className="form" method="post" onSubmit={handleSubmit}>
+          <TopButtonBar 
+            input={input} 
+            setInput={setInput} 
+            cityInput={cityInput} 
+            setCityInput={setCityInput}
+            startingContractExists={startingContractExists}
+            currentPhase={currentPhase}
+          />
+          <div style={{ padding: "5rem 2rem", textAlign: "center" }}>
+            <h1>Scoring Phase</h1>
+            <p>Game scoring will be implemented here.</p>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="boardPage" style={{display: (ctx.currentPlayer === playerID ? "block" : "none")}}>
       <form className="form" method="post" onSubmit={handleSubmit}>
@@ -315,11 +359,13 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
             cityInput={cityInput} 
             setCityInput={setCityInput}
             startingContractExists={startingContractExists}
+            currentPhase={currentPhase}
           />
           <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
         </div>
-        <MarketContracts G={G} ctx={ctx} />
-        <IndependentRailroads G={G} />
+        {/* Only show market contracts and independent railroads during play phase */}
+        {currentPhase === 'play' && <MarketContracts G={G} ctx={ctx} />}
+        {currentPhase === 'play' && <IndependentRailroads G={G} />}
         <ReferenceTables G={G} />
       </form>
     </div>
