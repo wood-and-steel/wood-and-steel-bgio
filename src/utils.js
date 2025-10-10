@@ -31,22 +31,47 @@ export function weightedRandom(weightedMap) {
   return undefined;
 }
 
+// Standard deviation divisor for Gaussian distribution
+// Value of 10.0 produces a distribution that fits well within [0, 1] range when centered at 0.5
+const GAUSSIAN_STD_DEV_DIVISOR = 10.0;
+
+// Maximum recursion depth for resampling out-of-range values
+const MAX_GAUSSIAN_ITERATIONS = 10;
+
 /**
  * Generate a random number with a Gaussian (normal) distribution between 0 and 1
+ * Uses the Box-Muller transform to convert uniform random values to Gaussian distribution.
  *
  * @export
- * @param {number} [iterations=0] - Internal counter to prevent infinite recursion
+ * @returns {number} - Random number between 0 and 1 with Gaussian distribution, clamped to range
+ */
+export function gaussianRandom() {
+  return _gaussianRandomInternal(0);
+}
+
+/**
+ * Internal implementation of gaussianRandom with recursion counter
+ *
+ * @param {number} iterations - Internal counter to prevent infinite recursion
  * @returns {number} - Random number between 0 and 1 with Gaussian distribution
  */
-export function gaussianRandom(iterations = 0) {
-  const u = 1 - Math.random(); // Subtract to flip [0, 1) to (0, 1]
+function _gaussianRandomInternal(iterations) {
+  // Box-Muller transform to generate Gaussian distribution
+  const u = 1 - Math.random(); // Subtract to flip [0, 1) to (0, 1] (avoid log(0))
   let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * Math.random());
-  num = num / 10.0 + 0.5; // Translate to [0, 1]
+  
+  // Scale and translate: divide by std dev divisor and shift to center at 0.5
+  num = num / GAUSSIAN_STD_DEV_DIVISOR + 0.5;
 
-  if (num > 1 || num < 0) { // Resample if outside the range (about 0.02% of the time)
-    if (iterations < 10) { // Make sure we don't recurse too many times
-      return gaussianRandom(iterations + 1);
+  // Resample if outside [0, 1] range (rare, but possible with extreme values)
+  if (num > 1 || num < 0) {
+    if (iterations < MAX_GAUSSIAN_ITERATIONS) {
+      return _gaussianRandomInternal(iterations + 1);
     } else {
+      // After max iterations, fall back to uniform distribution
+      // Note: This is extremely rare but ensures function always returns a valid value
+      // Tradeoff: silently changes distribution type, but prevents potential infinite recursion
+      console.warn('gaussianRandom: exceeded max iterations, falling back to uniform distribution');
       return Math.random();
     }
   }
