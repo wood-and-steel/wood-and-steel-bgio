@@ -1,6 +1,6 @@
 import { cities, routes } from "./GameData";
 import { citiesConnectedTo } from "./utils/graph";
-import { weightedRandom, randomArrayItem } from "./utils";
+import { weightedRandom, randomArrayItem } from "./utils/random";
 
 /**
  * Independent railroad company

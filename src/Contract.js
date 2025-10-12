@@ -1,7 +1,7 @@
 import { cities, commodities } from "./GameData";
 import { shortestDistance, citiesConnectedTo } from "./utils/graph";
 import { cardinalDirection } from "./utils/geo";
-import { weightedRandom, randomSetItem } from "./utils";
+import { weightedRandom, randomSetItem } from "./utils/random";
 
 /**
  * @typedef {Object} Contract
