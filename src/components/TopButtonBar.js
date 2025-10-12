@@ -32,11 +32,6 @@ export function TopButtonBar({ input, setInput, cityInput, setCityInput, startin
   
   return (
     <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em", position: "fixed", top: "0", left: "0", right: "0"}}>
-      {/* Phase indicator */}
-      <span style={{ color: "white", fontWeight: "bold", marginLeft: "1rem", marginRight: "1rem" }}>
-        Phase: {currentPhase === 'setup' ? 'Setup' : currentPhase === 'play' ? 'Play' : 'Scoring'}
-      </span>
-
       {/* New Game button */}
       <button 
         name="newGame" 

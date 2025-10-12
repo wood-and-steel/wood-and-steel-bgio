@@ -34,7 +34,7 @@ code {
 .button {
   height: 26px;
   text-align: center;
-  padding: 0 0.75rem;
+  padding: 0 0.5rem;
   align-items: center;
   width: fit-content;
   border-radius: 4px;
