@@ -1,5 +1,5 @@
 import React from "react";
-import { Contract } from "./Contract";
+import { Contract } from "./ContractDisplay";
 
 // Contracts List Component
 export function ContractsList({ G, ctx, type = "market", playerID = null }) {
