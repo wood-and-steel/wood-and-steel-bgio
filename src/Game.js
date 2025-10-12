@@ -56,7 +56,7 @@ export const WoodAndSteel = {
         // Count how many players have at least one private contract
         const playersWithContracts = new Set(
           G.contracts
-            .filter(c => c.type === 'private' && c.playerID !== null)
+            .filter(c => c.playerID !== null)
             .map(c => c.playerID)
         );
         return playersWithContracts.size >= ctx.numPlayers;

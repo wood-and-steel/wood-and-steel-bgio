@@ -244,6 +244,12 @@ function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContra
         Phase: {currentPhase === 'setup' ? 'Setup' : currentPhase === 'play' ? 'Play' : 'Scoring'}
       </span>
 
+      {/* New Game button */}
+      <button 
+        name="newGame" 
+        className="button"
+      >New Game</button>
+
       {/* End turn button - not shown during setup (auto-advances) */}
       <button 
         name="endTurn" 
@@ -374,6 +380,14 @@ export function WoodAndSteelState({ ctx, G, moves, playerID }) {
         break;
       case "endTurn":
         moves.endTurn();
+        break;
+      case "newGame":
+        if (window.confirm("Are you sure you want to start a new game? All progress will be lost.")) {
+          // Clear localStorage to reset the game
+          localStorage.clear();
+          // Reload the page to start fresh
+          window.location.reload();
+        }
         break;
       default:
         break;

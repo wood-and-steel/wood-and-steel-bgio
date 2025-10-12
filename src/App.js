@@ -5,7 +5,7 @@ import { WoodAndSteelState } from './Board';
 
 const WoodAndSteelClient = Client({ 
   game: WoodAndSteel,
-  multiplayer: Local({ persist: false }),
+  multiplayer: Local({ persist: true }),
   numPlayers: 2,
   board: WoodAndSteelState,
   debug: false,
