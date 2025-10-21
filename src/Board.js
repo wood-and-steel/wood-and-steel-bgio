@@ -19,6 +19,47 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
   const startingContractExists = G.contracts.filter(contract => contract.playerID === playerID).length > 0;
   const currentPhase = ctx.phase;
 
+  // Handler functions for dialogs
+  const handleSwitchGame = () => {
+    if (gameManager && switchCode) {
+      const normalized = gameManager.normalizeGameCode(switchCode);
+      if (gameManager.isValidGameCode(normalized)) {
+        gameManager.onSwitchGame(normalized);
+      } else {
+        alert('Please enter a valid 4-letter game code.');
+      }
+    }
+    setShowSwitchDialog(false);
+  };
+
+  const handleCancelSwitch = () => {
+    setShowSwitchDialog(false);
+    setSwitchCode('');
+  };
+
+  const handleDeleteGame = () => {
+    if (gameManager && deleteCode) {
+      const normalized = gameManager.normalizeGameCode(deleteCode);
+      if (gameManager.isValidGameCode(normalized)) {
+        if (window.confirm(`Are you sure you want to delete game "${normalized}"?`)) {
+          if (gameManager.onDeleteGame(normalized)) {
+            alert(`Game "${normalized}" deleted successfully.`);
+          } else {
+            alert(`Failed to delete game "${normalized}".`);
+          }
+        }
+      } else {
+        alert('Please enter a valid 4-letter game code.');
+      }
+    }
+    setShowDeleteDialog(false);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
+    setDeleteCode('');
+  };
+
   function handleSubmit(e) {
     // Prevent the browser from reloading the page
     e.preventDefault();
@@ -78,44 +119,8 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
         setShowSwitchDialog(true);
         setSwitchCode('');
         break;
-      case "switchGame":
-        if (gameManager && switchCode) {
-          const normalized = gameManager.normalizeGameCode(switchCode);
-          if (gameManager.isValidGameCode(normalized)) {
-            gameManager.onSwitchGame(normalized);
-          } else {
-            alert('Please enter a valid 4-letter game code.');
-          }
-        }
-        setShowSwitchDialog(false);
-        break;
-      case "cancelSwitch":
-        setShowSwitchDialog(false);
-        setSwitchCode('');
-        break;
       case "showDeleteDialog":
         setShowDeleteDialog(true);
-        setDeleteCode('');
-        break;
-      case "deleteGame":
-        if (gameManager && deleteCode) {
-          const normalized = gameManager.normalizeGameCode(deleteCode);
-          if (gameManager.isValidGameCode(normalized)) {
-            if (window.confirm(`Are you sure you want to delete game "${normalized}"?`)) {
-              if (gameManager.onDeleteGame(normalized)) {
-                alert(`Game "${normalized}" deleted successfully.`);
-              } else {
-                alert(`Failed to delete game "${normalized}".`);
-              }
-            }
-          } else {
-            alert('Please enter a valid 4-letter game code.');
-          }
-        }
-        setShowDeleteDialog(false);
-        break;
-      case "cancelDelete":
-        setShowDeleteDialog(false);
         setDeleteCode('');
         break;
       default:
@@ -144,8 +149,8 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
           </div>
         </form>
         {showGameList && gameManager && <GameListDialog gameManager={gameManager} onClose={() => setShowGameList(false)} />}
-        {showSwitchDialog && <GameSwitchDialog switchCode={switchCode} setSwitchCode={setSwitchCode} />}
-        {showDeleteDialog && <GameDeleteDialog deleteCode={deleteCode} setDeleteCode={setDeleteCode} />}
+        {showSwitchDialog && <GameSwitchDialog switchCode={switchCode} setSwitchCode={setSwitchCode} onSwitch={handleSwitchGame} onCancel={handleCancelSwitch} />}
+        {showDeleteDialog && <GameDeleteDialog deleteCode={deleteCode} setDeleteCode={setDeleteCode} onDelete={handleDeleteGame} onCancel={handleCancelDelete} />}
       </div>
     );
   }
@@ -172,8 +177,8 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
         <ReferenceTables G={G} />
       </form>
       {showGameList && gameManager && <GameListDialog gameManager={gameManager} onClose={() => setShowGameList(false)} />}
-      {showSwitchDialog && <GameSwitchDialog switchCode={switchCode} setSwitchCode={setSwitchCode} />}
-      {showDeleteDialog && <GameDeleteDialog deleteCode={deleteCode} setDeleteCode={setDeleteCode} />}
+      {showSwitchDialog && <GameSwitchDialog switchCode={switchCode} setSwitchCode={setSwitchCode} onSwitch={handleSwitchGame} onCancel={handleCancelSwitch} />}
+      {showDeleteDialog && <GameDeleteDialog deleteCode={deleteCode} setDeleteCode={setDeleteCode} onDelete={handleDeleteGame} onCancel={handleCancelDelete} />}
     </div>
   );
 }
@@ -247,7 +252,15 @@ function GameListDialog({ gameManager, onClose }) {
 }
 
 // Game Switch Dialog Component
-function GameSwitchDialog({ switchCode, setSwitchCode }) {
+function GameSwitchDialog({ switchCode, setSwitchCode, onSwitch, onCancel }) {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && switchCode && switchCode.length === 4) {
+      onSwitch();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -274,6 +287,7 @@ function GameSwitchDialog({ switchCode, setSwitchCode }) {
           type="text"
           value={switchCode}
           onChange={e => setSwitchCode(e.target.value.toUpperCase())}
+          onKeyDown={handleKeyPress}
           placeholder="ABCD"
           maxLength={4}
           style={{
@@ -286,11 +300,16 @@ function GameSwitchDialog({ switchCode, setSwitchCode }) {
           autoFocus
         />
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-          <button name="cancelSwitch" className="button">
+          <button 
+            type="button"
+            onClick={onCancel}
+            className="button"
+          >
             Cancel
           </button>
           <button 
-            name="switchGame" 
+            type="button"
+            onClick={onSwitch}
             className="button"
             disabled={!switchCode || switchCode.length !== 4}
           >
@@ -303,7 +322,15 @@ function GameSwitchDialog({ switchCode, setSwitchCode }) {
 }
 
 // Game Delete Dialog Component
-function GameDeleteDialog({ deleteCode, setDeleteCode }) {
+function GameDeleteDialog({ deleteCode, setDeleteCode, onDelete, onCancel }) {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && deleteCode && deleteCode.length === 4) {
+      onDelete();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -330,6 +357,7 @@ function GameDeleteDialog({ deleteCode, setDeleteCode }) {
           type="text"
           value={deleteCode}
           onChange={e => setDeleteCode(e.target.value.toUpperCase())}
+          onKeyDown={handleKeyPress}
           placeholder="ABCD"
           maxLength={4}
           style={{
@@ -342,11 +370,16 @@ function GameDeleteDialog({ deleteCode, setDeleteCode }) {
           autoFocus
         />
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-          <button name="cancelDelete" className="button">
+          <button 
+            type="button"
+            onClick={onCancel}
+            className="button"
+          >
             Cancel
           </button>
           <button 
-            name="deleteGame" 
+            type="button"
+            onClick={onDelete}
             className="button"
             disabled={!deleteCode || deleteCode.length !== 4}
             style={{ backgroundColor: '#d32f2f', color: 'white' }}
