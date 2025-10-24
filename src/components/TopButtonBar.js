@@ -11,7 +11,7 @@ const STARTING_CITY_PAIRS = [
 ];
 
 // Top Button Bar Component
-export function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase, G, gameManager }) {
+export function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase, G, gameManager, onShowGameList }) {
   // Get available starting pairs (filter out already chosen ones)
   const getAvailableStartingPairs = () => {
     if (currentPhase !== 'setup') return STARTING_CITY_PAIRS;
@@ -32,33 +32,25 @@ export function TopButtonBar({ input, setInput, cityInput, setCityInput, startin
   
   return (
     <div className="buttonBar" style={{ backgroundColor: "#606060", padding: "0.75em", position: "fixed", top: "0", left: "0", right: "0"}}>
-      {/* Game code display */}
+      {/* Game code display - clickable to open game list */}
       {gameManager && (
-        <span style={{ 
-          color: "white", 
-          fontWeight: "bold", 
-          fontSize: "110%", 
-          marginRight: "1.5rem",
-          padding: "0.25rem 0.75rem",
-          backgroundColor: "#404040",
-          borderRadius: "4px"
-        }}>
+        <span 
+          onClick={onShowGameList}
+          style={{ 
+            color: "white", 
+            fontWeight: "bold", 
+            fontSize: "110%", 
+            marginRight: "1.5rem",
+            padding: "0.25rem 0.75rem",
+            backgroundColor: "#404040",
+            borderRadius: "4px",
+            cursor: "pointer",
+            userSelect: "none"
+          }}
+          title="Click to view all games"
+        >
           Game: {gameManager.currentGameCode}
         </span>
-      )}
-      
-      {/* New Game button */}
-      <button 
-        name="newGame" 
-        className="button"
-      >New Game</button>
-
-      {/* Game management buttons */}
-      {gameManager && (
-        <button 
-          name="showGameList" 
-          className="button"
-        >List Games</button>
       )}
 
       {/* End turn button - not shown during setup (auto-advances) */}

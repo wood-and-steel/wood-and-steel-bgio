@@ -8,6 +8,12 @@ export function GameListDialog({ gameManager, onClose }) {
   const [switchCode, setSwitchCode] = React.useState('');
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [deleteCode, setDeleteCode] = React.useState('');
+
+  const handleNewGame = () => {
+    if (window.confirm("Are you sure you want to start a new game? All progress will be lost.")) {
+      gameManager.onNewGame();
+    }
+  };
   
   const handleSwitchGame = () => {
     if (gameManager && switchCode) {
@@ -102,6 +108,12 @@ export function GameListDialog({ gameManager, onClose }) {
             </table>
           )}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+            <button 
+              onClick={handleNewGame}
+              className="button"
+            >
+              New Game
+            </button>
             <button 
               onClick={() => setShowSwitchDialog(true)}
               className="button"

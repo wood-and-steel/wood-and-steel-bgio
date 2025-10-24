@@ -57,20 +57,6 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
       case "endTurn":
         moves.endTurn();
         break;
-      case "newGame":
-        if (window.confirm("Are you sure you want to start a new game? All progress will be lost.")) {
-          if (gameManager) {
-            gameManager.onNewGame();
-          } else {
-            // Fallback to old behavior
-            localStorage.clear();
-            window.location.reload();
-          }
-        }
-        break;
-      case "showGameList":
-        setShowGameList(!showGameList);
-        break;
       default:
         break;
     }
@@ -90,6 +76,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
             currentPhase={currentPhase}
             G={G}
             gameManager={gameManager}
+            onShowGameList={() => setShowGameList(true)}
           />
           <div style={{ padding: "5rem 2rem", textAlign: "center" }}>
             <h1>Scoring Phase</h1>
@@ -114,6 +101,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
             currentPhase={currentPhase}
             G={G}
             gameManager={gameManager}
+            onShowGameList={() => setShowGameList(true)}
           />
           <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
         </div>
