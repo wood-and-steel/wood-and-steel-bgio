@@ -62,7 +62,6 @@ Components use a block-element naming pattern:
 
 /* Modifiers */
 .button--hidden { }
-.button--danger { }
 ```
 
 **Example Usage:**
@@ -70,7 +69,6 @@ Components use a block-element naming pattern:
 <div className="buttonBar">
   <span className="buttonBar__gameCode">Game: ABCD</span>
   <input className="buttonBar__input" />
-  <button className="button button--danger">Delete</button>
 </div>
 ```
 
@@ -191,7 +189,6 @@ Use modifier classes with `--`:
 ```css
 .button { /* Base styles */ }
 .button--primary { background: blue; }
-.button--danger { background: red; }
 .button:disabled { opacity: 0.6; }
 ```
 
@@ -264,7 +261,6 @@ For now, the current CSS architecture is:
 
 // Buttons
 <button className="button">
-<button className="button button--danger">
 
 // Layout
 <div className="flex gap-md">

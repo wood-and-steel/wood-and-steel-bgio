@@ -9,14 +9,15 @@
   --color-text-muted: #a0a0a0;
   --color-text-light: #ffffff;
   
-  --color-border: #404040;
+  --color-border: #808080;
   --color-border-light: #c0c0c0;
   --color-border-subtle: #eee;
   --color-border-medium: #ccc;
   
   --color-bg-white: #ffffff;
-  --color-bg-light: #f0f2ff;
-  --color-bg-hover: rgb(240, 240, 250);
+  --color-bg-light: #f0f0f0;
+  --color-bg-active:  #f0f2ff;
+  --color-bg-hover: rgb(220, 220, 230);
   --color-bg-overlay: rgba(0, 0, 0, 0.5);
   
   --color-contract-market: blue;
@@ -63,14 +64,15 @@
   --color-text-muted: #808080;
   --color-text-light: #ffffff;
   
-  --color-border: #606060;
+  --color-border: #404040;
   --color-border-light: #505050;
   --color-border-subtle: #333;
   --color-border-medium: #444;
   
   --color-bg-white: #1a1a1a;
   --color-bg-light: #252525;
-  --color-bg-hover: rgb(35, 35, 45);
+  --color-bg-active: #252535;
+  --color-bg-hover: rgb(55, 55, 65);
   --color-bg-overlay: rgba(0, 0, 0, 0.7);
   
   --color-contract-market: #64b5f6;

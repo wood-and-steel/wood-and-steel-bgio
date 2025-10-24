@@ -33,7 +33,6 @@ export function GameListDialog({ gameManager, onClose }) {
     <>
       <div className="modal">
         <div className="modal__content">
-          <h2 className="modal__title">All Games</h2>
           {games.length === 0 ? (
             <p>No games found.</p>
           ) : (
@@ -43,7 +42,6 @@ export function GameListDialog({ gameManager, onClose }) {
                   <th className="table__headerCell">Code</th>
                   <th className="table__headerCell">Phase</th>
                   <th className="table__headerCell">Turn</th>
-                  <th className="table__headerCell">Players</th>
                   <th className="table__headerCell">Delete</th>
                 </tr>
               </thead>
@@ -60,7 +58,6 @@ export function GameListDialog({ gameManager, onClose }) {
                     </td>
                     <td className="table__cell">{game.phase}</td>
                     <td className="table__cell">{game.turn}</td>
-                    <td className="table__cell">{game.playerNames?.join(', ') || 'N/A'}</td>
                     <td className="table__cell table__cell--delete">
                       {game.code !== currentCode && (
                         <button 

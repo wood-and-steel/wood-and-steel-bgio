@@ -13,7 +13,7 @@
 }
 
 .playerBoard__info--active {
-  background-color: var(--color-bg-light);
+  background-color: var(--color-bg-active);
 }
 
 .playerBoard__name {
