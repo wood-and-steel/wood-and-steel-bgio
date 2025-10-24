@@ -1,0 +1,63 @@
+/* ========================================
+   REFERENCE TABLES
+   ======================================== */
+.referenceTable {
+  margin: var(--spacing-md) 0;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.referenceTable__title {
+  font-weight: bold;
+  padding-top: var(--spacing-md);
+}
+
+.referenceTable__title--first {
+  padding-top: 0;
+}
+
+.cityTable {
+  height: 134px;
+}
+
+.commodityTable {
+  height: 320px;
+}
+
+.cityCell {
+  display: flow;
+  flex: 1 1;
+  width: 115px;
+  opacity: var(--opacity-subtle);
+}
+
+.cityCell:hover {
+  background-color: var(--color-bg-hover);
+  opacity: 1.0;
+}
+
+.cityCell__name {
+  opacity: var(--opacity-muted);
+  padding-right: 0.4rem;
+  cursor: default;
+}
+
+.cityCell__value {
+  font-weight: 600;
+}
+
+.commodityRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.commodityRow__icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.commodityRow__cities {
+  opacity: var(--opacity-disabled);
+}

@@ -1,0 +1,18 @@
+/* ========================================
+   LAYOUT COMPONENTS
+   ======================================== */
+.boardPage {
+  padding: var(--spacing-md);
+  padding-top: var(--spacing-2xl);
+}
+
+.boardPage--hidden {
+  display: none;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+}

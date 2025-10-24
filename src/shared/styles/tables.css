@@ -1,0 +1,42 @@
+/* ========================================
+   TABLES
+   ======================================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table__header {
+  border-bottom: 2px solid var(--color-border-medium);
+}
+
+.table__headerCell {
+  padding: var(--spacing-sm);
+  text-align: left;
+}
+
+.table__row {
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table__row:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.table__row--current {
+  background-color: var(--color-accent);
+}
+
+.table__row--current:hover {
+  background-color: var(--color-accent);
+}
+
+.table__cell {
+  padding: var(--spacing-sm);
+}
+
+.table__cell--bold {
+  font-weight: bold;
+}

@@ -1,0 +1,81 @@
+/* ========================================
+   CSS VARIABLES
+   ======================================== */
+:root {
+  /* Colors - Light Mode */
+  --color-primary: #404040;
+  --color-primary-dark: #606060;
+  --color-secondary: #f0f2ff;
+  --color-accent: #e6f3ff;
+  
+  --color-text: #000000;
+  --color-text-muted: #a0a0a0;
+  --color-text-light: #ffffff;
+  
+  --color-border: #404040;
+  --color-border-light: #c0c0c0;
+  --color-border-subtle: #eee;
+  --color-border-medium: #ccc;
+  
+  --color-bg-white: #ffffff;
+  --color-bg-light: #f0f2ff;
+  --color-bg-hover: rgb(240, 240, 250);
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  
+  --color-contract-market: blue;
+  --color-contract-private: black;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3.5rem;
+  --spacing-3xl: 5rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  
+  /* Z-Index */
+  --z-modal: 1000;
+  --z-modal-nested: 1001;
+  
+  /* Sizes */
+  --button-height: 26px;
+  --input-height: 20px;
+  --input-height-md: 24px;
+  --icon-size: 24px;
+  
+  /* Opacity */
+  --opacity-disabled: 0.6;
+  --opacity-muted: 0.65;
+  --opacity-subtle: 0.8;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  /* Colors - Dark Mode */
+  --color-primary: #505050;
+  --color-primary-dark: #303030;
+  --color-secondary: #1a1a2e;
+  --color-accent: #16213e;
+  
+  --color-text: #e0e0e0;
+  --color-text-muted: #808080;
+  --color-text-light: #ffffff;
+  
+  --color-border: #606060;
+  --color-border-light: #505050;
+  --color-border-subtle: #333;
+  --color-border-medium: #444;
+  
+  --color-bg-white: #1a1a1a;
+  --color-bg-light: #252525;
+  --color-bg-hover: rgb(35, 35, 45);
+  --color-bg-overlay: rgba(0, 0, 0, 0.7);
+  
+  --color-contract-market: #64b5f6;
+  --color-contract-private: #e0e0e0;
+}

@@ -1,0 +1,28 @@
+/* ========================================
+   CONTRACTS
+   ======================================== */
+.contract {
+  margin: 0;
+  text-align: left;
+  width: fit-content;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.contract:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+.contract--fulfilled {
+  text-decoration: line-through;
+}
+
+.contract--market {
+  color: var(--color-contract-market);
+}
+
+.contract--private {
+  color: var(--color-contract-private);
+}

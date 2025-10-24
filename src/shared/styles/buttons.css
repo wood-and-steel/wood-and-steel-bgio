@@ -1,0 +1,46 @@
+/* ========================================
+   BUTTONS
+   ======================================== */
+.button {
+  height: var(--button-height);
+  text-align: center;
+  padding: 0 var(--spacing-sm);
+  align-items: center;
+  width: fit-content;
+  border-radius: var(--radius-sm);
+  border: solid 1px var(--color-border);
+  background-color: var(--color-bg-white);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.button:disabled {
+  color: var(--color-text-muted);
+  border: solid 1px var(--color-border-light);
+  background-color: var(--color-bg-white);
+}
+
+.button--hidden {
+  display: none;
+}
+
+.button--auto-margin {
+  margin-left: auto;
+}
+
+.button--danger {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.button--danger:disabled {
+  background-color: #e57373;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.deleteButton {
+  font-size: 120%;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}

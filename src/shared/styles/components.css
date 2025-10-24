@@ -1,0 +1,139 @@
+/* ========================================
+   BUTTON BAR
+   ======================================== */
+.buttonBar {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  align-items: center;
+  background-color: var(--color-primary-dark);
+  padding: 0.75em;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.buttonBar__gameCode {
+  color: var(--color-text-light);
+  font-weight: bold;
+  font-size: 110%;
+  margin-right: var(--spacing-lg);
+  padding: var(--spacing-xs) 0.75rem;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.buttonBar__label {
+  color: var(--color-text-light);
+  padding-left: var(--spacing-lg);
+  font-size: 90%;
+}
+
+.buttonBar__input {
+  width: 15rem;
+  height: var(--input-height);
+  margin: 0 var(--spacing-sm);
+  background-color: var(--color-bg-white);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+  padding: 0 var(--spacing-xs);
+}
+
+.buttonBar__input--large {
+  width: 15rem;
+  height: var(--input-height-md);
+  margin-left: var(--spacing-sm);
+  background-color: var(--color-bg-white);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+  padding: 0 var(--spacing-xs);
+}
+
+.buttonBar__input--small {
+  width: 8rem;
+  height: var(--input-height);
+  margin: 0 var(--spacing-sm);
+  background-color: var(--color-bg-white);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+  padding: 0 var(--spacing-xs);
+}
+
+.buttonBar__section {
+  display: inline;
+}
+
+.buttonBar__section--hidden {
+  display: none;
+}
+
+/* ========================================
+   MARKET CONTRACTS
+   ======================================== */
+.marketContracts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: auto;
+  padding: var(--spacing-sm);
+}
+
+.marketContracts__title {
+  font-weight: bold;
+  width: 18rem;
+  padding-bottom: var(--spacing-xs);
+}
+
+/* ========================================
+   INDEPENDENT RAILROADS
+   ======================================== */
+.independentRailroads__title {
+  font-weight: bold;
+  padding-bottom: var(--spacing-sm);
+}
+
+.independentRailroads__item {
+  margin-bottom: 0.1rem;
+}
+
+.independentRailroads__button {
+  margin-right: var(--spacing-sm);
+}
+
+.independentRailroads__name {
+  opacity: var(--opacity-disabled);
+}
+
+.independentRailroads__route {
+  margin-left: 0.3rem;
+}
+
+/* ========================================
+   THEME TOGGLE
+   ======================================== */
+.themeToggle {
+  background: transparent;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 26px;
+  transition: background-color 0.2s ease;
+}
+
+.themeToggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.themeToggle:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
