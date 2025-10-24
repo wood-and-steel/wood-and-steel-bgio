@@ -6,9 +6,7 @@ export function GameListDialog({ gameManager, onClose }) {
   const currentCode = gameManager.currentGameCode;
 
   const handleNewGame = () => {
-    if (window.confirm("Are you sure you want to start a new game? All progress will be lost.")) {
-      gameManager.onNewGame();
-    }
+    gameManager.onNewGame();
   };
   
   const handleRowClick = (gameCode) => {
