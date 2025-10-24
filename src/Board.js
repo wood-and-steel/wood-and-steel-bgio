@@ -13,22 +13,25 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
   const [cityInput, setCityInput] = React.useState('');
   const [showGameList, setShowGameList] = React.useState(false);
   
-  // Theme management
-  const [theme, setTheme] = React.useState(() => {
-    // Check localStorage for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
-  });
-
-  // Apply theme to document on mount and when it changes
+  // Theme management - use system preference
   React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    // Function to update theme based on system preference
+    const updateTheme = (e) => {
+      const systemTheme = e.matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', systemTheme);
+    };
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+    // Set initial theme based on system preference
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const initialTheme = darkModeQuery.matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', initialTheme);
+
+    // Listen for changes to system preference
+    darkModeQuery.addEventListener('change', updateTheme);
+
+    // Cleanup listener on unmount
+    return () => darkModeQuery.removeEventListener('change', updateTheme);
+  }, []);
 
   const startingContractExists = G.contracts.filter(contract => contract.playerID === playerID).length > 0;
   const currentPhase = ctx.phase;
@@ -94,8 +97,6 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
             G={G}
             gameManager={gameManager}
             onShowGameList={() => setShowGameList(true)}
-            theme={theme}
-            onThemeToggle={toggleTheme}
           />
           <div className="padding-xl text-center">
             <h1>Scoring Phase</h1>
@@ -121,8 +122,6 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
             G={G}
             gameManager={gameManager}
             onShowGameList={() => setShowGameList(true)}
-            theme={theme}
-            onThemeToggle={toggleTheme}
           />
           <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
         </div>
