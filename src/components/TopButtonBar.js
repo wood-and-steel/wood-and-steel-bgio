@@ -55,20 +55,10 @@ export function TopButtonBar({ input, setInput, cityInput, setCityInput, startin
 
       {/* Game management buttons */}
       {gameManager && (
-        <>
-          <button 
-            name="showSwitchDialog" 
-            className="button"
-          >Switch Game</button>
-          <button 
-            name="showGameList" 
-            className="button"
-          >List Games</button>
-          <button 
-            name="showDeleteDialog" 
-            className="button"
-          >Delete Game</button>
-        </>
+        <button 
+          name="showGameList" 
+          className="button"
+        >List Games</button>
       )}
 
       {/* End turn button - not shown during setup (auto-advances) */}
