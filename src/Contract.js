@@ -37,7 +37,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   const candidatesByDirection = citiesByDirection(activeCitiesKeys, candidates);
   
   // If only two of the directions have cities, choose between those two directions 50/50
-  // If all four directions have cities, choose one of them by these odds: N 20%, S 20%, E 30%, or W 30%
+  // If all four directions have cities, choose one of them by these odds: N 15%, S 15%, E 35%, or W 35%
 
   const weightedDirections = new Map();
   
@@ -46,7 +46,7 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
   } else if (candidatesByDirection.get("east").size === 0) {
     weightedDirections.set("north", 1).set("south", 1);
   } else {
-    weightedDirections.set("north", 2).set("south", 2).set("east", 3).set("west", 3);
+    weightedDirections.set("north", 3).set("south", 3).set("east", 7).set("west", 7);
   }
 
   const candidatesInChosenDirection = Array.from(candidatesByDirection.get(weightedRandom(weightedDirections)));
@@ -116,13 +116,13 @@ export function generatePrivateContract(G, ctx) {
 
   // Set odds for direction from currentCityKey, biased away from creating coastal connections
 
-  const weightedDirections = new Map([ ["north", 2], ["south", 2] ]);
+  const weightedDirections = new Map([ ["north", 3], ["south", 3] ]);
   if (cities.get(currentCityKey).nearEastCoast) {
-    weightedDirections.set("east", 2).set("west", 4);
+    weightedDirections.set("east", 3).set("west", 11);
   } else if (cities.get(currentCityKey).nearWestCoast) {
-    weightedDirections.set("east", 4).set("west", 2);
+    weightedDirections.set("east", 11).set("west", 3);
   } else {
-    weightedDirections.set("east", 3).set("west", 3);
+    weightedDirections.set("east", 7).set("west", 7);
   }
 
   // Get all cities within 2 hops of current city, split by direction
