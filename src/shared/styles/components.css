@@ -110,30 +110,3 @@
 .independentRailroads__route {
   margin-left: 0.3rem;
 }
-
-/* ========================================
-   THEME TOGGLE
-   ======================================== */
-.themeToggle {
-  background: transparent;
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  cursor: pointer;
-  color: var(--color-text-light);
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 26px;
-  transition: background-color 0.2s ease;
-}
-
-.themeToggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.themeToggle:active {
-  background-color: rgba(255, 255, 255, 0.2);
-}

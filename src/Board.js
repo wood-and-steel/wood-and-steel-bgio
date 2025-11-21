@@ -15,7 +15,7 @@ export function WoodAndSteelState({ ctx, G, moves, playerID, gameManager }) {
   
   // Theme management - use system preference
   React.useEffect(() => {
-    // Function to update theme based on system preference
+    // Update theme based on system preference
     const updateTheme = (e) => {
       const systemTheme = e.matches ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', systemTheme);
