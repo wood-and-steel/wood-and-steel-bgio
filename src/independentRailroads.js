@@ -83,10 +83,10 @@ class RailroadCompany {
 /**
  * Manages independent railroads
  * 
- * @class RailroadMaanger
+ * @class RailroadManager
  * @typedef {RailroadManager}
  * @property {Map<RailroadCompany>} companies - all independent railroad companies
- * @property {Map} routeOwnership - tracks which indepdendent railroad company holds each route
+ * @property {Map} routeOwnership - tracks which independent railroad company holds each route
  * @property {Map} cityOwnership - tracks which independent railroad company holds each city
  * @property {Array<Array<string>>} routesCreatedByRound - rounds and which routes were created during that round
  * 
