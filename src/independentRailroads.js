@@ -80,11 +80,24 @@ class RailroadCompany {
 }
 
 
+/**
+ * Manages independent railroads
+ * 
+ * @class RailroadManager
+ * @typedef {RailroadManager}
+ * @property {Map<RailroadCompany>} companies - all independent railroad companies
+ * @property {Map} routeOwnership - tracks which independent railroad company holds each route
+ * @property {Map} cityOwnership - tracks which independent railroad company holds each city
+ * @property {Array<Array<string>>} routesCreatedByRound - rounds and which routes were created during that round
+ * 
+ * @deprecated This class is no longer used. Independent railroads are now stored directly in G.independentRailroads as a plain object.
+ */
 export class RailroadManager {
   constructor() {
     this.companies = new Map();
     this.routeOwnership = new Map();
-    this.cityOwnership = new Map(); // Tracks which company owns each city
+    this.cityOwnership = new Map();
+    this.routesCreatedByRound = Array(0);
   }
 
   /**
@@ -159,7 +172,7 @@ export class RailroadManager {
     // Try to add route to company
     if (!company.addRoute(routeKey)) return false;
 
-    // If successful, record ownership of route and cities
+    // If successful, record ownership of route and cities and round in which it was claimed
     this.routeOwnership.set(routeKey, companyName);
     this.claimCities(companyName, routes.get(routeKey).cities);
     return true;
@@ -236,7 +249,7 @@ function routesWithoutTheseCities(cities) {
 }
 
 
-export function initializeIndependentRailroads(railroadManager) {
+export function initializeIndependentRailroads() {
 
   // Get the set of cities that are valid endpoints for independent railroads: everything not within 2 hops of possible starting cities
   const withinTwoOfStartingCities = citiesConnectedTo(
@@ -272,36 +285,57 @@ export function initializeIndependentRailroads(railroadManager) {
   
   const shuffledRoutes = shuffle([...routeEntries]);
   
+  // Store independent railroads as a plain object
+  const independentRailroads = {};
+  const routeOwnership = new Map();
+  const cityOwnership = new Map();
+  
   // Try to assign routes one by one
   let assignedCount = 0;
-  let companyCounter = 1;
   
   while (assignedCount < numberOfRoutesToAssign && shuffledRoutes.length > 0) {
-    const [routeKey, routeData] = shuffledRoutes.pop();
+    const [routeKey] = shuffledRoutes.pop();
     
-    // Create a new company name
+    // Create a new company name that doesn't already exist
     let companyCreated = false, companyName;
     while (!companyCreated) {
       companyName = generateRailroadName(cities.get(routes.get(routeKey).cities[0]).state);
-      companyCreated = railroadManager.createCompany(companyName);
+      companyCreated = !independentRailroads[companyName];
     }
 
-    // Try to create company and assign the route
-    if (railroadManager.assignRoute(companyName, routeKey, routeData)) {
+    // Check if route is already owned
+    if (routeOwnership.has(routeKey)) {
+      continue;
+    }
+
+    // Check if any cities in the route are owned by other companies
+    const routeCities = routes.get(routeKey).cities;
+    const isCityOwnedByOther = routeCities.some(cityKey => {
+      const owner = cityOwnership.get(cityKey);
+      return owner && owner !== companyName;
+    });
+
+    if (!isCityOwnedByOther) {
+      // Create the company and assign the route
+      independentRailroads[companyName] = {
+        name: companyName,
+        routes: [routeKey]
+      };
+
+      // Record ownership of route and cities
+      routeOwnership.set(routeKey, companyName);
+      routeCities.forEach(city => {
+        if (!cityOwnership.has(city)) {
+          cityOwnership.set(city, companyName);
+        }
+      });
+
       assignedCount++;
-      companyCounter++;
-    } else {
-      railroadManager.deleteCompany(companyName);
     }
   }
   
-  // Return statistics about the initialization
-  return {
-    companiesCreated: companyCounter - 1,
-    routesAssigned: assignedCount,
-    totalRoutes: routesAvailableToIndies.size,
-    percentageAssigned: (assignedCount / routesAvailableToIndies.size * 100).toFixed(1)
-  };
+  // Return the independent railroads object
+  return independentRailroads;
 }
 
 
