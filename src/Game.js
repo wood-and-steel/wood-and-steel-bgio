@@ -1,6 +1,6 @@
 import { generateMarketContract, generatePrivateContract, generateStartingContract, newContract } from './Contract';
 import { TurnOrder } from 'boardgame.io/core';
-import { initializeIndependentRailroads, RailroadManager, growIndependentRailroads } from './independentRailroads';
+import { initializeIndependentRailroads, growIndependentRailroads } from './independentRailroads';
 import { routes } from './data';
 
 export const WoodAndSteel = {
@@ -8,15 +8,7 @@ export const WoodAndSteel = {
   
   setup: ({ numPlayers = 2 }) => {
 
-    const independentRailroadManager = new RailroadManager();
-    initializeIndependentRailroads(independentRailroadManager);
-    const independentRailroadCompaniesArray = independentRailroadManager.getCompanies();
-
-    // Convert array to object keyed by railroad name for stable IDs
-    const independentRailroads = {};
-    independentRailroadCompaniesArray.forEach(railroadCompany => {
-      independentRailroads[railroadCompany.name] = railroadCompany;
-    });
+    const independentRailroads = initializeIndependentRailroads();
 
     return { 
       contracts: Array(0),
