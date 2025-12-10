@@ -80,11 +80,23 @@ class RailroadCompany {
 }
 
 
+// TODO: Remove RailroadManager class and directly access independentRailroads in G instead. It's only used at the start of the game and never used again.
+/**
+ * Manages independent railroads
+ * 
+ * @class RailroadMaanger
+ * @typedef {RailroadManager}
+ * @property {Map<RailroadCompany>} companies - all independent railroad companies
+ * @property {Map} routeOwnership - tracks which indepdendent railroad company holds each route
+ * @property {Map} cityOwnership - tracks which independent railroad company holds each city
+ * @property {Array<Array<string>>} routesCreatedByRound - rounds and which routes were created during that round
+ */
 export class RailroadManager {
   constructor() {
     this.companies = new Map();
     this.routeOwnership = new Map();
-    this.cityOwnership = new Map(); // Tracks which company owns each city
+    this.cityOwnership = new Map();
+    this.routesCreatedByRound = Array(0);
   }
 
   /**
@@ -159,7 +171,7 @@ export class RailroadManager {
     // Try to add route to company
     if (!company.addRoute(routeKey)) return false;
 
-    // If successful, record ownership of route and cities
+    // If successful, record ownership of route and cities and round in which it was claimed
     this.routeOwnership.set(routeKey, companyName);
     this.claimCities(companyName, routes.get(routeKey).cities);
     return true;

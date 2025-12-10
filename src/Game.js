@@ -10,12 +10,12 @@ export const WoodAndSteel = {
 
     const independentRailroadManager = new RailroadManager();
     initializeIndependentRailroads(independentRailroadManager);
-    const independentRailroadsArray = independentRailroadManager.getCompanies();
+    const independentRailroadCompaniesArray = independentRailroadManager.getCompanies();
 
     // Convert array to object keyed by railroad name for stable IDs
     const independentRailroads = {};
-    independentRailroadsArray.forEach(railroad => {
-      independentRailroads[railroad.name] = railroad;
+    independentRailroadCompaniesArray.forEach(railroadCompany => {
+      independentRailroads[railroadCompany.name] = railroadCompany;
     });
 
     return { 
