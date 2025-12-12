@@ -140,7 +140,7 @@ export function MyComponent({ isActive, onAction }) {
 
 ### boardgame.io Patterns
 
-1. **Game state (G)**: Always treat as immutable; modify properties directly in moves
+1. **Game state (G)**: Always treat as immutable; modify properties directly in moves; must be a JSON-serializable object
 2. **Moves**: Define as functions in the `moves` object
 3. **Phases**: Use for different game stages (setup, play, scoring)
 4. **Context (ctx)**: Access game metadata (currentPlayer, phase, turn)
