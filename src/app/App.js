@@ -3,6 +3,7 @@ import { Client } from 'boardgame.io/react';
 import { Local } from 'boardgame.io/multiplayer';
 import { WoodAndSteel } from '../Game';
 import { WoodAndSteelState } from '../Board';
+import { useBgioSync } from '../hooks/useBgioSync';
 import { 
   getCurrentGameCode, 
   createNewGame,
@@ -14,11 +15,23 @@ import {
   normalizeGameCode
 } from '../utils/gameManager';
 
+/**
+ * Wrapper component that syncs bgio state to Zustand store
+ * This ensures state synchronization happens for each player instance
+ */
+const BgioSyncWrapper = ({ ctx, G, ...rest }) => {
+  // Sync state from bgio to Zustand store (one-way sync)
+  useBgioSync(G, ctx);
+  
+  // Pass all props to the board component
+  return <WoodAndSteelState ctx={ctx} G={G} {...rest} />;
+};
+
 const WoodAndSteelClient = Client({ 
   game: WoodAndSteel,
   multiplayer: Local({ persist: true }),
   numPlayers: 2,
-  board: WoodAndSteelState,
+  board: BgioSyncWrapper,
   debug: false,
 });
 
