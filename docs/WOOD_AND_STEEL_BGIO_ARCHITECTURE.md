@@ -599,6 +599,11 @@ const ctx = {
 5. **Phase 5:** Implement persistence
 6. **Phase 6:** Remove bgio dependency
 7. **Phase 7:** Test and migrate existing saved games
+8. **Phase 8:** Final cleanup
+   - Remove `useGameState` wrapper hook (migration artifact)
+   - Migrate components to use `useGameStore` directly with selectors
+   - Remove `useBgioSync` hook
+   - Remove any remaining bgio compatibility code
 
 ### Estimated Complexity
 
