@@ -7,6 +7,11 @@
  * the boardgame.io context objects (G, ctx, events).
  */
 
+import { useGameStore } from './gameStore';
+import { isMoveAllowed } from './moveValidation';
+import { generateStartingContract as generateStartingContractContract } from '../Contract';
+import { endTurn as endTurnEvent } from './events';
+
 /**
  * Generate a starting contract for a player during the setup phase.
  * Mirrors: setup.moves.generateStartingContract
@@ -15,9 +20,46 @@
  * @returns {void}
  */
 export function generateStartingContract(activeCities) {
-  // Stub: Will be implemented to create and add a starting contract
-  // using the store's G state and current player from ctx
-  console.log('[STUB] generateStartingContract called with:', activeCities);
+  // Get current state from store
+  const { G, ctx } = useGameStore.getState();
+
+  // Validate move is allowed in current phase
+  if (!isMoveAllowed('generateStartingContract', ctx)) {
+    console.warn('[generateStartingContract] Move not allowed in current phase');
+    return;
+  }
+
+  // Validate activeCities parameter
+  if (!Array.isArray(activeCities) || activeCities.length !== 2) {
+    console.error('[generateStartingContract] activeCities must be an array of 2 city keys');
+    return;
+  }
+
+  // Generate the contract using Contract.js function
+  const contract = generateStartingContractContract(G, activeCities, ctx.currentPlayer);
+  
+  if (!contract) {
+    console.error('[generateStartingContract] Contract generation failed');
+    return;
+  }
+
+  // Update state immutably
+  useGameStore.setState((state) => ({
+    G: {
+      ...state.G,
+      // Add contract to beginning of contracts array
+      contracts: [contract, ...state.G.contracts],
+      // Update current player's activeCities
+      players: state.G.players.map(([id, props]) =>
+        id === ctx.currentPlayer
+          ? [id, { ...props, activeCities: [...activeCities] }]
+          : [id, props]
+      )
+    }
+  }));
+
+  // Automatically end turn after choosing starting cities
+  endTurnEvent();
 }
 
 /**
