@@ -588,8 +588,6 @@ const ctx = {
 
 5. **Event System:** Replace `events.endTurn()` with direct state updates
 
-6. **Storage Format:** Consider maintaining compatibility with existing saved games, or provide migration
-
 ### Migration Path
 
 1. **Phase 1:** Implement state management alongside bgio
@@ -598,8 +596,7 @@ const ctx = {
 4. **Phase 4:** Replace Client component with custom React integration
 5. **Phase 5:** Implement persistence
 6. **Phase 6:** Remove bgio dependency
-7. **Phase 7:** Test and migrate existing saved games
-8. **Phase 8:** Final cleanup
+7. **Phase 7:** Final cleanup
    - Remove `useGameState` wrapper hook (migration artifact)
    - Migrate components to use `useGameStore` directly with selectors
    - Remove `useBgioSync` hook
