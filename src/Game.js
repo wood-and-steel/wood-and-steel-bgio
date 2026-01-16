@@ -34,8 +34,17 @@ export const WoodAndSteel = {
         generateStartingContract: ({ G, ctx, events }, activeCities) => {
           const contract = generateStartingContract(G, activeCities, ctx.currentPlayer);
           if (contract) {
+            // Add the contract to the contracts array
             G.contracts.unshift(contract);
-            // Automatically end turn after choosing starting cities
+            
+            // Make the two starting cities the active cities for the current player
+            G.players = G.players.map(([id, props]) => 
+              id === ctx.currentPlayer
+                ? [id, { ...props, activeCities: [...activeCities] }]
+                : [id, props]
+            );
+
+            // Turn ends after generating starting contract
             events.endTurn();
           } else {
             console.error("Game.js: generateStartingContract failed");

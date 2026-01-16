@@ -87,12 +87,6 @@ export function generateStartingContract(G, activeCitiesKeys, playerID) {
     candidatesInChosenDirection.filter(candidate => !cities.get(candidate).commodities.includes(contractCommodity))
   );
 
-  // Make the two starting cities the active cities for this player
-  const player = G.players.find(([id, props]) => id === playerID);
-  if (player) {
-    player[1].activeCities = activeCitiesKeys;
-  }
-
   return newContract(contractCity, contractCommodity, { type: "private", playerID: playerID });
 };
 
