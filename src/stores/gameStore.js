@@ -135,7 +135,7 @@ export const useGameStore = create((set, get) => ({
 }));
 
 // Expose store to window for console debugging (development only)
-if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+if (typeof window !== 'undefined' && !import.meta.env.PROD) {
   window.__gameStore = useGameStore;
   window.__getGameState = () => useGameStore.getState();
   console.log('🎮 Game store available in console:');
