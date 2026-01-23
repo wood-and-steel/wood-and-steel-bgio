@@ -73,16 +73,36 @@ export function isValidGameCode(code) {
  * @returns {Map} - Map of matchID to data
  */
 function getBgioData(key) {
-  const data = localStorage.getItem(key);
-  if (!data) {
-    return new Map();
-  }
-  
   try {
-    const parsed = JSON.parse(data);
-    return new Map(parsed);
+    const data = localStorage.getItem(key);
+    if (!data) {
+      return new Map();
+    }
+    
+    try {
+      const parsed = JSON.parse(data);
+      if (!Array.isArray(parsed)) {
+        console.error(`[getBgioData] Invalid data format for key "${key}": expected array, got ${typeof parsed}`);
+        // Attempt recovery: clear corrupted data
+        localStorage.removeItem(key);
+        return new Map();
+      }
+      return new Map(parsed);
+    } catch (parseError) {
+      console.error(`[getBgioData] Failed to parse JSON for key "${key}":`, parseError.message);
+      console.error(`[getBgioData] Corrupted data (first 200 chars):`, data.substring(0, 200));
+      // Attempt recovery: clear corrupted data
+      try {
+        localStorage.removeItem(key);
+        console.warn(`[getBgioData] Cleared corrupted data for key "${key}"`);
+      } catch (removeError) {
+        console.error(`[getBgioData] Failed to clear corrupted data for key "${key}":`, removeError.message);
+      }
+      return new Map();
+    }
   } catch (e) {
-    console.error(`Failed to parse ${key}:`, e);
+    console.error(`[getBgioData] Unexpected error accessing localStorage for key "${key}":`, e.message);
+    console.error(`[getBgioData] Error details:`, e);
     return new Map();
   }
 }
@@ -91,10 +111,36 @@ function getBgioData(key) {
  * Set boardgame.io storage data
  * @param {string} key - Storage key (state, metadata, or initial)
  * @param {Map} dataMap - Map of matchID to data
+ * @returns {boolean} - True if saved successfully
  */
 function setBgioData(key, dataMap) {
-  const serialized = JSON.stringify(Array.from(dataMap.entries()));
-  localStorage.setItem(key, serialized);
+  try {
+    if (!(dataMap instanceof Map)) {
+      console.error(`[setBgioData] Invalid dataMap type for key "${key}": expected Map, got ${typeof dataMap}`);
+      return false;
+    }
+    
+    const serialized = JSON.stringify(Array.from(dataMap.entries()));
+    
+    // Check localStorage quota (rough estimate)
+    const currentSize = new Blob([serialized]).size;
+    if (currentSize > 5 * 1024 * 1024) { // 5MB warning
+      console.warn(`[setBgioData] Large data size for key "${key}": ${(currentSize / 1024 / 1024).toFixed(2)}MB`);
+    }
+    
+    localStorage.setItem(key, serialized);
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      console.error(`[setBgioData] Storage quota exceeded for key "${key}"`);
+      console.error(`[setBgioData] Attempting to free space by clearing old games...`);
+      // Could implement cleanup logic here if needed
+    } else {
+      console.error(`[setBgioData] Failed to save data for key "${key}":`, e.message);
+      console.error(`[setBgioData] Error details:`, e);
+    }
+    return false;
+  }
 }
 
 /**
@@ -104,21 +150,30 @@ function setBgioData(key, dataMap) {
  * @returns {boolean} - True if switched successfully
  */
 export function switchToGame(code) {
+  const operation = 'switchToGame';
+  
   if (!isValidGameCode(code)) {
+    console.error(`[${operation}] Invalid game code format:`, code);
     return false;
   }
   
   const normalizedCode = normalizeGameCode(code);
   
-  // Check if game exists
-  if (!gameExists(normalizedCode)) {
+  try {
+    // Check if game exists
+    if (!gameExists(normalizedCode)) {
+      console.warn(`[${operation}] Game not found:`, normalizedCode);
+      return false;
+    }
+    
+    // Set as current game
+    setCurrentGameCode(normalizedCode);
+    return true;
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error switching to game "${normalizedCode}":`, e.message);
+    console.error(`[${operation}] Error details:`, e);
     return false;
   }
-  
-  // Set as current game
-  setCurrentGameCode(normalizedCode);
-  
-  return true;
 }
 
 /**
@@ -128,30 +183,48 @@ export function switchToGame(code) {
  * @returns {boolean} - True if deleted, false if not found
  */
 export function deleteGame(code) {
+  const operation = 'deleteGame';
+  
   if (!isValidGameCode(code)) {
+    console.error(`[${operation}] Invalid game code format:`, code);
     return false;
   }
   
   const normalizedCode = normalizeGameCode(code);
   
-  if (!gameExists(normalizedCode)) {
+  try {
+    if (!gameExists(normalizedCode)) {
+      console.warn(`[${operation}] Game not found:`, normalizedCode);
+      return false;
+    }
+    
+    // Remove from all three storage keys
+    const stateMap = getBgioData(BGIO_STATE_KEY);
+    const metadataMap = getBgioData(BGIO_METADATA_KEY);
+    const initialMap = getBgioData(BGIO_INITIAL_KEY);
+    
+    const hadState = stateMap.delete(normalizedCode);
+    metadataMap.delete(normalizedCode);
+    initialMap.delete(normalizedCode);
+    
+    // Save changes, checking for errors
+    const stateSaved = setBgioData(BGIO_STATE_KEY, stateMap);
+    const metadataSaved = setBgioData(BGIO_METADATA_KEY, metadataMap);
+    const initialSaved = setBgioData(BGIO_INITIAL_KEY, initialMap);
+    
+    if (!stateSaved || !metadataSaved || !initialSaved) {
+      console.error(`[${operation}] Failed to save some data after deletion for game:`, normalizedCode);
+      console.error(`[${operation}] State saved: ${stateSaved}, Metadata saved: ${metadataSaved}, Initial saved: ${initialSaved}`);
+      // Still return true if at least state was deleted
+      return hadState;
+    }
+    
+    return true;
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error deleting game "${normalizedCode}":`, e.message);
+    console.error(`[${operation}] Error details:`, e);
     return false;
   }
-  
-  // Remove from all three storage keys
-  const stateMap = getBgioData(BGIO_STATE_KEY);
-  const metadataMap = getBgioData(BGIO_METADATA_KEY);
-  const initialMap = getBgioData(BGIO_INITIAL_KEY);
-  
-  stateMap.delete(normalizedCode);
-  metadataMap.delete(normalizedCode);
-  initialMap.delete(normalizedCode);
-  
-  setBgioData(BGIO_STATE_KEY, stateMap);
-  setBgioData(BGIO_METADATA_KEY, metadataMap);
-  setBgioData(BGIO_INITIAL_KEY, initialMap);
-  
-  return true;
 }
 
 /**
@@ -199,13 +272,27 @@ export function getCurrentGameCode() {
 /**
  * Set the current active game code
  * @param {string} code - Game code to set as current
+ * @throws {Error} If game code is invalid or storage fails
  */
 export function setCurrentGameCode(code) {
+  const operation = 'setCurrentGameCode';
+  
   if (!isValidGameCode(code)) {
-    throw new Error('Invalid game code format');
+    const error = new Error(`Invalid game code format: ${code}`);
+    console.error(`[${operation}]`, error.message);
+    throw error;
   }
   
-  localStorage.setItem(CURRENT_GAME_KEY, normalizeGameCode(code));
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    localStorage.setItem(CURRENT_GAME_KEY, normalizedCode);
+  } catch (e) {
+    const error = new Error(`Failed to set current game code: ${e.message}`);
+    console.error(`[${operation}]`, error.message);
+    console.error(`[${operation}] Error details:`, e);
+    throw error;
+  }
 }
 
 /**
@@ -220,42 +307,65 @@ export function clearCurrentGameCode() {
  * @returns {Array<{code: string, phase: string, players: any}>} - Array of game info
  */
 export function listGames() {
-  const codes = listGameCodes();
-  const games = [];
+  const operation = 'listGames';
   
-  const stateMap = getBgioData(BGIO_STATE_KEY);
-  const metadataMap = getBgioData(BGIO_METADATA_KEY);
-  
-  for (const code of codes) {
-    const state = stateMap.get(code);
-    const metadata = metadataMap.get(code);
+  try {
+    const codes = listGameCodes();
+    const games = [];
     
-    if (state) {
-      // Extract player names from the game state
-      const playerNames = state.G?.players?.map(([id, player]) => player.name) || [];
-      
-      games.push({
-        code: code,
-        phase: state.ctx?.phase || 'unknown',
-        turn: state.ctx?.turn || 0,
-        numPlayers: state.ctx?.numPlayers || 0,
-        playerNames: playerNames,
-        metadata: metadata || {}
-      });
+    const stateMap = getBgioData(BGIO_STATE_KEY);
+    const metadataMap = getBgioData(BGIO_METADATA_KEY);
+    
+    for (const code of codes) {
+      try {
+        const state = stateMap.get(code);
+        const metadata = metadataMap.get(code);
+        
+        if (state) {
+          // Extract player names from the game state
+          const playerNames = state.G?.players?.map(([id, player]) => player.name) || [];
+          
+          games.push({
+            code: code,
+            phase: state.ctx?.phase || 'unknown',
+            turn: state.ctx?.turn || 0,
+            numPlayers: state.ctx?.numPlayers || 0,
+            playerNames: playerNames,
+            metadata: metadata || {}
+          });
+        }
+      } catch (e) {
+        console.warn(`[${operation}] Error processing game "${code}":`, e.message);
+        // Continue processing other games
+      }
     }
+    
+    return games.sort((a, b) => a.code.localeCompare(b.code));
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error listing games:`, e.message);
+    console.error(`[${operation}] Error details:`, e);
+    return [];
   }
-  
-  return games.sort((a, b) => a.code.localeCompare(b.code));
 }
 
 /**
  * Create a new game with a unique code
  * @returns {string} - The generated game code
+ * @throws {Error} If code generation or storage fails
  */
 export function createNewGame() {
-  const code = generateUniqueGameCode();
-  setCurrentGameCode(code);
-  return code;
+  const operation = 'createNewGame';
+  
+  try {
+    const code = generateUniqueGameCode();
+    setCurrentGameCode(code);
+    console.info(`[${operation}] Created new game with code:`, code);
+    return code;
+  } catch (e) {
+    console.error(`[${operation}] Failed to create new game:`, e.message);
+    console.error(`[${operation}] Error details:`, e);
+    throw e;
+  }
 }
 
 /**
@@ -267,27 +377,54 @@ export function createNewGame() {
  * @returns {boolean} - True if saved successfully
  */
 export function saveGameState(code, G, ctx) {
+  const operation = 'saveGameState';
+  
   if (!isValidGameCode(code)) {
-    console.error('[saveGameState] Invalid game code:', code);
+    console.error(`[${operation}] Invalid game code format:`, code);
     return false;
   }
 
   const normalizedCode = normalizeGameCode(code);
   
   try {
+    // Validate input state
+    if (!G || typeof G !== 'object') {
+      console.error(`[${operation}] Invalid G parameter for game "${normalizedCode}": expected object, got ${typeof G}`);
+      return false;
+    }
+    
+    if (!ctx || typeof ctx !== 'object') {
+      console.error(`[${operation}] Invalid ctx parameter for game "${normalizedCode}": expected object, got ${typeof ctx}`);
+      return false;
+    }
+    
     // Get existing state map
     const stateMap = getBgioData(BGIO_STATE_KEY);
     
     // Serialize state using serialization utilities
     // This ensures proper deep cloning and filtering of internal properties
-    const serialized = serializeState(G, ctx);
+    let serialized;
+    try {
+      serialized = serializeState(G, ctx);
+    } catch (serializeError) {
+      console.error(`[${operation}] Serialization failed for game "${normalizedCode}":`, serializeError.message);
+      console.error(`[${operation}] Serialization error details:`, serializeError);
+      return false;
+    }
     
     stateMap.set(normalizedCode, serialized);
-    setBgioData(BGIO_STATE_KEY, stateMap);
+    
+    const saved = setBgioData(BGIO_STATE_KEY, stateMap);
+    if (!saved) {
+      console.error(`[${operation}] Failed to persist state to localStorage for game "${normalizedCode}"`);
+      return false;
+    }
     
     return true;
   } catch (e) {
-    console.error('[saveGameState] Failed to save state:', e, 'Game code:', normalizedCode);
+    console.error(`[${operation}] Unexpected error saving state for game "${normalizedCode}":`, e.message);
+    console.error(`[${operation}] Error details:`, e);
+    console.error(`[${operation}] Stack trace:`, e.stack);
     return false;
   }
 }
@@ -296,11 +433,13 @@ export function saveGameState(code, G, ctx) {
  * Load game state from localStorage
  * Returns state in the format: { G: {...}, ctx: {...} }
  * @param {string} code - Game code
- * @returns {{G: Object, ctx: Object}|null} - Game state or null if not found
+ * @returns {{G: Object, ctx: Object}|null} - Game state or null if not found/invalid
  */
 export function loadGameState(code) {
+  const operation = 'loadGameState';
+  
   if (!isValidGameCode(code)) {
-    console.error('[loadGameState] Invalid game code:', code);
+    console.error(`[${operation}] Invalid game code format:`, code);
     return null;
   }
 
@@ -311,20 +450,53 @@ export function loadGameState(code) {
     const stateData = stateMap.get(normalizedCode);
     
     if (!stateData) {
+      console.info(`[${operation}] No saved state found for game:`, normalizedCode);
       return null;
     }
     
     // Validate state structure before deserializing
     if (!isValidSerializedState(stateData)) {
-      console.warn('[loadGameState] Invalid state format for game:', normalizedCode);
+      console.warn(`[${operation}] Invalid state format for game "${normalizedCode}"`);
+      console.warn(`[${operation}] State data type:`, typeof stateData);
+      console.warn(`[${operation}] State data keys:`, stateData && typeof stateData === 'object' ? Object.keys(stateData) : 'N/A');
+      
+      // Attempt recovery: remove corrupted state
+      console.warn(`[${operation}] Attempting to remove corrupted state for game "${normalizedCode}"`);
+      try {
+        stateMap.delete(normalizedCode);
+        setBgioData(BGIO_STATE_KEY, stateMap);
+        console.warn(`[${operation}] Removed corrupted state for game "${normalizedCode}"`);
+      } catch (recoveryError) {
+        console.error(`[${operation}] Failed to remove corrupted state:`, recoveryError.message);
+      }
+      
       return null;
     }
     
     // Deserialize state using serialization utilities
     // This ensures clean state structure and proper deep cloning
-    return deserializeState(stateData);
+    try {
+      return deserializeState(stateData);
+    } catch (deserializeError) {
+      console.error(`[${operation}] Deserialization failed for game "${normalizedCode}":`, deserializeError.message);
+      console.error(`[${operation}] Deserialization error details:`, deserializeError);
+      
+      // Attempt recovery: remove corrupted state
+      console.warn(`[${operation}] Attempting to remove corrupted state after deserialization failure`);
+      try {
+        stateMap.delete(normalizedCode);
+        setBgioData(BGIO_STATE_KEY, stateMap);
+        console.warn(`[${operation}] Removed corrupted state for game "${normalizedCode}"`);
+      } catch (recoveryError) {
+        console.error(`[${operation}] Failed to remove corrupted state:`, recoveryError.message);
+      }
+      
+      return null;
+    }
   } catch (e) {
-    console.error('[loadGameState] Failed to load state:', e, 'Game code:', normalizedCode);
+    console.error(`[${operation}] Unexpected error loading state for game "${normalizedCode}":`, e.message);
+    console.error(`[${operation}] Error details:`, e);
+    console.error(`[${operation}] Stack trace:`, e.stack);
     return null;
   }
 }
