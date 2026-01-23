@@ -625,10 +625,10 @@ describe('Persistence Tests', () => {
       saveGameState(gameCode, useGameStore.getState().G, useGameStore.getState().ctx);
       
       // Corrupt the state in localStorage
-      const stateMap = JSON.parse(localStorage.getItem('bgio_state') || '[]');
+      const stateMap = JSON.parse(localStorage.getItem('game_state') || '[]');
       const corruptedState = { G: 'invalid', ctx: 'invalid' };
       stateMap[stateMap.findIndex(([code]) => code === gameCode)][1] = corruptedState;
-      localStorage.setItem('bgio_state', JSON.stringify(stateMap));
+      localStorage.setItem('game_state', JSON.stringify(stateMap));
 
       // Try to load corrupted state
       const loadedState = loadGameState(gameCode);
