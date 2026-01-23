@@ -18,6 +18,18 @@ import {
 import { endTurn as endTurnEvent } from './events';
 import { checkPhaseTransition } from './phaseManager';
 import { routes } from '../data';
+import { getCurrentGameCode, saveGameState } from '../utils/gameManager';
+
+/**
+ * Helper function to save game state to localStorage after moves
+ */
+function saveCurrentGameState() {
+  const code = getCurrentGameCode();
+  if (code) {
+    const { G, ctx } = useGameStore.getState();
+    saveGameState(code, G, ctx);
+  }
+}
 
 /**
  * Generate a starting contract for a player during the setup phase.
@@ -69,8 +81,14 @@ export function generateStartingContract(activeCities) {
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
 
+  // Save state to localStorage (after potential phase transition)
+  saveCurrentGameState();
+
   // Automatically end turn after choosing starting cities
   endTurnEvent();
+
+  // Save state to localStorage (after turn ends)
+  saveCurrentGameState();
 }
 
 /**
@@ -105,6 +123,9 @@ export function generatePrivateContract() {
       contracts: [contract, ...state.G.contracts]
     }
   }));
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -143,6 +164,9 @@ export function generateMarketContract() {
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -204,6 +228,9 @@ export function addManualContract(commodity, destinationKey, type) {
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -321,6 +348,9 @@ export function toggleContractFulfilled(contractID) {
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -372,6 +402,9 @@ export function deleteContract(contractID) {
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -453,6 +486,9 @@ export function acquireIndependentRailroad(railroadName) {
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
 }
 
 /**
@@ -471,6 +507,9 @@ export function endTurn() {
     return;
   }
 
-  // Call the events.endTurn() stub (will be fully implemented in Phase 3)
+  // Call the events.endTurn() to advance turn
   endTurnEvent();
+
+  // Save state to localStorage after turn ends
+  saveCurrentGameState();
 }

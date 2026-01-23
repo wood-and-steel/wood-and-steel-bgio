@@ -1,9 +1,12 @@
 /**
  * Game Manager - Handles multiple game instances with unique four-letter codes
- * Works with boardgame.io's Local multiplayer storage format
+ * Works with Zustand store state persistence
+ * Maintains compatibility with boardgame.io's Local multiplayer storage format for migration
  */
 
-// boardgame.io uses these keys with matchID as part of the data structure
+import { serializeState, deserializeState, isValidSerializedState } from './stateSerialization';
+
+// Storage keys - using bgio format for backward compatibility
 const BGIO_STATE_KEY = 'bgio_state';
 const BGIO_METADATA_KEY = 'bgio_metadata';
 const BGIO_INITIAL_KEY = 'bgio_initial';
@@ -247,13 +250,81 @@ export function listGames() {
 
 /**
  * Create a new game with a unique code
- * This initializes the game in boardgame.io's storage
- * Note: The actual game initialization is handled by boardgame.io Client
- * This just reserves the code
  * @returns {string} - The generated game code
  */
 export function createNewGame() {
   const code = generateUniqueGameCode();
   setCurrentGameCode(code);
   return code;
+}
+
+/**
+ * Save game state to localStorage
+ * Stores state in the same format as bgio for compatibility: { G: {...}, ctx: {...} }
+ * @param {string} code - Game code
+ * @param {Object} G - Game state
+ * @param {Object} ctx - Game context
+ * @returns {boolean} - True if saved successfully
+ */
+export function saveGameState(code, G, ctx) {
+  if (!isValidGameCode(code)) {
+    console.error('[saveGameState] Invalid game code:', code);
+    return false;
+  }
+
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    // Get existing state map
+    const stateMap = getBgioData(BGIO_STATE_KEY);
+    
+    // Serialize state using serialization utilities
+    // This ensures proper deep cloning and filtering of internal properties
+    const serialized = serializeState(G, ctx);
+    
+    stateMap.set(normalizedCode, serialized);
+    setBgioData(BGIO_STATE_KEY, stateMap);
+    
+    return true;
+  } catch (e) {
+    console.error('[saveGameState] Failed to save state:', e, 'Game code:', normalizedCode);
+    return false;
+  }
+}
+
+/**
+ * Load game state from localStorage
+ * Returns state in the format: { G: {...}, ctx: {...} }
+ * @param {string} code - Game code
+ * @returns {{G: Object, ctx: Object}|null} - Game state or null if not found
+ */
+export function loadGameState(code) {
+  if (!isValidGameCode(code)) {
+    console.error('[loadGameState] Invalid game code:', code);
+    return null;
+  }
+
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const stateMap = getBgioData(BGIO_STATE_KEY);
+    const stateData = stateMap.get(normalizedCode);
+    
+    if (!stateData) {
+      return null;
+    }
+    
+    // Validate state structure before deserializing
+    if (!isValidSerializedState(stateData)) {
+      console.warn('[loadGameState] Invalid state format for game:', normalizedCode);
+      return null;
+    }
+    
+    // Deserialize state using serialization utilities
+    // This ensures clean state structure and proper deep cloning
+    return deserializeState(stateData);
+  } catch (e) {
+    console.error('[loadGameState] Failed to load state:', e, 'Game code:', normalizedCode);
+    return null;
+  }
 }

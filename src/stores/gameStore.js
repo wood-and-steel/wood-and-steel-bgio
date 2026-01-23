@@ -76,41 +76,6 @@ export const useGameStore = create((set, get) => ({
   ...getInitialState(),
 
   /**
-   * Sync state from boardgame.io Client
-   * One-way synchronization: bgio → Zustand
-   * Copies all ctx properties except internal ones (prefixed with underscore)
-   * @param {GameState} G - Game state from bgio
-   * @param {GameContext} ctx - Context from bgio
-   */
-  syncFromBgio: (G, ctx) => {
-    // Copy all ctx properties except internal ones (prefixed with underscore)
-    const publicCtx = Object.fromEntries(
-      Object.entries(ctx || {}).filter(([key]) => !key.startsWith('_'))
-    );
-    
-    // Deep clone arrays and objects in ctx to ensure immutability
-    const syncedCtx = {
-      ...publicCtx,
-      playOrder: [...(publicCtx.playOrder || [])],
-    };
-
-    set({
-      G: {
-        contracts: [...(G.contracts || [])],
-        players: (G.players || []).map(([id, props]) => [
-          id,
-          {
-            name: props.name,
-            activeCities: [...(props.activeCities || [])]
-          }
-        ]),
-        independentRailroads: { ...(G.independentRailroads || {}) }
-      },
-      ctx: syncedCtx
-    });
-  },
-
-  /**
    * Reset state to initial values
    * @param {number} numPlayers - Number of players (default: 2)
    */

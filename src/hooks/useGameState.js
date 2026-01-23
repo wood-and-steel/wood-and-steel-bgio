@@ -42,10 +42,8 @@ export function useGameState() {
   const isMyTurn = useGameStore((state) => state.isMyTurn);
   const getPlayerActiveCities = useGameStore((state) => state.getPlayerActiveCities);
 
-  // Get action functions from the store (resetState, syncFromBgio)
-  // Note: syncFromBgio is typically used internally by useBgioSync hook
+  // Get action functions from the store
   const resetState = useGameStore((state) => state.resetState);
-  const syncFromBgio = useGameStore((state) => state.syncFromBgio);
 
   // Organize selectors into an object
   const selectors = {
@@ -59,11 +57,10 @@ export function useGameState() {
   // Organize actions into an object
   // Include both game actions and store management actions
   const actions = {
-    // Game actions (currently stubs)
+    // Game actions
     ...gameActions,
     // Store management actions
     resetState,
-    syncFromBgio, // Exposed for advanced use cases, but typically used by useBgioSync
   };
 
   return {

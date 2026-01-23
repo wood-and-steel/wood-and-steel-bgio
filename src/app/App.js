@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameProvider } from '../providers/GameProvider';
 import { WoodAndSteelState } from '../Board';
+import { useGameStore } from '../stores/gameStore';
 import { 
   getCurrentGameCode, 
   createNewGame,
@@ -9,7 +10,9 @@ import {
   deleteGame,
   switchToGame,
   isValidGameCode,
-  normalizeGameCode
+  normalizeGameCode,
+  loadGameState,
+  saveGameState
 } from '../utils/gameManager';
 
 const App = () => {
@@ -24,6 +27,22 @@ const App = () => {
     
     return code;
   });
+
+  // Load game state on mount
+  React.useEffect(() => {
+    const code = getCurrentGameCode();
+    if (code && gameExists(code)) {
+      const savedState = loadGameState(code);
+      if (savedState) {
+        // Load state into Zustand store
+        useGameStore.setState({
+          G: savedState.G,
+          ctx: savedState.ctx
+        });
+      }
+    }
+    // Note: State saving happens automatically after moves in gameActions.js
+  }, []); // Run only on mount
 
   // Pass game management functions to the board through context
   const gameManager = {
