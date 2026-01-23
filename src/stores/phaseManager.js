@@ -5,6 +5,7 @@
 
 import { useGameStore } from './gameStore';
 import { getPhaseConfig, executePhaseOnEnd } from './phaseConfig';
+import { getCurrentGameCode, saveGameState } from '../utils/gameManager';
 
 /**
  * Check if the current phase should end and transition to the next phase.
@@ -55,6 +56,13 @@ export function checkPhaseTransition(G, ctx) {
       phase: nextPhase
     }
   }));
+
+  // Save state after phase transition
+  const gameCode = getCurrentGameCode();
+  if (gameCode) {
+    const updatedState = useGameStore.getState();
+    saveGameState(gameCode, updatedState.G, updatedState.ctx);
+  }
 
   console.log(`[checkPhaseTransition] Phase transition: ${ctx.phase} → ${nextPhase}`);
   return true;

@@ -5,6 +5,7 @@
 
 import { useGameStore } from './gameStore';
 import { executeTurnOnEnd } from './phaseConfig';
+import { getCurrentGameCode, saveGameState } from '../utils/gameManager';
 
 /**
  * End the current player's turn.
@@ -52,4 +53,11 @@ export function endTurn() {
       turn: nextTurn
     }
   }));
+
+  // Save state after turn change
+  const gameCode = getCurrentGameCode();
+  if (gameCode) {
+    const updatedState = useGameStore.getState();
+    saveGameState(gameCode, updatedState.G, updatedState.ctx);
+  }
 }
