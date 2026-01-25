@@ -7,3 +7,4 @@
 
 export { StorageAdapter } from './storageAdapter';
 export { LocalStorageAdapter } from './localStorageAdapter';
+export { SupabaseAdapter } from './supabaseAdapter';
