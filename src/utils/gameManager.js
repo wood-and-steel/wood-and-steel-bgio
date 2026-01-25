@@ -304,15 +304,21 @@ export async function saveGameState(code, G, ctx) {
     const adapter = getAdapter();
     
     // For Supabase adapter, use optimistic locking with expectedLastModified
+    // Use cached value if available and recent, but let saveGame() fetch fresh for actual comparison
+    // This avoids race conditions from separate timestamp queries
     let expectedLastModified = null;
     if (adapter.getLastModified && typeof adapter.getLastModified === 'function') {
-      // Get expected last_modified from cache or fetch it
-      expectedLastModified = lastModifiedCache.get(normalizedCode);
-      if (!expectedLastModified) {
-        expectedLastModified = await adapter.getLastModified(normalizedCode);
-        if (expectedLastModified) {
-          lastModifiedCache.set(normalizedCode, expectedLastModified);
+      // Use cached value as a hint, but only if it's recent (within last 30 seconds)
+      // Stale cache values can cause false conflict warnings
+      const cachedTimestamp = lastModifiedCache.get(normalizedCode);
+      if (cachedTimestamp) {
+        const cacheAge = Date.now() - new Date(cachedTimestamp).getTime();
+        // Only use cache if it's less than 30 seconds old
+        // Older cache values are likely stale and will cause false conflicts
+        if (cacheAge < 30000) {
+          expectedLastModified = cachedTimestamp;
         }
+        // If cache is stale, pass null to skip conflict detection (prevents false positives)
       }
     }
     

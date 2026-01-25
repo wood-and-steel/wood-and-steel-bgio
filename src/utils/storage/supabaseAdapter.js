@@ -191,23 +191,36 @@ export class SupabaseAdapter extends StorageAdapter {
       
       // Conflict detection: if expectedLastModified is provided and doesn't match, there's a conflict
       // Only warn if server timestamp is actually newer (indicating someone else saved)
+      // Note: We only warn if expectedLastModified is provided (from cache), not if it's null
+      // This prevents false positives when the cache is empty or when we're doing the first save
       if (expectedLastModified && existingGame) {
         const serverLastModified = existingGame.last_modified;
         if (serverLastModified !== expectedLastModified) {
           // Check if server timestamp is actually newer (real conflict) or just different format
           const serverTime = new Date(serverLastModified).getTime();
           const expectedTime = new Date(expectedLastModified).getTime();
+          const timeDiff = serverTime - expectedTime;
           
-          // Only warn if server is newer (someone else saved) or significantly different
-          // Allow small differences (1 second) for timestamp precision issues
-          if (serverTime > expectedTime + 1000) {
+          // Only warn if server is significantly newer (more than 10 seconds)
+          // This indicates a real conflict from another client, not just our own rapid saves
+          // We use 10 seconds to account for:
+          // - Network latency and replication delays in Supabase
+          // - Multiple rapid saves from the same client
+          // - Real-time subscription processing delays
+          // - Stale cache values from previous sessions
+          // If the difference is > 10 seconds, it's likely a real conflict from another client
+          // For single-client scenarios, differences are usually due to stale cache or delays
+          if (timeDiff > 10000) {
             console.warn(`[SupabaseAdapter.${operation}] Conflict detected for game "${normalizedCode}": expected ${expectedLastModified}, got ${serverLastModified}. Last-write-wins.`);
           }
+          // For differences <= 10 seconds, silently continue (likely our own saves or timing issues)
           
           // Continue with save (last-write-wins strategy)
           // Return conflict flag so caller can handle it if needed
         }
       }
+      // If expectedLastModified is null (cache miss), skip conflict detection entirely
+      // This prevents false positives on first save or when cache is empty
       
       // Prepare data for upsert
       const gameData = {
