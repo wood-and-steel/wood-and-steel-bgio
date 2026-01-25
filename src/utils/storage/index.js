@@ -13,6 +13,7 @@ import { STORAGE_TYPE, SUPABASE_URL, SUPABASE_ANON_KEY, validateStorageConfig } 
 export { StorageAdapter } from './storageAdapter';
 export { LocalStorageAdapter } from './localStorageAdapter';
 export { SupabaseAdapter } from './supabaseAdapter';
+export * from './migration';
 
 /**
  * Create and return the appropriate storage adapter based on configuration

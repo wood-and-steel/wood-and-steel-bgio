@@ -257,8 +257,12 @@ export async function createNewGame() {
   }
 }
 
+// Cache for storing last known last_modified timestamps per game
+// Used for optimistic locking in conflict resolution
+const lastModifiedCache = new Map();
+
 /**
- * Save game state to storage
+ * Save game state to storage with conflict resolution support
  * Stores state in format: { G: {...}, ctx: {...} }
  * Updates lastModified timestamp in metadata
  * @param {string} code - Game code
@@ -298,7 +302,50 @@ export async function saveGameState(code, G, ctx) {
     
     // Save using adapter
     const adapter = getAdapter();
-    return await adapter.saveGame(normalizedCode, state, metadata);
+    
+    // For Supabase adapter, use optimistic locking with expectedLastModified
+    let expectedLastModified = null;
+    if (adapter.getLastModified && typeof adapter.getLastModified === 'function') {
+      // Get expected last_modified from cache or fetch it
+      expectedLastModified = lastModifiedCache.get(normalizedCode);
+      if (!expectedLastModified) {
+        expectedLastModified = await adapter.getLastModified(normalizedCode);
+        if (expectedLastModified) {
+          lastModifiedCache.set(normalizedCode, expectedLastModified);
+        }
+      }
+    }
+    
+    const result = await adapter.saveGame(normalizedCode, state, metadata, expectedLastModified);
+    
+    // Handle both boolean (localStorage) and object (Supabase) return formats
+    let success = false;
+    let hadConflict = false;
+    
+    if (typeof result === 'boolean') {
+      success = result;
+    } else if (result && typeof result === 'object') {
+      success = result.success === true;
+      hadConflict = result.conflict === true;
+      
+      // Update cache immediately with the timestamp we just set (optimistic update)
+      // This prevents race conditions when multiple saves happen in quick succession
+      if (success && result.lastModified) {
+        lastModifiedCache.set(normalizedCode, result.lastModified);
+      } else if (success && adapter.getLastModified) {
+        // Fallback: fetch if not provided (for backward compatibility)
+        const newLastModified = await adapter.getLastModified(normalizedCode);
+        if (newLastModified) {
+          lastModifiedCache.set(normalizedCode, newLastModified);
+        }
+      }
+    }
+    
+    if (hadConflict) {
+      console.warn(`[${operation}] Save completed with conflict resolution (last-write-wins) for game "${normalizedCode}"`);
+    }
+    
+    return success;
   } catch (e) {
     console.error(`[${operation}] Unexpected error saving state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);
@@ -308,8 +355,32 @@ export async function saveGameState(code, G, ctx) {
 }
 
 /**
+ * Clear the last_modified cache for a game (useful after loading fresh state)
+ * @param {string} code - Game code
+ */
+export function clearLastModifiedCache(code) {
+  if (isValidGameCode(code)) {
+    const normalizedCode = normalizeGameCode(code);
+    lastModifiedCache.delete(normalizedCode);
+  }
+}
+
+/**
+ * Update the last_modified cache for a game with a new timestamp
+ * @param {string} code - Game code
+ * @param {string} lastModified - New last_modified timestamp
+ */
+export function updateLastModifiedCache(code, lastModified) {
+  if (isValidGameCode(code) && lastModified) {
+    const normalizedCode = normalizeGameCode(code);
+    lastModifiedCache.set(normalizedCode, lastModified);
+  }
+}
+
+/**
  * Load game state from storage
  * Returns state in the format: { G: {...}, ctx: {...} }
+ * Also updates the last_modified cache for conflict resolution
  * @param {string} code - Game code
  * @returns {Promise<{G: Object, ctx: Object}|null>} - Game state or null if not found/invalid
  */
@@ -325,7 +396,17 @@ export async function loadGameState(code) {
   
   try {
     const adapter = getAdapter();
-    return await adapter.loadGame(normalizedCode);
+    const state = await adapter.loadGame(normalizedCode);
+    
+    // Update last_modified cache after loading (for Supabase adapter)
+    if (state && adapter.getLastModified && typeof adapter.getLastModified === 'function') {
+      const lastModified = await adapter.getLastModified(normalizedCode);
+      if (lastModified) {
+        lastModifiedCache.set(normalizedCode, lastModified);
+      }
+    }
+    
+    return state;
   } catch (e) {
     console.error(`[${operation}] Unexpected error loading state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);

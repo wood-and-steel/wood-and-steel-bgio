@@ -16,7 +16,7 @@
  *   - state JSONB NOT NULL (contains {G: {...}, ctx: {...}})
  *   - metadata JSONB (contains {lastModified, playerNames, ...})
  *   - created_at TIMESTAMPTZ DEFAULT NOW()
- *   - updated_at TIMESTAMPTZ DEFAULT NOW()
+ *   - last_modified TIMESTAMPTZ DEFAULT NOW()
  */
 
 import { StorageAdapter } from './storageAdapter';
@@ -119,19 +119,23 @@ export class SupabaseAdapter extends StorageAdapter {
   }
 
   /**
-   * Save game state to Supabase
+   * Save game state to Supabase with conflict resolution (last-write-wins)
+   * 
+   * Uses optimistic locking: checks if last_modified matches before saving.
+   * If there's a conflict (last_modified mismatch), the last write wins.
    * 
    * @param {string} code - Game code
    * @param {Object} state - Game state object with structure { G: {...}, ctx: {...} }
    * @param {Object} metadata - Game metadata (e.g., { lastModified: string, playerNames: Array<string> })
-   * @returns {Promise<boolean>} - True if saved successfully
+   * @param {string} [expectedLastModified] - Optional: expected last_modified timestamp for optimistic locking
+   * @returns {Promise<{success: boolean, conflict?: boolean, currentState?: Object}>} - Result object
    */
-  async saveGame(code, state, metadata = {}) {
+  async saveGame(code, state, metadata = {}, expectedLastModified = null) {
     const operation = 'saveGame';
     
     if (!this._isValidCode(code)) {
       console.error(`[SupabaseAdapter.${operation}] Invalid game code format:`, code);
-      return false;
+      return { success: false };
     }
 
     const normalizedCode = this._normalizeCode(code);
@@ -142,19 +146,19 @@ export class SupabaseAdapter extends StorageAdapter {
       // Validate input state
       if (!state || typeof state !== 'object') {
         console.error(`[SupabaseAdapter.${operation}] Invalid state parameter for game "${normalizedCode}": expected object, got ${typeof state}`);
-        return false;
+        return { success: false };
       }
 
       const { G, ctx } = state;
       
       if (!G || typeof G !== 'object') {
         console.error(`[SupabaseAdapter.${operation}] Invalid G parameter for game "${normalizedCode}": expected object, got ${typeof G}`);
-        return false;
+        return { success: false };
       }
       
       if (!ctx || typeof ctx !== 'object') {
         console.error(`[SupabaseAdapter.${operation}] Invalid ctx parameter for game "${normalizedCode}": expected object, got ${typeof ctx}`);
-        return false;
+        return { success: false };
       }
       
       // Serialize state using serialization utilities
@@ -163,7 +167,7 @@ export class SupabaseAdapter extends StorageAdapter {
         serialized = serializeState(G, ctx);
       } catch (serializeError) {
         console.error(`[SupabaseAdapter.${operation}] Serialization failed for game "${normalizedCode}":`, serializeError.message);
-        return false;
+        return { success: false };
       }
       
       // Prepare metadata with lastModified
@@ -173,16 +177,36 @@ export class SupabaseAdapter extends StorageAdapter {
         lastModified: metadata.lastModified || now
       };
       
-      // Check if game exists
+      // Check if game exists and get current last_modified for conflict detection
       const { data: existingGame, error: fetchError } = await this.supabase
         .from('games')
-        .select('code, updated_at')
+        .select('code, last_modified, state')
         .eq('code', normalizedCode)
         .single();
       
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = not found, which is okay
         console.error(`[SupabaseAdapter.${operation}] Error checking existing game "${normalizedCode}":`, fetchError.message);
-        return false;
+        return { success: false };
+      }
+      
+      // Conflict detection: if expectedLastModified is provided and doesn't match, there's a conflict
+      // Only warn if server timestamp is actually newer (indicating someone else saved)
+      if (expectedLastModified && existingGame) {
+        const serverLastModified = existingGame.last_modified;
+        if (serverLastModified !== expectedLastModified) {
+          // Check if server timestamp is actually newer (real conflict) or just different format
+          const serverTime = new Date(serverLastModified).getTime();
+          const expectedTime = new Date(expectedLastModified).getTime();
+          
+          // Only warn if server is newer (someone else saved) or significantly different
+          // Allow small differences (1 second) for timestamp precision issues
+          if (serverTime > expectedTime + 1000) {
+            console.warn(`[SupabaseAdapter.${operation}] Conflict detected for game "${normalizedCode}": expected ${expectedLastModified}, got ${serverLastModified}. Last-write-wins.`);
+          }
+          
+          // Continue with save (last-write-wins strategy)
+          // Return conflict flag so caller can handle it if needed
+        }
       }
       
       // Prepare data for upsert
@@ -190,7 +214,7 @@ export class SupabaseAdapter extends StorageAdapter {
         code: normalizedCode,
         state: serialized,
         metadata: gameMetadata,
-        updated_at: now
+        last_modified: now
       };
       
       // If game doesn't exist, set created_at
@@ -207,15 +231,57 @@ export class SupabaseAdapter extends StorageAdapter {
       
       if (upsertError) {
         console.error(`[SupabaseAdapter.${operation}] Failed to save game "${normalizedCode}":`, upsertError.message);
-        return false;
+        return { success: false };
+      }
+      
+      const hadConflict = expectedLastModified && existingGame && existingGame.last_modified !== expectedLastModified;
+      
+      if (hadConflict) {
+        console.info(`[SupabaseAdapter.${operation}] Saved game "${normalizedCode}" with conflict resolution (last-write-wins)`);
+        return { success: true, conflict: true, lastModified: now };
       }
       
       console.info(`[SupabaseAdapter.${operation}] Successfully saved game "${normalizedCode}"`);
-      return true;
+      return { success: true, lastModified: now };
     } catch (e) {
       console.error(`[SupabaseAdapter.${operation}] Unexpected error saving state for game "${normalizedCode}":`, e.message);
       console.error(`[SupabaseAdapter.${operation}] Error details:`, e);
-      return false;
+      return { success: false };
+    }
+  }
+
+  /**
+   * Get the last_modified timestamp for a game
+   * 
+   * @param {string} code - Game code
+   * @returns {Promise<string|null>} - Last modified timestamp or null if not found
+   */
+  async getLastModified(code) {
+    const operation = 'getLastModified';
+    
+    if (!this._isValidCode(code)) {
+      return null;
+    }
+
+    const normalizedCode = this._normalizeCode(code);
+    
+    try {
+      await this._ensureInitialized();
+      
+      const { data, error } = await this.supabase
+        .from('games')
+        .select('last_modified')
+        .eq('code', normalizedCode)
+        .single();
+      
+      if (error || !data) {
+        return null;
+      }
+      
+      return data.last_modified;
+    } catch (e) {
+      console.error(`[SupabaseAdapter.${operation}] Error getting last_modified for game "${normalizedCode}":`, e.message);
+      return null;
     }
   }
 
@@ -342,8 +408,8 @@ export class SupabaseAdapter extends StorageAdapter {
       
       const { data, error } = await this.supabase
         .from('games')
-        .select('code, state, metadata, updated_at')
-        .order('updated_at', { ascending: false });
+        .select('code, state, metadata, last_modified')
+        .order('last_modified', { ascending: false });
       
       if (error) {
         console.error(`[SupabaseAdapter.${operation}] Error listing games:`, error.message);
@@ -375,7 +441,7 @@ export class SupabaseAdapter extends StorageAdapter {
               phase: state.ctx?.phase || 'unknown',
               turn: state.ctx?.turn || 0,
               numPlayers: state.ctx?.numPlayers || 0,
-              lastModified: metadata.lastModified || row.updated_at || new Date(0).toISOString(),
+              lastModified: metadata.lastModified || row.last_modified || new Date(0).toISOString(),
               playerNames: playerNames,
               metadata: metadata
             });
@@ -386,7 +452,7 @@ export class SupabaseAdapter extends StorageAdapter {
         }
       }
       
-      // Already sorted by updated_at DESC from query, but ensure lastModified sorting as well
+      // Already sorted by last_modified DESC from query, but ensure lastModified sorting as well
       return games.sort((a, b) => {
         const timeA = new Date(a.lastModified).getTime();
         const timeB = new Date(b.lastModified).getTime();
@@ -406,7 +472,7 @@ export class SupabaseAdapter extends StorageAdapter {
    * When the game state is updated in the database, the callback is invoked.
    * 
    * @param {string} code - Game code
-   * @param {Function} callback - Callback function that receives updated game state: (state, metadata) => void
+   * @param {Function} callback - Callback function that receives updated game state: (state, metadata, lastModified) => void
    * @returns {Function} - Unsubscribe function
    */
   subscribeToGame(code, callback) {
@@ -444,7 +510,8 @@ export class SupabaseAdapter extends StorageAdapter {
                 if (isValidSerializedState(newData.state)) {
                   const state = deserializeState(newData.state);
                   const metadata = newData.metadata || {};
-                  callback(state, metadata);
+                  const lastModified = newData.last_modified || null;
+                  callback(state, metadata, lastModified);
                 } else {
                   console.warn(`[SupabaseAdapter.${operation}] Received invalid state update for game "${normalizedCode}"`);
                 }

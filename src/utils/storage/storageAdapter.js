@@ -67,7 +67,10 @@ export class StorageAdapter {
    * can return a no-op unsubscribe function.
    * 
    * @param {string} code - Game code
-   * @param {Function} callback - Callback function that receives updated game state: (state, metadata) => void
+   * @param {Function} callback - Callback function that receives updated game state: (state, metadata, lastModified) => void
+   *   - state: {G: Object, ctx: Object} - Deserialized game state
+   *   - metadata: Object - Game metadata
+   *   - lastModified: string|null - Last modified timestamp from database (if available)
    * @returns {Function} - Unsubscribe function
    */
   subscribeToGame(code, callback) {

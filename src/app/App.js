@@ -15,8 +15,14 @@ import {
   normalizeGameCode,
   loadGameState,
   clearCurrentGameCode,
-  setCurrentGameCode
+  setCurrentGameCode,
+  updateLastModifiedCache
 } from '../utils/gameManager';
+import { getStorageAdapter } from '../utils/storage';
+// Import test utilities in development
+if (!import.meta.env.PROD) {
+  import('../utils/storage/testMigration');
+}
 
 const App = () => {
   const { isLobbyMode, setLobbyMode, setSelectedGame } = useLobbyStore();
@@ -80,6 +86,46 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on mount
 
+  // Real-time subscription for multiplayer sync
+  React.useEffect(() => {
+    if (!currentGameCode || isLobbyMode) {
+      return; // No subscription if no game or in lobby mode
+    }
+
+    const adapter = getStorageAdapter();
+    
+    // Subscribe to real-time updates for the current game
+    const unsubscribe = adapter.subscribeToGame(currentGameCode, (state, metadata, lastModified) => {
+      if (state && state.G && state.ctx) {
+        console.info('[App] Received real-time update for game:', currentGameCode);
+        
+        // Update Zustand store with remote state
+        useGameStore.setState({
+          G: state.G,
+          ctx: state.ctx
+        });
+        
+        // Update last_modified cache with the new timestamp from the database
+        // This prevents false conflict warnings when we save after receiving our own updates
+        if (lastModified) {
+          updateLastModifiedCache(currentGameCode, lastModified);
+        }
+        
+        console.info('[App] Updated game state from real-time subscription');
+      } else {
+        console.warn('[App] Received invalid state from real-time subscription');
+      }
+    });
+
+    // Cleanup subscription on unmount or when game changes
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+        console.info('[App] Unsubscribed from real-time updates for game:', currentGameCode);
+      }
+    };
+  }, [currentGameCode, isLobbyMode]);
+
   // Handler to enter a game
   const handleEnterGame = React.useCallback(async (code) => {
     try {
@@ -110,6 +156,7 @@ const App = () => {
         setLobbyMode(false);
         setCurrentGameCodeState(normalizedCode);
         console.info('[App] Entered game:', normalizedCode);
+        // Real-time subscription will be set up by the useEffect hook
       } else {
         alert(`Unable to load game "${normalizedCode}". The game state may be corrupted.`);
       }
