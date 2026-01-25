@@ -20,7 +20,8 @@
 }
 
 .commodityTable {
-  height: 320px;
+  flex-wrap: nowrap;
+  height: auto;
 }
 
 .cityCell {
