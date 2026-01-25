@@ -157,6 +157,15 @@
   gap: var(--spacing-sm);
 }
 
+.lobbyScreen__newGame {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin: var(--spacing-md);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .table__cell--delete {
   text-align: center;
   width: 60px;

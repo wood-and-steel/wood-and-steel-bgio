@@ -21,6 +21,8 @@ import {
 const App = () => {
   const { isLobbyMode, setLobbyMode, setSelectedGame } = useLobbyStore();
   const [currentGameCode, setCurrentGameCodeState] = React.useState(null);
+  // Get number of players from game store (must be at top level, before conditional returns)
+  const numPlayers = useGameStore((state) => state.ctx?.numPlayers || 3);
 
   // Initialize lobby mode on mount
   React.useEffect(() => {
@@ -103,19 +105,22 @@ const App = () => {
   }, [setSelectedGame, setLobbyMode]);
 
   // Handler to create a new game
-  const handleNewGame = React.useCallback(() => {
+  const handleNewGame = React.useCallback((numPlayers = 3) => {
+    // Validate numPlayers is between 2 and 6
+    const validNumPlayers = Math.max(2, Math.min(6, Math.floor(numPlayers) || 3));
+    
     try {
       const newCode = createNewGame();
       
-      // Initialize game state to initial values
-      useGameStore.getState().resetState(3);
+      // Initialize game state to initial values with specified number of players
+      useGameStore.getState().resetState(validNumPlayers);
       
       // Set as current game
       setCurrentGameCode(newCode);
       setSelectedGame(newCode);
       setLobbyMode(false);
       setCurrentGameCodeState(newCode);
-      console.info('[App] Created and entered new game:', newCode);
+      console.info('[App] Created and entered new game:', newCode, 'with', validNumPlayers, 'players');
     } catch (error) {
       console.error('[App] Error creating new game:', error.message);
       alert(`Unable to create a new game. ${error.message || 'Please try again or refresh the page.'}`);
@@ -174,15 +179,11 @@ const App = () => {
   // Render game board when not in lobby mode
   return (
     <div>
-      <GameProvider playerID="0">
-        <WoodAndSteelState gameManager={gameManager} />
-      </GameProvider>
-      <GameProvider playerID="1">
-        <WoodAndSteelState gameManager={gameManager} />
-      </GameProvider>
-      <GameProvider playerID="2">
-        <WoodAndSteelState gameManager={gameManager} />
-      </GameProvider>
+      {Array.from({ length: numPlayers }, (_, i) => (
+        <GameProvider key={i} playerID={String(i)}>
+          <WoodAndSteelState gameManager={gameManager} />
+        </GameProvider>
+      ))}
     </div>
   );
 };
