@@ -11,10 +11,6 @@
   z-index: var(--z-modal);
 }
 
-.modal--nested {
-  z-index: var(--z-modal-nested);
-}
-
 .modal__content {
   background-color: var(--color-bg-white);
   padding: var(--spacing-xl);
@@ -38,10 +34,6 @@
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
   flex-wrap: wrap;
-}
-
-.modal__actions--end {
-  justify-content: flex-end;
 }
 
 .modal__input {

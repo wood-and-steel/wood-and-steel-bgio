@@ -11,12 +11,10 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.referenceTable__title--first {
-  padding-top: 0;
-}
-
 .cityTable {
-  height: 134px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 115px);
+  gap: var(--spacing-xs, 0.5rem);
 }
 
 .commodityTable {
@@ -25,8 +23,6 @@
 }
 
 .cityCell {
-  display: flow;
-  flex: 1 1;
   width: 115px;
   opacity: var(--opacity-subtle);
 }

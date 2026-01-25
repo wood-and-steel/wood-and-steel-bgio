@@ -26,8 +26,24 @@
   display: none;
 }
 
-.button--auto-margin {
-  margin-left: auto;
+.button--icon {
+  width: var(--button-height);
+  height: var(--button-height);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button--danger {
+  background-color: #dc3545;
+  color: var(--color-text-light);
+  border-color: #dc3545;
+}
+
+.button--danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
 }
 
 .deleteButton {

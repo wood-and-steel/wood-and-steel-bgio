@@ -36,32 +36,10 @@
   font-size: 0.8rem;
 }
 
-.buttonBar__input {
-  width: 10rem;
-  height: var(--input-height);
-  margin: 0 var(--spacing-xs);
-  background-color: var(--color-bg-white);
-  color: var(--color-text);
-  border: 1px solid var(--color-border-light);
-  padding: 0 var(--spacing-xs);
-  font-size: 0.85rem;
-}
-
 .buttonBar__input--large {
   width: 10rem;
   height: var(--input-height-md);
   margin-left: var(--spacing-xs);
-  background-color: var(--color-bg-white);
-  color: var(--color-text);
-  border: 1px solid var(--color-border-light);
-  padding: 0 var(--spacing-xs);
-  font-size: 0.85rem;
-}
-
-.buttonBar__input--small {
-  width: 6rem;
-  height: var(--input-height);
-  margin: 0 var(--spacing-xs);
   background-color: var(--color-bg-white);
   color: var(--color-text);
   border: 1px solid var(--color-border-light);
@@ -131,12 +109,6 @@
     font-size: 0.85rem;
   }
 
-  .buttonBar__input {
-    width: 12rem;
-    margin: 0 var(--spacing-sm);
-    font-size: 0.9rem;
-  }
-
   .buttonBar__input--large {
     width: 12rem;
     margin-left: var(--spacing-sm);
@@ -177,12 +149,6 @@
   .buttonBar__label {
     padding-left: var(--spacing-lg);
     font-size: 90%;
-  }
-
-  .buttonBar__input {
-    width: 15rem;
-    margin: 0 var(--spacing-sm);
-    font-size: 1rem;
   }
 
   .buttonBar__input--large {
@@ -229,6 +195,12 @@
 /* ========================================
    INDEPENDENT RAILROADS
    ======================================== */
+.independentRailroads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
 .independentRailroads__title {
   font-weight: bold;
   padding-bottom: var(--spacing-sm);
@@ -382,4 +354,20 @@
 .table__cell--delete {
   text-align: center;
   width: 60px;
+}
+
+/* ========================================
+   THEME TOGGLE
+   ======================================== */
+.themeToggle {
+  background-color: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  transition: transform 0.2s ease;
+}
+
+.themeToggle:hover {
+  transform: scale(1.1);
 }
