@@ -11,7 +11,7 @@ const STARTING_CITY_PAIRS = [
 ];
 
 // Top Button Bar Component
-export function TopButtonBar({ input, setInput, cityInput, setCityInput, startingContractExists, currentPhase, G, gameManager, onNavigateToLobby }) {
+export function TopButtonBar({ input, setInput, startingContractExists, currentPhase, G, gameManager, onNavigateToLobby, onOpenEditPlaytest }) {
   // Get available starting pairs (filter out already chosen ones)
   const getAvailableStartingPairs = () => {
     if (currentPhase !== 'setup') return STARTING_CITY_PAIRS;
@@ -53,9 +53,6 @@ export function TopButtonBar({ input, setInput, cityInput, setCityInput, startin
         <span className={`buttonBar__label ${currentPhase === 'setup' ? '' : 'hidden'}`}>
           <b>Choose starting cities:</b>
         </span>
-        <span className={`buttonBar__label ${currentPhase === 'play' ? '' : 'hidden'}`}>
-          <b>Manual</b> commodity, destination, type:
-        </span>
       </div>
       
       {/* Dropdown for setup phase */}
@@ -75,34 +72,17 @@ export function TopButtonBar({ input, setInput, cityInput, setCityInput, startin
         </select>
       )}
       
-      {/* Text input for play phase */}
-      <input 
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        name="inputParameters" 
-        className={`buttonBar__input ${currentPhase === 'play' ? '' : 'hidden'}`}
-      />
-      
       <button 
         name="startingContract" 
         className={`button ${currentPhase === 'setup' ? '' : 'button--hidden'}`}
         disabled={!input || currentPhase !== 'setup'}
       >Choose Starting Cities</button>
+      
       <button 
-        name="manualContract" 
+        type="button"
+        onClick={onOpenEditPlaytest}
         className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
-      >Manual Contract</button>
-
-      <div className={`buttonBar__section ${currentPhase === 'play' ? '' : 'buttonBar__section--hidden'}`}>
-        <span className="buttonBar__label"><b>Cities:</b></span>
-        <input 
-          value={cityInput}
-          onChange={e => setCityInput(e.target.value)}
-          name="cityList" 
-          className="buttonBar__input--small"
-        />
-        <button name="addCities" className="button">Add Cities</button>
-      </div>
+      >Edit Playtest</button>
     </div>
   );
 }

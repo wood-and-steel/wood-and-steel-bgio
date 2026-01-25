@@ -4,6 +4,7 @@ import { PlayerBoard } from "./components/PlayerBoard";
 import { MarketContracts } from "./components/MarketContracts";
 import { IndependentRailroads } from "./components/IndependentRailroads";
 import { ReferenceTables } from "./components/ReferenceTables";
+import { EditPlaytestDialog } from "./components/EditPlaytestDialog";
 import { useGame } from "./hooks/useGame";
 import { useLobbyStore } from "./stores/lobbyStore";
 
@@ -15,7 +16,7 @@ export function WoodAndSteelState({ gameManager }) {
 
   // React hooks must be at the top of the component
   const [input, setInput] = React.useState('');
-  const [cityInput, setCityInput] = React.useState('');
+  const [isEditPlaytestDialogOpen, setIsEditPlaytestDialogOpen] = React.useState(false);
   
   // Handler to navigate to lobby
   const handleNavigateToLobby = React.useCallback(() => {
@@ -64,6 +65,8 @@ export function WoodAndSteelState({ gameManager }) {
         moves.generateMarketContract();
         break;
       case "manualContract":
+        // This case is kept for backwards compatibility but should not be used
+        // Manual contracts are now created via EditPlaytestDialog
         moves.addManualContract(inputParameters[0], inputParameters[1], inputParameters[2]);
         break;
       case "toggleContractFulfilled":
@@ -99,14 +102,20 @@ export function WoodAndSteelState({ gameManager }) {
         <form className="form" method="post" onSubmit={handleSubmit}>
           <TopButtonBar 
             input={input} 
-            setInput={setInput} 
-            cityInput={cityInput} 
-            setCityInput={setCityInput}
+            setInput={setInput}
             startingContractExists={startingContractExists}
             currentPhase={currentPhase}
             G={G}
             gameManager={gameManager}
             onNavigateToLobby={handleNavigateToLobby}
+            onOpenEditPlaytest={() => setIsEditPlaytestDialogOpen(true)}
+          />
+          <EditPlaytestDialog
+            isOpen={isEditPlaytestDialogOpen}
+            onClose={() => setIsEditPlaytestDialogOpen(false)}
+            G={G}
+            ctx={ctx}
+            moves={moves}
           />
           <div className="padding-xl text-center">
             <h1>Scoring Phase</h1>
@@ -123,14 +132,20 @@ export function WoodAndSteelState({ gameManager }) {
         <div>
           <TopButtonBar 
             input={input} 
-            setInput={setInput} 
-            cityInput={cityInput} 
-            setCityInput={setCityInput}
+            setInput={setInput}
             startingContractExists={startingContractExists}
             currentPhase={currentPhase}
             G={G}
             gameManager={gameManager}
             onNavigateToLobby={handleNavigateToLobby}
+            onOpenEditPlaytest={() => setIsEditPlaytestDialogOpen(true)}
+          />
+          <EditPlaytestDialog
+            isOpen={isEditPlaytestDialogOpen}
+            onClose={() => setIsEditPlaytestDialogOpen(false)}
+            G={G}
+            ctx={ctx}
+            moves={moves}
           />
           <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
         </div>

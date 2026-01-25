@@ -6,6 +6,7 @@ import {
   toggleContractFulfilled,
   deleteContract,
   acquireIndependentRailroad,
+  addCityToPlayer,
   endTurn
 } from './gameActions';
 
@@ -38,6 +39,9 @@ export const createMoves = (store) => ({
   
   acquireIndependentRailroad: (railroadName) => 
     acquireIndependentRailroad(railroadName),
+  
+  addCityToPlayer: (cityKey) => 
+    addCityToPlayer(cityKey),
   
   endTurn: () => 
     endTurn()

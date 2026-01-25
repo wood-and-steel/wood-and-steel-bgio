@@ -16,7 +16,7 @@ import {
 } from '../Contract';
 import { endTurn as endTurnEvent } from './events';
 import { checkPhaseTransition } from './phaseManager';
-import { routes } from '../data';
+import { routes, cities } from '../data';
 import { getCurrentGameCode, saveGameState } from '../utils/gameManager';
 
 /**
@@ -471,6 +471,73 @@ export function acquireIndependentRailroad(railroadName) {
         ...state.G,
         players: updatedPlayers,
         independentRailroads: restRailroads
+      }
+    };
+  });
+
+  // Check for phase transition after state update
+  const updatedState = useGameStore.getState();
+  checkPhaseTransition(updatedState.G, updatedState.ctx);
+
+  // Save state to localStorage
+  saveCurrentGameState();
+}
+
+/**
+ * Add a city to the current player's active cities.
+ * 
+ * @param {string} cityKey - City key to add
+ * @returns {void}
+ */
+export function addCityToPlayer(cityKey) {
+  // Get current state from store
+  const { G, ctx } = useGameStore.getState();
+
+  // Validate move is allowed in current phase
+  if (!isMoveAllowed('addCityToPlayer', ctx)) {
+    console.warn('[addCityToPlayer] Move not allowed in current phase');
+    return;
+  }
+
+  // Validate cityKey parameter
+  if (typeof cityKey !== 'string' || !cityKey) {
+    console.error('[addCityToPlayer] cityKey must be a non-empty string');
+    return;
+  }
+
+  // Validate city exists
+  if (!cities.get(cityKey)) {
+    console.error(`[addCityToPlayer] City "${cityKey}" not found`);
+    return;
+  }
+
+  // Get current player's data
+  const currentPlayerEntry = G.players.find(([id]) => id === ctx.currentPlayer);
+  if (!currentPlayerEntry) {
+    console.error(`[addCityToPlayer] Current player "${ctx.currentPlayer}" not found`);
+    return;
+  }
+
+  const [, playerProps] = currentPlayerEntry;
+  
+  // Check if city is already in player's active cities
+  if (playerProps.activeCities.includes(cityKey)) {
+    console.warn(`[addCityToPlayer] City "${cityKey}" is already in player's active cities`);
+    return;
+  }
+
+  // Update state immutably
+  useGameStore.setState((state) => {
+    const updatedPlayers = state.G.players.map(([id, props]) =>
+      id === ctx.currentPlayer
+        ? [id, { ...props, activeCities: [...props.activeCities, cityKey] }]
+        : [id, props]
+    );
+
+    return {
+      G: {
+        ...state.G,
+        players: updatedPlayers
       }
     };
   });

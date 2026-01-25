@@ -54,3 +54,42 @@
   color: var(--color-text);
   border: 1px solid var(--color-border-light);
 }
+
+/* ========================================
+   EDIT PLAYTEST DIALOG
+   ======================================== */
+.editPlaytestDialog__form {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-md) var(--spacing-md);
+  align-items: center;
+}
+
+.editPlaytestDialog__form--separated {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.editPlaytestDialog__row {
+  display: contents;
+}
+
+.editPlaytestDialog__label {
+  padding-right: var(--spacing-md);
+  text-align: right;
+}
+
+.editPlaytestDialog__select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  font-size: 1rem;
+  background-color: var(--color-bg-white);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+}
+
+.editPlaytestDialog__actions {
+  grid-column: 1 / -1;
+  margin-top: var(--spacing-sm);
+}

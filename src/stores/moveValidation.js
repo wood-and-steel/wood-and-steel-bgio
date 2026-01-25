@@ -18,6 +18,7 @@ const MOVES_BY_PHASE = {
     'toggleContractFulfilled',
     'deleteContract',
     'acquireIndependentRailroad',
+    'addCityToPlayer',
     'endTurn'
   ],
   scoring: [
