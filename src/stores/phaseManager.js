@@ -61,7 +61,9 @@ export function checkPhaseTransition(G, ctx) {
   const gameCode = getCurrentGameCode();
   if (gameCode) {
     const updatedState = useGameStore.getState();
-    saveGameState(gameCode, updatedState.G, updatedState.ctx);
+    saveGameState(gameCode, updatedState.G, updatedState.ctx).catch((error) => {
+      console.error('[checkPhaseTransition] Failed to save game state:', error.message);
+    });
   }
 
   console.log(`[checkPhaseTransition] Phase transition: ${ctx.phase} → ${nextPhase}`);

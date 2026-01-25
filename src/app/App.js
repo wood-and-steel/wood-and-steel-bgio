@@ -26,18 +26,30 @@ const App = () => {
 
   // Initialize lobby mode on mount
   React.useEffect(() => {
-    const code = getCurrentGameCode();
-    
-    // If no current game or it doesn't exist, go to lobby mode
-    if (!code || !gameExists(code)) {
-      setLobbyMode(true);
-      setSelectedGame(null);
-      setCurrentGameCodeState(null);
-      console.info('[App] No current game, starting in lobby mode');
-    } else {
-      // Game exists, load it and exit lobby mode
+    const initializeApp = async () => {
+      const code = getCurrentGameCode();
+      
+      // If no current game or it doesn't exist, go to lobby mode
+      if (!code) {
+        setLobbyMode(true);
+        setSelectedGame(null);
+        setCurrentGameCodeState(null);
+        console.info('[App] No current game, starting in lobby mode');
+        return;
+      }
+      
       try {
-        const savedState = loadGameState(code);
+        const exists = await gameExists(code);
+        if (!exists) {
+          setLobbyMode(true);
+          setSelectedGame(null);
+          setCurrentGameCodeState(null);
+          console.info('[App] Current game does not exist, starting in lobby mode');
+          return;
+        }
+        
+        // Game exists, load it and exit lobby mode
+        const savedState = await loadGameState(code);
         if (savedState && savedState.G && savedState.ctx) {
           // Load state into Zustand store
           useGameStore.setState({
@@ -62,12 +74,14 @@ const App = () => {
         setSelectedGame(null);
         setCurrentGameCodeState(null);
       }
-    }
+    };
+    
+    initializeApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on mount
 
   // Handler to enter a game
-  const handleEnterGame = React.useCallback((code) => {
+  const handleEnterGame = React.useCallback(async (code) => {
     try {
       const normalizedCode = normalizeGameCode(code);
       
@@ -76,13 +90,14 @@ const App = () => {
         return;
       }
       
-      if (!gameExists(normalizedCode)) {
+      const exists = await gameExists(normalizedCode);
+      if (!exists) {
         alert(`Game "${normalizedCode}" not found.`);
         return;
       }
       
       // Load game state
-      const savedState = loadGameState(normalizedCode);
+      const savedState = await loadGameState(normalizedCode);
       if (savedState && savedState.G && savedState.ctx) {
         // Load state into Zustand store
         useGameStore.setState({
@@ -105,12 +120,12 @@ const App = () => {
   }, [setSelectedGame, setLobbyMode]);
 
   // Handler to create a new game
-  const handleNewGame = React.useCallback((numPlayers = 3) => {
+  const handleNewGame = React.useCallback(async (numPlayers = 3) => {
     // Validate numPlayers is between 2 and 6
     const validNumPlayers = Math.max(2, Math.min(6, Math.floor(numPlayers) || 3));
     
     try {
-      const newCode = createNewGame();
+      const newCode = await createNewGame();
       
       // Initialize game state to initial values with specified number of players
       useGameStore.getState().resetState(validNumPlayers);
@@ -134,12 +149,13 @@ const App = () => {
     onSwitchGame: (code) => {
       handleEnterGame(code);
     },
-    onDeleteGame: (code) => {
+    onDeleteGame: async (code) => {
       try {
         const normalizedCode = normalizeGameCode(code);
         const wasCurrentGame = normalizedCode === currentGameCode;
         
-        if (deleteGame(normalizedCode)) {
+        const deleted = await deleteGame(normalizedCode);
+        if (deleted) {
           // If we deleted the current game, return to lobby
           if (wasCurrentGame) {
             clearCurrentGameCode();
@@ -158,8 +174,8 @@ const App = () => {
         return false;
       }
     },
-    onListGames: () => {
-      return listGames();
+    onListGames: async () => {
+      return await listGames();
     },
     isValidGameCode,
     normalizeGameCode

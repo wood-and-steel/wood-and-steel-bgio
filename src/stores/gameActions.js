@@ -20,13 +20,16 @@ import { routes, cities } from '../data';
 import { getCurrentGameCode, saveGameState } from '../utils/gameManager';
 
 /**
- * Helper function to save game state to localStorage after moves
+ * Helper function to save game state to storage after moves
+ * Fire-and-forget: doesn't block UI, errors are logged but not thrown
  */
 function saveCurrentGameState() {
   const code = getCurrentGameCode();
   if (code) {
     const { G, ctx } = useGameStore.getState();
-    saveGameState(code, G, ctx);
+    saveGameState(code, G, ctx).catch((error) => {
+      console.error('[saveCurrentGameState] Failed to save game state:', error.message);
+    });
   }
 }
 

@@ -1,15 +1,12 @@
 /**
  * Game Manager - Handles multiple game instances with unique four-letter codes
  * Works with Zustand store state persistence
- * Uses localStorage with a format compatible with legacy saved games
+ * Uses storage adapter pattern to support multiple storage backends (localStorage, Supabase, etc.)
  */
 
-import { serializeState, deserializeState, isValidSerializedState } from './stateSerialization';
+import { getStorageAdapter } from './storage/index';
 
-// Storage keys - using legacy format for backward compatibility with existing saved games
-const GAME_STATE_KEY = 'game_state';
-const GAME_METADATA_KEY = 'game_metadata';
-const GAME_INITIAL_KEY = 'game_initial';
+// Storage key for current game (still uses localStorage for now, as it's UI state)
 const CURRENT_GAME_KEY = 'current_game';
 
 /**
@@ -30,10 +27,10 @@ export function generateGameCode() {
 
 /**
  * Generate a unique code that doesn't exist in current games
- * @returns {string} - Unique game code
+ * @returns {Promise<string>} - Unique game code
  */
-export function generateUniqueGameCode() {
-  const existingCodes = listGameCodes();
+export async function generateUniqueGameCode() {
+  const existingCodes = await listGameCodes();
   let code;
   let attempts = 0;
   const maxAttempts = 100; // Prevent infinite loop
@@ -71,87 +68,19 @@ export function isValidGameCode(code) {
 }
 
 /**
- * Get all game storage data from localStorage
- * @param {string} key - Storage key (state, metadata, or initial)
- * @returns {Map} - Map of game code to data
+ * Get the storage adapter instance
+ * @returns {StorageAdapter} The storage adapter
  */
-function getGameData(key) {
-  try {
-    const data = localStorage.getItem(key);
-    if (!data) {
-      return new Map();
-    }
-    
-    try {
-      const parsed = JSON.parse(data);
-      if (!Array.isArray(parsed)) {
-        console.error(`[getGameData] Invalid data format for key "${key}": expected array, got ${typeof parsed}`);
-        // Attempt recovery: clear corrupted data
-        localStorage.removeItem(key);
-        return new Map();
-      }
-      return new Map(parsed);
-    } catch (parseError) {
-      console.error(`[getGameData] Failed to parse JSON for key "${key}":`, parseError.message);
-      console.error(`[getGameData] Corrupted data (first 200 chars):`, data.substring(0, 200));
-      // Attempt recovery: clear corrupted data
-      try {
-        localStorage.removeItem(key);
-        console.warn(`[getGameData] Cleared corrupted data for key "${key}"`);
-      } catch (removeError) {
-        console.error(`[getGameData] Failed to clear corrupted data for key "${key}":`, removeError.message);
-      }
-      return new Map();
-    }
-  } catch (e) {
-    console.error(`[getGameData] Unexpected error accessing localStorage for key "${key}":`, e.message);
-    console.error(`[getGameData] Error details:`, e);
-    return new Map();
-  }
-}
-
-/**
- * Set game storage data in localStorage
- * @param {string} key - Storage key (state, metadata, or initial)
- * @param {Map} dataMap - Map of game code to data
- * @returns {boolean} - True if saved successfully
- */
-function setGameData(key, dataMap) {
-  try {
-    if (!(dataMap instanceof Map)) {
-      console.error(`[setGameData] Invalid dataMap type for key "${key}": expected Map, got ${typeof dataMap}`);
-      return false;
-    }
-    
-    const serialized = JSON.stringify(Array.from(dataMap.entries()));
-    
-    // Check localStorage quota (rough estimate)
-    const currentSize = new Blob([serialized]).size;
-    if (currentSize > 5 * 1024 * 1024) { // 5MB warning
-      console.warn(`[setGameData] Large data size for key "${key}": ${(currentSize / 1024 / 1024).toFixed(2)}MB`);
-    }
-    
-    localStorage.setItem(key, serialized);
-    return true;
-  } catch (e) {
-    if (e.name === 'QuotaExceededError') {
-      console.error(`[setGameData] Storage quota exceeded for key "${key}"`);
-      console.error(`[setGameData] Attempting to free space by clearing old games...`);
-      // Could implement cleanup logic here if needed
-    } else {
-      console.error(`[setGameData] Failed to save data for key "${key}":`, e.message);
-      console.error(`[setGameData] Error details:`, e);
-    }
-    return false;
-  }
+function getAdapter() {
+  return getStorageAdapter();
 }
 
 /**
  * Switch to a different game by updating the active game code
  * @param {string} code - Game code to switch to
- * @returns {boolean} - True if switched successfully
+ * @returns {Promise<boolean>} - True if switched successfully
  */
-export function switchToGame(code) {
+export async function switchToGame(code) {
   const operation = 'switchToGame';
   
   if (!isValidGameCode(code)) {
@@ -163,7 +92,8 @@ export function switchToGame(code) {
   
   try {
     // Check if game exists
-    if (!gameExists(normalizedCode)) {
+    const exists = await gameExists(normalizedCode);
+    if (!exists) {
       console.warn(`[${operation}] Game not found:`, normalizedCode);
       return false;
     }
@@ -179,12 +109,12 @@ export function switchToGame(code) {
 }
 
 /**
- * Delete a game from localStorage
+ * Delete a game from storage
  * Removes all game data for this game code
  * @param {string} code - Game code
- * @returns {boolean} - True if deleted, false if not found
+ * @returns {Promise<boolean>} - True if deleted, false if not found
  */
-export function deleteGame(code) {
+export async function deleteGame(code) {
   const operation = 'deleteGame';
   
   if (!isValidGameCode(code)) {
@@ -195,33 +125,8 @@ export function deleteGame(code) {
   const normalizedCode = normalizeGameCode(code);
   
   try {
-    if (!gameExists(normalizedCode)) {
-      console.warn(`[${operation}] Game not found:`, normalizedCode);
-      return false;
-    }
-    
-    // Remove from all three storage keys
-    const stateMap = getGameData(GAME_STATE_KEY);
-    const metadataMap = getGameData(GAME_METADATA_KEY);
-    const initialMap = getGameData(GAME_INITIAL_KEY);
-    
-    const hadState = stateMap.delete(normalizedCode);
-    metadataMap.delete(normalizedCode);
-    initialMap.delete(normalizedCode);
-    
-    // Save changes, checking for errors
-    const stateSaved = setGameData(GAME_STATE_KEY, stateMap);
-    const metadataSaved = setGameData(GAME_METADATA_KEY, metadataMap);
-    const initialSaved = setGameData(GAME_INITIAL_KEY, initialMap);
-    
-    if (!stateSaved || !metadataSaved || !initialSaved) {
-      console.error(`[${operation}] Failed to save some data after deletion for game:`, normalizedCode);
-      console.error(`[${operation}] State saved: ${stateSaved}, Metadata saved: ${metadataSaved}, Initial saved: ${initialSaved}`);
-      // Still return true if at least state was deleted
-      return hadState;
-    }
-    
-    return true;
+    const adapter = getAdapter();
+    return await adapter.deleteGame(normalizedCode);
   } catch (e) {
     console.error(`[${operation}] Unexpected error deleting game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);
@@ -231,36 +136,27 @@ export function deleteGame(code) {
 
 /**
  * List all game codes
- * @returns {string[]} - Array of game codes
+ * @returns {Promise<string[]>} - Array of game codes
  */
-export function listGameCodes() {
-  const codes = [];
-  const stateMap = getGameData(GAME_STATE_KEY);
-  
-  for (const [matchID] of stateMap) {
-    // Only include valid game codes
-    if (isValidGameCode(matchID)) {
-      codes.push(matchID);
-    }
-  }
-  
-  return codes.sort();
+export async function listGameCodes() {
+  const games = await listGames();
+  return games.map(game => game.code).sort();
 }
 
 /**
  * Check if a game exists
  * @param {string} code - Game code
- * @returns {boolean} - True if game exists
+ * @returns {Promise<boolean>} - True if game exists
  */
-export function gameExists(code) {
+export async function gameExists(code) {
   if (!isValidGameCode(code)) {
     return false;
   }
   
   const normalizedCode = normalizeGameCode(code);
-  const stateMap = getGameData(GAME_STATE_KEY);
+  const adapter = getAdapter();
   
-  return stateMap.has(normalizedCode);
+  return await adapter.gameExists(normalizedCode);
 }
 
 /**
@@ -307,49 +203,14 @@ export function clearCurrentGameCode() {
 /**
  * Get all games with their codes and basic info
  * Sorted by lastModified descending (most recent first)
- * @returns {Array<{code: string, phase: string, turn: number, numPlayers: number, lastModified: string, playerNames: Array<string>, metadata: Object}>} - Array of game info
+ * @returns {Promise<Array<{code: string, phase: string, turn: number, numPlayers: number, lastModified: string, playerNames: Array<string>, metadata: Object}>>} - Array of game info
  */
-export function listGames() {
+export async function listGames() {
   const operation = 'listGames';
   
   try {
-    const codes = listGameCodes();
-    const games = [];
-    
-    const stateMap = getGameData(GAME_STATE_KEY);
-    const metadataMap = getGameData(GAME_METADATA_KEY);
-    
-    for (const code of codes) {
-      try {
-        const state = stateMap.get(code);
-        const metadata = metadataMap.get(code) || {};
-        
-        if (state) {
-          // Extract player names from the game state
-          const playerNames = state.G?.players?.map(([id, player]) => player.name) || [];
-          
-          games.push({
-            code: code,
-            phase: state.ctx?.phase || 'unknown',
-            turn: state.ctx?.turn || 0,
-            numPlayers: state.ctx?.numPlayers || 0,
-            lastModified: metadata.lastModified || new Date(0).toISOString(), // Default to epoch if missing
-            playerNames: playerNames,
-            metadata: metadata
-          });
-        }
-      } catch (e) {
-        console.warn(`[${operation}] Error processing game "${code}":`, e.message);
-        // Continue processing other games
-      }
-    }
-    
-    // Sort by lastModified descending (most recent first)
-    return games.sort((a, b) => {
-      const timeA = new Date(a.lastModified).getTime();
-      const timeB = new Date(b.lastModified).getTime();
-      return timeB - timeA; // Descending order
-    });
+    const adapter = getAdapter();
+    return await adapter.listGames();
   } catch (e) {
     console.error(`[${operation}] Unexpected error listing games:`, e.message);
     console.error(`[${operation}] Error details:`, e);
@@ -360,22 +221,32 @@ export function listGames() {
 /**
  * Create a new game with a unique code
  * Sets initial lastModified timestamp in metadata
- * @returns {string} - The generated game code
+ * @returns {Promise<string>} - The generated game code
  * @throws {Error} If code generation or storage fails
  */
-export function createNewGame() {
+export async function createNewGame() {
   const operation = 'createNewGame';
   
   try {
-    const code = generateUniqueGameCode();
+    const code = await generateUniqueGameCode();
     setCurrentGameCode(code);
     
-    // Set initial lastModified timestamp in metadata
-    const metadataMap = getGameData(GAME_METADATA_KEY);
-    metadataMap.set(code, {
+    // Initialize metadata with lastModified timestamp
+    const metadata = {
       lastModified: new Date().toISOString() // ISO 8601 format for cloud compatibility
-    });
-    setGameData(GAME_METADATA_KEY, metadataMap);
+    };
+    
+    // Save empty initial state to create the game record
+    const adapter = getAdapter();
+    // We'll save an empty state initially - the actual game state will be saved when the game starts
+    // For now, we just need to create the metadata entry
+    // Since the adapter expects state, we'll create a minimal valid state
+    const initialState = {
+      G: { contracts: [], players: [], independentRailroads: [] },
+      ctx: { phase: 'setup', currentPlayer: '0', numPlayers: 3, playOrder: ['0'], playOrderPos: 0, turn: 0 }
+    };
+    
+    await adapter.saveGame(code, initialState, metadata);
     
     console.info(`[${operation}] Created new game with code:`, code);
     return code;
@@ -387,15 +258,15 @@ export function createNewGame() {
 }
 
 /**
- * Save game state to localStorage
+ * Save game state to storage
  * Stores state in format: { G: {...}, ctx: {...} }
  * Updates lastModified timestamp in metadata
  * @param {string} code - Game code
  * @param {Object} G - Game state
  * @param {Object} ctx - Game context
- * @returns {boolean} - True if saved successfully
+ * @returns {Promise<boolean>} - True if saved successfully
  */
-export function saveGameState(code, G, ctx) {
+export async function saveGameState(code, G, ctx) {
   const operation = 'saveGameState';
   
   if (!isValidGameCode(code)) {
@@ -417,38 +288,17 @@ export function saveGameState(code, G, ctx) {
       return false;
     }
     
-    // Get existing state map
-    const stateMap = getGameData(GAME_STATE_KEY);
+    // Prepare state object
+    const state = { G, ctx };
     
-    // Serialize state using serialization utilities
-    // This ensures proper deep cloning and filtering of internal properties
-    let serialized;
-    try {
-      serialized = serializeState(G, ctx);
-    } catch (serializeError) {
-      console.error(`[${operation}] Serialization failed for game "${normalizedCode}":`, serializeError.message);
-      console.error(`[${operation}] Serialization error details:`, serializeError);
-      return false;
-    }
-    
-    stateMap.set(normalizedCode, serialized);
-    
-    const saved = setGameData(GAME_STATE_KEY, stateMap);
-    if (!saved) {
-      console.error(`[${operation}] Failed to persist state to localStorage for game "${normalizedCode}"`);
-      return false;
-    }
-    
-    // Update lastModified timestamp in metadata
-    const metadataMap = getGameData(GAME_METADATA_KEY);
-    const existingMetadata = metadataMap.get(normalizedCode) || {};
-    metadataMap.set(normalizedCode, {
-      ...existingMetadata,
+    // Prepare metadata with lastModified timestamp
+    const metadata = {
       lastModified: new Date().toISOString() // ISO 8601 format for cloud compatibility
-    });
-    setGameData(GAME_METADATA_KEY, metadataMap);
+    };
     
-    return true;
+    // Save using adapter
+    const adapter = getAdapter();
+    return await adapter.saveGame(normalizedCode, state, metadata);
   } catch (e) {
     console.error(`[${operation}] Unexpected error saving state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);
@@ -458,12 +308,12 @@ export function saveGameState(code, G, ctx) {
 }
 
 /**
- * Load game state from localStorage
+ * Load game state from storage
  * Returns state in the format: { G: {...}, ctx: {...} }
  * @param {string} code - Game code
- * @returns {{G: Object, ctx: Object}|null} - Game state or null if not found/invalid
+ * @returns {Promise<{G: Object, ctx: Object}|null>} - Game state or null if not found/invalid
  */
-export function loadGameState(code) {
+export async function loadGameState(code) {
   const operation = 'loadGameState';
   
   if (!isValidGameCode(code)) {
@@ -474,53 +324,8 @@ export function loadGameState(code) {
   const normalizedCode = normalizeGameCode(code);
   
   try {
-    const stateMap = getGameData(GAME_STATE_KEY);
-    const stateData = stateMap.get(normalizedCode);
-    
-    if (!stateData) {
-      console.info(`[${operation}] No saved state found for game:`, normalizedCode);
-      return null;
-    }
-    
-    // Validate state structure before deserializing
-    if (!isValidSerializedState(stateData)) {
-      console.warn(`[${operation}] Invalid state format for game "${normalizedCode}"`);
-      console.warn(`[${operation}] State data type:`, typeof stateData);
-      console.warn(`[${operation}] State data keys:`, stateData && typeof stateData === 'object' ? Object.keys(stateData) : 'N/A');
-      
-      // Attempt recovery: remove corrupted state
-      console.warn(`[${operation}] Attempting to remove corrupted state for game "${normalizedCode}"`);
-      try {
-        stateMap.delete(normalizedCode);
-        setGameData(GAME_STATE_KEY, stateMap);
-        console.warn(`[${operation}] Removed corrupted state for game "${normalizedCode}"`);
-      } catch (recoveryError) {
-        console.error(`[${operation}] Failed to remove corrupted state:`, recoveryError.message);
-      }
-      
-      return null;
-    }
-    
-    // Deserialize state using serialization utilities
-    // This ensures clean state structure and proper deep cloning
-    try {
-      return deserializeState(stateData);
-    } catch (deserializeError) {
-      console.error(`[${operation}] Deserialization failed for game "${normalizedCode}":`, deserializeError.message);
-      console.error(`[${operation}] Deserialization error details:`, deserializeError);
-      
-      // Attempt recovery: remove corrupted state
-      console.warn(`[${operation}] Attempting to remove corrupted state after deserialization failure`);
-      try {
-        stateMap.delete(normalizedCode);
-        setGameData(GAME_STATE_KEY, stateMap);
-        console.warn(`[${operation}] Removed corrupted state for game "${normalizedCode}"`);
-      } catch (recoveryError) {
-        console.error(`[${operation}] Failed to remove corrupted state:`, recoveryError.message);
-      }
-      
-      return null;
-    }
+    const adapter = getAdapter();
+    return await adapter.loadGame(normalizedCode);
   } catch (e) {
     console.error(`[${operation}] Unexpected error loading state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);

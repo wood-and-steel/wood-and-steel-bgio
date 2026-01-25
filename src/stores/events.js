@@ -58,6 +58,8 @@ export function endTurn() {
   const gameCode = getCurrentGameCode();
   if (gameCode) {
     const updatedState = useGameStore.getState();
-    saveGameState(gameCode, updatedState.G, updatedState.ctx);
+    saveGameState(gameCode, updatedState.G, updatedState.ctx).catch((error) => {
+      console.error('[endTurn] Failed to save game state:', error.message);
+    });
   }
 }

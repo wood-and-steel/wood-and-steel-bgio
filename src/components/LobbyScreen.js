@@ -7,12 +7,22 @@ import { useLobbyStore } from "../stores/lobbyStore";
  * Allows players to manage their games (view, enter, delete, create new)
  */
 export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
-  const [games, setGames] = React.useState(() => gameManager.onListGames());
+  const [games, setGames] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const { selectedGameCode } = useLobbyStore();
 
   // Refresh games list when needed
-  const refreshGames = React.useCallback(() => {
-    setGames(gameManager.onListGames());
+  const refreshGames = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const gamesList = await gameManager.onListGames();
+      setGames(gamesList || []);
+    } catch (error) {
+      console.error('[LobbyScreen] Error loading games:', error);
+      setGames([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [gameManager]);
 
   // Refresh games list on mount and when gameManager changes
@@ -26,16 +36,22 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
     }
   };
 
-  const handleDeleteGame = (gameCode, event) => {
+  const handleDeleteGame = async (gameCode, event) => {
     // Stop event propagation to prevent row click
     event.stopPropagation();
     
     if (window.confirm(`Are you sure you want to delete game "${gameCode}"?`)) {
-      if (gameManager.onDeleteGame(gameCode)) {
-        // Refresh the games list after successful deletion
-        refreshGames();
-      } else {
-        alert(`Failed to delete game "${gameCode}".`);
+      try {
+        const deleted = await gameManager.onDeleteGame(gameCode);
+        if (deleted) {
+          // Refresh the games list after successful deletion
+          await refreshGames();
+        } else {
+          alert(`Failed to delete game "${gameCode}".`);
+        }
+      } catch (error) {
+        console.error('[LobbyScreen] Error deleting game:', error);
+        alert(`Failed to delete game "${gameCode}". ${error.message || 'Please try again.'}`);
       }
     }
   };
@@ -61,7 +77,11 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
       <div className="lobbyScreen__content">
         <h1 className="lobbyScreen__title">Wood and Steel Lobby</h1>
         
-        {games.length === 0 ? (
+        {isLoading ? (
+          <div className="lobbyScreen__emptyState">
+            <p>Loading games...</p>
+          </div>
+        ) : games.length === 0 ? (
           <div className="lobbyScreen__emptyState">
             <p>No games found.</p>
             <div className="lobbyScreen__newGame">
