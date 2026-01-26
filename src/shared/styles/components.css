@@ -55,6 +55,10 @@
   display: none;
 }
 
+.buttonBar__right {
+  margin-left: auto;
+}
+
 .buttonBar__tabs {
   display: flex;
   gap: var(--spacing-xs);

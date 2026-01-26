@@ -2,7 +2,7 @@ import React from "react";
 import { ContractsList } from "./ContractsList";
 
 // Player Board Component
-export function PlayerBoard({ G, ctx, startingContractExists }) {
+export function PlayerBoard({ G, ctx, startingContractExists, currentPhase }) {
   const activePlayer = G.players.find(([key]) => key === ctx.currentPlayer);
   if (!activePlayer) return null;
 
@@ -15,6 +15,11 @@ export function PlayerBoard({ G, ctx, startingContractExists }) {
           <div className="playerBoard__name playerBoard__name--active">
             {name}
           </div>
+          {/* End turn button - not shown during setup (auto-advances) */}
+          <button 
+            name="endTurn" 
+            className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
+          >End Turn</button>
         </div>
         <div className="playerBoard__contracts">
           <button

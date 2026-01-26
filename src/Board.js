@@ -155,7 +155,7 @@ export function WoodAndSteelState({ gameManager }) {
           />
           {activeTab === 'board' && (
             <>
-              <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} />
+              <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} currentPhase={currentPhase} />
               {/* Only show market contracts and independent railroads during play phase */}
               {currentPhase === 'play' && <MarketContracts G={G} ctx={ctx} />}
               {currentPhase === 'play' && <IndependentRailroads G={G} />}

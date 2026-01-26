@@ -68,12 +68,6 @@ export function TopButtonBar({ input, setInput, startingContractExists, currentP
         </button>
       </div>
 
-      {/* End turn button - not shown during setup (auto-advances) */}
-      <button 
-        name="endTurn" 
-        className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
-      >End Turn</button>
-
       <div className="buttonBar__section">
         <span className={`buttonBar__label ${currentPhase === 'setup' ? '' : 'hidden'}`}>
           <b>Choose starting cities:</b>
@@ -103,11 +97,14 @@ export function TopButtonBar({ input, setInput, startingContractExists, currentP
         disabled={!input || currentPhase !== 'setup'}
       >Choose Starting Cities</button>
       
-      <button 
-        type="button"
-        onClick={onOpenEditPlaytest}
-        className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
-      >Edit Playtest</button>
+      <div className="buttonBar__right">
+        <button 
+          type="button"
+          onClick={onOpenEditPlaytest}
+          className={`button button--icon-square ${currentPhase === 'play' ? '' : 'button--hidden'}`}
+          title="Edit Playtest"
+        >⚙️</button>
+      </div>
     </div>
   );
 }
