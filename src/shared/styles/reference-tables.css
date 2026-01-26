@@ -70,3 +70,21 @@
 .commodityRow__cities {
   opacity: var(--opacity-disabled);
 }
+
+.commoditySection__title {
+  font-weight: bold;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.commodityTable > div:first-child > .commoditySection__title {
+  margin-top: 0;
+}
+
+.commoditySection__empty {
+  opacity: var(--opacity-muted);
+  font-style: italic;
+  padding: var(--spacing-sm) 0;
+}
