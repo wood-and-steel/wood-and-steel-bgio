@@ -15,14 +15,14 @@
   background-color: var(--color-bg-white);
   padding: var(--spacing-xl);
   border-radius: var(--radius-md);
-  max-width: 500px;
+  max-width: 31rem;
   width: 90%;
   max-height: 80vh;
   overflow: auto;
 }
 
 .modal__content--small {
-  max-width: 400px;
+  max-width: 25rem;
 }
 
 .modal__title {
@@ -39,12 +39,12 @@
 .modal__input {
   width: 100%;
   padding: var(--spacing-sm);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   text-transform: uppercase;
   margin-bottom: var(--spacing-md);
   background-color: var(--color-bg-white);
   color: var(--color-text);
-  border: 1px solid var(--color-border-light);
+  border: 0.125rem solid var(--color-border-light);
 }
 
 /* ========================================
@@ -60,7 +60,7 @@
 .editPlaytestDialog__form--separated {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-xl);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 0.125rem solid var(--color-border-light);
 }
 
 .editPlaytestDialog__row {
@@ -78,7 +78,7 @@
   font-size: 1rem;
   background-color: var(--color-bg-white);
   color: var(--color-text);
-  border: 1px solid var(--color-border-light);
+  border: 0.125rem solid var(--color-border-light);
 }
 
 .editPlaytestDialog__actions {

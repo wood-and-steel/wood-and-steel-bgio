@@ -4,7 +4,7 @@
 }
 
 .table__header {
-  border-bottom: 2px solid var(--color-border-medium);
+  border-bottom: 0.125rem solid var(--color-border-medium);
 }
 
 .table__headerCell {
@@ -13,7 +13,7 @@
 }
 
 .table__row {
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 0.125rem solid var(--color-border-subtle);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -44,41 +44,48 @@
 
 /* Mobile Layout (default, < 768px) */
 .table {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .table__headerCell {
   padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .table__cell {
   padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 /* Hide less important columns on mobile */
-@media (max-width: 767px) {
-  .table__cell--hide-mobile,
-  .table__headerCell--hide-mobile {
-    display: none;
-  }
+.table__cell--hide-mobile,
+.table__headerCell--hide-mobile {
+  display: none;
 }
 
 /* Tablet Layout (768px - 1023px) */
 @media (min-width: 768px) {
   .table {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   .table__headerCell {
     padding: var(--spacing-sm);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   .table__cell {
     padding: var(--spacing-sm);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+  }
+
+  /* Show columns that were hidden on mobile */
+  .table__cell--hide-mobile {
+    display: table-cell;
+  }
+
+  .table__headerCell--hide-mobile {
+    display: table-cell;
   }
 }
 

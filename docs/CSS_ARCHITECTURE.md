@@ -2,26 +2,36 @@
 
 ## Overview
 
-This project now uses a modern, maintainable CSS architecture with no inline styles. All styling is centralized in `/src/shared/styles/index.css`.
+This project now uses a modern, maintainable CSS architecture with no inline styles. All styling is centralized in `/src/shared/styles/index.css`, which imports multiple organized CSS files.
 
-## Key Improvements
+## Key tenets
 
-### ✅ What We Fixed
-
-1. **Removed ALL inline styles** - Previously 40+ inline style attributes scattered across components
-2. **Centralized styling** - Single CSS file with clear organization
+1. **No inline styles** - Components only refer to class names and never have style={} attributes
+2. **Centralized styling** - All CSS files imported through `/src/shared/styles/index.css` with clear organization
 3. **CSS Variables** - Consistent colors, spacing, and values throughout
 4. **Semantic class names** - Classes describe purpose, not appearance
 5. **BEM-inspired naming** - Component-scoped classes with clear hierarchy
 6. **Utility classes** - Reusable classes for common patterns
-
-### ❌ What We Removed
-
-- Deleted `/src/shared/styles/styles.js` (JavaScript style objects)
-- Removed all inline `style={}` attributes from JSX
-- Eliminated magic numbers and hardcoded values
+7. **Responsive zooming** - All measurements (other than breakpoints) are in rems instead of pixels (assuming a default of 16 px == 1 rem)
+8. **Rounded rem values** - All rem values must be rounded according to specific precision rules (see Rem Value Rounding section)
 
 ## CSS Structure
+
+The CSS is organized into multiple files, all imported through `/src/shared/styles/index.css`:
+
+- `variables.css` - CSS custom properties (design tokens)
+- `base.css` - Global styles and resets
+- `layout.css` - Page-level layout styles
+- `components.css` - Component-specific styles (NavBar, LobbyScreen, etc.)
+- `buttons.css` - Button component styles
+- `modal.css` - Modal/dialog styles
+- `tables.css` - Table component styles
+- `contracts.css` - Contract component styles
+- `player-board.css` - Player board component styles
+- `reference-tables.css` - Reference table styles
+- `utilities.css` - Utility classes
+
+This modular approach keeps styles organized while maintaining a single entry point.
 
 ### 1. CSS Variables (`:root`)
 
@@ -112,7 +122,7 @@ The app uses a **3-layout approach** (mobile, tablet, desktop) for pixel-perfect
 /* Mobile Layout (default, < 768px) */
 .myComponent {
   padding: var(--spacing-sm);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 /* Tablet Layout (768px - 1023px) */
@@ -127,7 +137,7 @@ The app uses a **3-layout approach** (mobile, tablet, desktop) for pixel-perfect
 @media (min-width: 1024px) {
   .myComponent {
     padding: var(--spacing-lg);
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 }
 ```
@@ -206,8 +216,10 @@ Use template literals for conditional classes:
 4. **Use utility classes** for simple, one-off layouts
 5. **Add comments** to organize sections in CSS
 6. **Start with mobile layout** - Use mobile-first approach, then add tablet/desktop overrides
-7. **Define all 3 breakpoints** - Even if similar, explicitly define mobile/tablet/desktop for pixel-perfect control
+7. **Add breakpoints only where needed** - Only define responsive breakpoints when there are actual differences between layouts
 8. **Use breakpoint variables** - Reference `var(--breakpoint-tablet)` in comments for clarity
+9. **Use rems for all measurements** - Convert all px values to rem (except breakpoint values) for responsive zooming
+10. **Round rem values appropriately** - Follow the rounding rules for rem precision (see Rem Value Rounding section)
 
 ### DON'T ❌
 
@@ -217,7 +229,8 @@ Use template literals for conditional classes:
 4. **No generic class names** - `.info` is too vague
 5. **No duplicate styles** - DRY principle
 6. **No fluid responsive** - Use discrete breakpoints, not continuous scaling
-7. **Don't skip breakpoints** - Define all three layouts even if they're similar
+7. **No pixel values** - Use rems for all measurements (except breakpoint values in media queries)
+8. **No max-width media queries** - Use mobile-first with min-width queries only
 
 ## Adding New Styles
 
@@ -232,7 +245,7 @@ Use template literals for conditional classes:
 /* Mobile Layout (default, < 768px) */
 .myComponent {
   padding: var(--spacing-sm);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .myComponent__element {
@@ -255,7 +268,7 @@ Use template literals for conditional classes:
 @media (min-width: 1024px) {
   .myComponent {
     padding: var(--spacing-lg);
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 }
 ```
@@ -290,24 +303,6 @@ Add to the utilities section if it's reusable:
 .width-full { width: 100%; }
 ```
 
-## Migration Notes
-
-### Before (inline styles ❌)
-
-```jsx
-<div style={{ 
-  padding: '2rem',
-  backgroundColor: 'white',
-  borderRadius: '8px'
-}}>
-```
-
-### After (CSS classes ✅)
-
-```jsx
-<div className="modal__content">
-```
-
 ## Performance Benefits
 
 1. **Smaller bundle** - CSS is more compressible than JS objects
@@ -317,11 +312,62 @@ Add to the utilities section if it's reusable:
 
 ## Maintenance Benefits
 
-1. **Single source of truth** - All styles in one file
-2. **Find/replace works** - Change colors globally
-3. **No duplication** - Reuse classes and variables
-4. **Type safety** - No runtime style errors
-5. **Better IDE support** - CSS autocomplete and linting
+1. **Find/replace works** - Change colors globally
+2. **No duplication** - Reuse classes and variables
+3. **Type safety** - No runtime style errors
+4. **Better IDE support** - CSS autocomplete and linting
+
+## Rem Value Rounding
+
+All rem values must be rounded to specific precision levels for consistency and maintainability:
+
+### Rounding Rules
+
+1. **Under 1 rem**: Round to the nearest **0.125** (e.g., 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875)
+   - Examples: `0.0625rem` → `0.125rem`, `0.7rem` → `0.75rem`, `0.9rem` → `0.875rem`
+
+2. **1 to 4 rem**: Round to the nearest **0.25** (e.g., 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4)
+   - Examples: `1.1rem` → `1rem`, `1.625rem` → `1.75rem`, `3.4rem` → `3.5rem`
+
+3. **4 to 10 rem**: Round to the nearest **0.5** (e.g., 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10)
+   - Examples: `7.1875rem` → `7.5rem`, `8.375rem` → `8.5rem`
+
+4. **Above 10 rem**: Round to the nearest **whole number** (e.g., 11, 12, 13, 14, ...)
+   - Examples: `12.5rem` → `13rem`, `31.25rem` → `31rem`, `37.5rem` → `38rem`
+
+### Why Round?
+
+- **Consistency**: Easier to scan and understand rounded values
+- **Maintainability**: Fewer unique values to remember
+- **Performance**: Slightly better browser optimization with standard increments
+- **Design system**: Aligns with common design token practices
+
+### Examples
+
+```css
+/* ✅ Correct - rounded values */
+.icon {
+  width: 1.5rem;        /* 1-4 rem, rounded to 0.25 */
+  height: 1.5rem;
+  border: 0.125rem;     /* Under 1 rem, rounded to 0.125 */
+}
+
+.button {
+  width: 7.5rem;        /* 4-10 rem, rounded to 0.5 */
+  min-width: 13rem;    /* Above 10 rem, rounded to whole number */
+}
+
+/* ❌ Incorrect - unrounded values */
+.icon {
+  width: 1.47rem;       /* Should be 1.5rem */
+  border: 0.0625rem;    /* Should be 0.125rem */
+}
+
+.button {
+  width: 7.1875rem;     /* Should be 7.5rem */
+  min-width: 12.5rem;   /* Should be 13rem */
+}
+```
 
 ## Responsive Design Philosophy
 
@@ -394,5 +440,5 @@ For now, the current CSS architecture is:
 
 ---
 
-**Last Updated:** January 25, 2026  
+**Last Updated:** January 26, 2026  
 **Maintainer:** Development Team

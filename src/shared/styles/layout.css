@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .pageContent {
@@ -31,7 +31,7 @@
   }
 
   .form {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 }
 
@@ -43,6 +43,6 @@
   }
 
   .form {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 }

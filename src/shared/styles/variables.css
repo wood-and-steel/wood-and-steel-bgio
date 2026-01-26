@@ -33,18 +33,18 @@
   --spacing-3xl: 5rem;
   
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
   
   /* Z-Index */
   --z-modal: 1000;
   --z-modal-nested: 1001;
   
   /* Sizes */
-  --button-height: 26px;
-  --input-height: 20px;
-  --input-height-md: 24px;
-  --icon-size: 24px;
+  --button-height: 1.75rem;
+  --input-height: 1.25rem;
+  --input-height-md: 1.5rem;
+  --icon-size: 1.5rem;
   
   /* Opacity */
   --opacity-disabled: 0.6;

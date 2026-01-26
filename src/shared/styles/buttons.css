@@ -5,7 +5,7 @@
   align-items: center;
   width: fit-content;
   border-radius: var(--radius-sm);
-  border: solid 1px var(--color-border);
+  border: solid 0.125rem var(--color-border);
   background-color: var(--color-bg-light);
   color: var(--color-text);
   cursor: pointer;
@@ -18,7 +18,7 @@
 
 .button:disabled {
   color: var(--color-text-muted);
-  border: solid 1px var(--color-border-light);
+  border: solid 0.125rem var(--color-border-light);
   background-color: var(--color-bg-white);
 }
 
