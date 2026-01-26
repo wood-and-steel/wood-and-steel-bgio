@@ -323,8 +323,8 @@ All rem values must be rounded to specific precision levels for consistency and 
 
 ### Rounding Rules
 
-1. **Under 1 rem**: Round to the nearest **0.125** (e.g., 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875)
-   - Examples: `0.0625rem` → `0.125rem`, `0.7rem` → `0.75rem`, `0.9rem` → `0.875rem`
+1. **Under 1 rem**: Round to the nearest **0.0625** (e.g., 0.0625, 0.125, 0.1875, etc.)
+   - Examples: `0.06rem` → `0.0625rem`, `0.7rem` → `0.75rem`, `0.9rem` → `0.875rem`
 
 2. **1 to 4 rem**: Round to the nearest **0.25** (e.g., 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4)
    - Examples: `1.1rem` → `1rem`, `1.625rem` → `1.75rem`, `3.4rem` → `3.5rem`

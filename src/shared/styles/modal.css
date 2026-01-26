@@ -44,7 +44,7 @@
   margin-bottom: var(--spacing-md);
   background-color: var(--color-bg-white);
   color: var(--color-text);
-  border: 0.125rem solid var(--color-border-light);
+  border: var(--border-width-md) solid var(--color-border-light);
 }
 
 /* ========================================
@@ -60,7 +60,7 @@
 .editPlaytestDialog__form--separated {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-xl);
-  border-top: 0.125rem solid var(--color-border-light);
+  border-top: var(--border-width-md) solid var(--color-border-light);
 }
 
 .editPlaytestDialog__row {
@@ -78,7 +78,7 @@
   font-size: 1rem;
   background-color: var(--color-bg-white);
   color: var(--color-text);
-  border: 0.125rem solid var(--color-border-light);
+  border: var(--border-width-md) solid var(--color-border-light);
 }
 
 .editPlaytestDialog__actions {

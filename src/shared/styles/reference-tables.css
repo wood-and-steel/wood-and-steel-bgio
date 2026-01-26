@@ -76,7 +76,7 @@
   margin-top: var(--spacing-md);
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-xs);
-  border-bottom: 0.125rem solid var(--color-border);
+  border-bottom: var(--border-width-md) solid var(--color-border);
 }
 
 .commodityTable > div:first-child > .commoditySection__title {

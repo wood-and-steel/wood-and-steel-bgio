@@ -4,7 +4,7 @@
 }
 
 .table__header {
-  border-bottom: 0.125rem solid var(--color-border-medium);
+  border-bottom: var(--border-width-md) solid var(--color-border-medium);
 }
 
 .table__headerCell {
@@ -13,7 +13,7 @@
 }
 
 .table__row {
-  border-bottom: 0.125rem solid var(--color-border-subtle);
+  border-bottom: var(--border-width-md) solid var(--color-border-subtle);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
