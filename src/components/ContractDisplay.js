@@ -24,16 +24,26 @@ export function Contract({ contract, ctx, onToggle, onDelete }) {
   const value = getContractValue(contract);
 
   return (
-    <div>
+    <div className={classes}>
       <button 
-        className={classes}
+        className="contract__fulfillButton"
         id={contract.id} 
         name="toggleContractFulfilled"
         onClick={onToggle}
         disabled={!enabled}
       >
-        <CommodityRichName commodity={contract.commodity} /> to {contract.destinationKey} ({value})
+        Fulfill
       </button>
+      <CommodityRichName commodity={contract.commodity} />
+      <div>
+        to
+      </div>   
+      <div>
+        {contract.destinationKey}
+      </div>
+      <div>
+        {value}
+      </div>
       <button 
         className={`deleteButton ${contract.fulfilled ? 'hidden' : ''}`}
         id={contract.id} 

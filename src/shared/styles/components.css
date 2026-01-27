@@ -316,23 +316,6 @@
 }
 
 /* ========================================
-   MARKET CONTRACTS
-   ======================================== */
-.marketContracts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  margin: auto;
-  padding: var(--spacing-sm);
-}
-
-.marketContracts__title {
-  font-weight: bold;
-  width: 18rem;
-  padding-bottom: var(--spacing-xs);
-}
-
-/* ========================================
    INDEPENDENT RAILROADS
    ======================================== */
 .independentRailroads {
@@ -545,4 +528,14 @@
 
 .themeToggle:hover {
   transform: scale(1.1);
+}
+
+/* ========================================
+   COMMODITY RICH NAME
+   ======================================== */
+.commodityRichName {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-xs);
 }

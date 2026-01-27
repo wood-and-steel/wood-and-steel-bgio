@@ -9,9 +9,9 @@ function capitalizeFirst(str) {
 // Reusable component for displaying commodity with icon and capitalized name
 export function CommodityRichName({ commodity, iconClassName }) {
   return (
-    <>
+    <div className="commodityRichName">
       <img src={commodityIcons[commodity]} alt={commodity} className={iconClassName || "commodityRow__icon"} />
       <span>{capitalizeFirst(commodity)}</span>
-    </>
+    </div>
   );
 }
