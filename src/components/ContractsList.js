@@ -2,6 +2,27 @@ import React from "react";
 import { ContractDisplay } from "./ContractDisplay";
 
 const SKIP_OPEN_MS = 50;
+/**
+ * Displays a list of Contract cards, either market or player-specific.
+ * 
+ * @component
+ * @param {object} props
+ * @param {object} props.G - The game state object containing contracts.
+ * @param {object} props.ctx - The game context.
+ * @param {'market'|'private'|'fulfilled'} [props.type='market'] - Which contracts to show; 'market' shows global market contracts, 'private' shows unfulfilled player-specific contracts, 'fulfilled' shows fulfilled contracts for the player.
+ * @param {string|null} [props.playerID=null] - The player whose contracts to show (only relevant if type is 'private' or 'fulfilled').
+ * @param {function} props.onToggleFulfilled - Called when a contract's fulfilled state is toggled.
+ * @param {function} props.onDelete - Called when a contract is deleted.
+ * 
+ * @example
+ * <ContractsList
+ *   G={G}
+ *   ctx={ctx}
+ *   type="market"
+ *   onToggleFulfilled={fn}
+ *   onDelete={fn}
+ * />
+ */
 
 export function ContractsList({
   G,
@@ -37,7 +58,9 @@ export function ContractsList({
   const filteredContracts = (
     type === "market"
       ? G.contracts.filter((c) => c.type === "market" && !c.fulfilled)
-      : G.contracts.filter((c) => c.playerID === playerID)
+      : type === "private"
+      ? G.contracts.filter((c) => c.playerID === playerID && !c.fulfilled)
+      : G.contracts.filter((c) => c.playerID === playerID && c.fulfilled)
   );
 
   return (

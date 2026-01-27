@@ -84,8 +84,12 @@ export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onSt
           </div>
         )}
         <div className="playerBoard__contracts">
+          <h3 className="playerBoard__contractsTitle">Private</h3>
           <ContractsList G={G} ctx={ctx} type="private" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
+          <h3 className="playerBoard__contractsTitle">Market</h3>
           <ContractsList G={G} ctx={ctx} type="market" onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
+          <h3 className="playerBoard__contractsTitle">Fulfilled</h3>
+          <ContractsList G={G} ctx={ctx} type="fulfilled" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
         </div>
       </div>
     </div>
