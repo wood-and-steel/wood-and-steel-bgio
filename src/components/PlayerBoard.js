@@ -12,7 +12,7 @@ const STARTING_CITY_PAIRS = [
 ];
 
 // Player Board Component
-export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onStartingPairSelect }) {
+export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onStartingPairSelect, onToggleFulfilled, onDelete }) {
   const activePlayer = G.players.find(([key]) => key === ctx.currentPlayer);
   if (!activePlayer) return null;
 
@@ -76,7 +76,7 @@ export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onSt
           >
             Generate Private Contract
           </button>
-          <ContractsList G={G} ctx={ctx} type="private" playerID={key} />
+          <ContractsList G={G} ctx={ctx} type="private" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
         </div>
       </div>
     </div>

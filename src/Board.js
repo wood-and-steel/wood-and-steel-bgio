@@ -56,6 +56,22 @@ export function WoodAndSteelState({ gameManager }) {
     setInput("");
   }, [moves]);
 
+  const handleToggleFulfilled = React.useCallback(
+    (contractId) => moves.toggleContractFulfilled(contractId),
+    [moves]
+  );
+
+  const handleDelete = React.useCallback(
+    (contractId) => {
+      const c = G.contracts.find((x) => x.id === contractId);
+      if (!c) return;
+      if (!window.confirm(`Delete "${c.commodity} to ${c.destinationKey}"?`)) return;
+      setInput(`${c.commodity}, ${c.destinationKey}, ${c.type}`);
+      moves.deleteContract(contractId);
+    },
+    [G.contracts, moves]
+  );
+
   function handleSubmit(e) {
     // Prevent the browser from reloading the page
     e.preventDefault();
@@ -77,17 +93,6 @@ export function WoodAndSteelState({ gameManager }) {
         // This case is kept for backwards compatibility but should not be used
         // Manual contracts are now created via EditPlaytestDialog
         moves.addManualContract(inputParameters[0], inputParameters[1], inputParameters[2]);
-        break;
-      case "toggleContractFulfilled":
-        moves.toggleContractFulfilled(e.nativeEvent.submitter.id);
-        break;
-      case "deleteContract":
-        const contractIndex = G.contracts.findIndex(c => c.id === e.nativeEvent.submitter.id);
-        const contract = G.contracts[contractIndex];
-        if (window.confirm(`Delete "${contract.commodity} to ${contract.destinationKey}?"`)) {
-            setInput(`${contract.commodity}, ${contract.destinationKey}, ${contract.type}`); 
-            moves.deleteContract(e.nativeEvent.submitter.id);
-        }
         break;
       case "acquireIndependentRailroad":
         const railroadName = e.nativeEvent.submitter.id;
@@ -162,9 +167,9 @@ export function WoodAndSteelState({ gameManager }) {
           />
           {activeTab === 'board' && (
             <>
-              <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} currentPhase={currentPhase} onStartingPairSelect={handleStartingPairSelect} />
+              <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} currentPhase={currentPhase} onStartingPairSelect={handleStartingPairSelect} onToggleFulfilled={handleToggleFulfilled} onDelete={handleDelete} />
               {/* Only show market contracts during play phase */}
-              {currentPhase === 'play' && <MarketContracts G={G} ctx={ctx} />}
+              {currentPhase === 'play' && <MarketContracts G={G} ctx={ctx} onToggleFulfilled={handleToggleFulfilled} onDelete={handleDelete} />}
             </>
           )}
           {activeTab === 'commodities' && <CommoditiesPage />}

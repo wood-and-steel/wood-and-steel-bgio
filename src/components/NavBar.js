@@ -1,104 +1,88 @@
 import React from "react";
 import placeholderIcon from "../shared/assets/images/placeholder-icon.svg";
 import hamburgerIcon from "../shared/assets/images/hamburger-icon.svg";
+import { PopupMenu, PopupMenuItem } from "./PopupMenu";
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+  React.useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const handler = () => setIsDesktop(mql.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+  return isDesktop;
+}
 
 // Nav Bar Component
 export function NavBar({ input, setInput, startingContractExists, currentPhase, G, gameManager, onNavigateToLobby, onOpenEditPlaytest, activeTab, onTabChange }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const menuRef = React.useRef(null);
   const menuButtonRef = React.useRef(null);
   const menuButtonDesktopRef = React.useRef(null);
+  const isDesktop = useIsDesktop();
 
-  // Close menu when clicking outside
-  React.useEffect(() => {
-    function handleClickOutside(event) {
-      const target = event.target;
-      const isMenuClick = menuRef.current?.contains(target);
-      const isMenuButtonClick = menuButtonRef.current?.contains(target) || menuButtonDesktopRef.current?.contains(target);
-      
-      if (isMenuOpen && !isMenuClick && !isMenuButtonClick) {
-        setIsMenuOpen(false);
-      }
-    }
+  const placement = React.useMemo(
+    () => (isDesktop ? { side: "bottom", align: "start" } : { side: "top", align: "end" }),
+    [isDesktop]
+  );
 
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isMenuOpen]);
-
-  // Handle copying game code to clipboard
   const handleCopyGameCode = React.useCallback(async () => {
     if (gameManager?.currentGameCode) {
       try {
         await navigator.clipboard.writeText(gameManager.currentGameCode);
         setIsMenuOpen(false);
       } catch (err) {
-        console.error('Failed to copy game code:', err);
+        console.error("Failed to copy game code:", err);
       }
     }
   }, [gameManager]);
 
-  // Handle menu item clicks
-  const handleMenuClick = React.useCallback((action) => {
-    if (action === 'lobby') {
-      onNavigateToLobby();
-    } else if (action === 'edit') {
-      onOpenEditPlaytest();
-    }
-    setIsMenuOpen(false);
-  }, [onNavigateToLobby, onOpenEditPlaytest]);
+  const handleMenuClick = React.useCallback(
+    (action) => {
+      if (action === "lobby") onNavigateToLobby();
+      else if (action === "edit") onOpenEditPlaytest();
+      setIsMenuOpen(false);
+    },
+    [onNavigateToLobby, onOpenEditPlaytest]
+  );
 
   const tabs = [
-    { id: 'board', label: 'Board' },
-    { id: 'commodities', label: 'Commodities' },
-    { id: 'indies', label: 'Railroads' },
-    { id: 'cities', label: 'Cities' }
+    { id: "board", label: "Board" },
+    { id: "commodities", label: "Commodities" },
+    { id: "indies", label: "Railroads" },
+    { id: "cities", label: "Cities" },
   ];
 
   return (
     <>
-      {/* Menu button - floating on mobile/tablet, in nav bar on desktop */}
       <button
         type="button"
         className="navBar__menuButton"
         ref={menuButtonRef}
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        onClick={() => setIsMenuOpen((o) => !o)}
         aria-label="Menu"
+        aria-expanded={isMenuOpen}
+        aria-haspopup="menu"
       >
         <img src={hamburgerIcon} alt="" className="navBar__menuIcon" />
       </button>
 
-      {/* Menu dropdown */}
-      {isMenuOpen && (
-        <div className="navBar__menu" ref={menuRef}>
-          <button
-            type="button"
-            className="navBar__menuItem"
-            onClick={() => handleMenuClick('lobby')}
-          >
-            Go to Lobby
-          </button>
-          {gameManager?.currentGameCode && (
-            <button
-              type="button"
-              className="navBar__menuItem"
-              onClick={handleCopyGameCode}
-            >
-              Copy Game Code ({gameManager.currentGameCode})
-            </button>
-          )}
-          <button
-            type="button"
-            className="navBar__menuItem"
-            onClick={() => handleMenuClick('edit')}
-          >
-            Add Contract or City...
-          </button>
-        </div>
-      )}
+      <PopupMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        anchorRef={[menuButtonRef, menuButtonDesktopRef]}
+        placement={placement}
+      >
+        <PopupMenuItem onClick={() => handleMenuClick("lobby")}>Go to Lobby</PopupMenuItem>
+        {gameManager?.currentGameCode && (
+          <PopupMenuItem onClick={handleCopyGameCode}>
+            Copy Game Code ({gameManager.currentGameCode})
+          </PopupMenuItem>
+        )}
+        <PopupMenuItem onClick={() => handleMenuClick("edit")}>Add Contract or City...</PopupMenuItem>
+      </PopupMenu>
 
       {/* Main nav bar */}
       <nav className="navBar">
@@ -107,8 +91,10 @@ export function NavBar({ input, setInput, startingContractExists, currentPhase, 
           type="button"
           className="navBar__menuButton--desktop"
           ref={menuButtonDesktopRef}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => setIsMenuOpen((o) => !o)}
           aria-label="Menu"
+          aria-expanded={isMenuOpen}
+          aria-haspopup="menu"
         >
           <img src={hamburgerIcon} alt="" className="navBar__menuIcon" />
         </button>

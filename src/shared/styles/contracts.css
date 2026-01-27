@@ -11,7 +11,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  width: 8rem;
+  width: 10rem;
   background-color: transparent;
   border: solid var(--border-width-md) var(--color-border-light);
   border-radius: var(--radius-sm);
@@ -33,11 +33,6 @@
 
 .contract--private {
   color: var(--color-contract-private);
-}
-
-.contract__fulfillButton {
-  display: inline-block;
-  margin-right: var(--spacing-xs);
 }
 
 .contract__header {
