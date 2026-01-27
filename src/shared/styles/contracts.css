@@ -1,3 +1,11 @@
+.contractsList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
 .contract {
   display: flex;
   flex-direction: column;
@@ -38,8 +46,30 @@
   align-items: center;
   justify-content: space-between;
   background-color: var(--color-bg-light);
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
   width: 100%;
+  box-sizing: border-box;
+}
+
+.contract--market .contract__header {
+  background-color: var(--color-bg-active);
+}
+
+.contract__tieIcon {
+  height: 1rem;
+}
+
+.contract__rewardValue {
+  font-weight: bold;
+}
+
+.contract__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-sm);
   box-sizing: border-box;
 }
 
@@ -57,7 +87,6 @@
 
 .marketContracts__title {
   font-weight: bold;
-  width: 18rem;
   padding-bottom: var(--spacing-xs);
 }
   

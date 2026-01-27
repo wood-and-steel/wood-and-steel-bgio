@@ -1,5 +1,5 @@
 import React from "react";
-import { Contract } from "./ContractDisplay";
+import { ContractDisplay } from "./ContractDisplay";
 
 // Contracts List Component
 export function ContractsList({ G, ctx, type = "market", playerID = null }) {
@@ -17,7 +17,9 @@ export function ContractsList({ G, ctx, type = "market", playerID = null }) {
     G.contracts.filter(contract => contract.playerID === playerID)
   );
 
-  return filteredContracts.toSorted(compareContractsFn).map((contract, index) => (
-    <Contract key={index} contract={contract} ctx={ctx} />
-  ));
+  return <div className="contractsList">
+    {filteredContracts.toSorted(compareContractsFn).map((contract, index) => (
+      <ContractDisplay key={index} contract={contract} ctx={ctx} />
+    ))}
+  </div>
 }

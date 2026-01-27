@@ -1,58 +1,46 @@
 import React from "react";
 import { rewardValue, railroadTieValue } from "../Contract";
 import { CommodityRichName } from "./CommodityRichName";
+import { contractTieIcons } from "../shared/assets/icons";
 
 function formatContractTieValue(contract) {
   const ties = railroadTieValue(contract);
-  return `${ties} ${ties > 1 ? "RR ties" : "RR tie"}`;
+  return <img className="contract__tieIcon" src={contractTieIcons[ties]} alt={`${ties} ${ties > 1 ? "railroad ties" : "railroad tie"}`} />; 
 }
 
-function isContractEnabled(contract, ctx) {
-  return contract.playerID === ctx.currentPlayer || 
-         (contract.type === "market" && (!contract.fulfilled || contract.playerID === ctx.currentPlayer));
-}
-
-// Contract Component
-export function Contract({ contract, ctx, onToggle, onDelete }) {
-  const enabled = isContractEnabled(contract, ctx);
+export function ContractDisplay({ contract }) {
   const classes = [
-    'contract',
-    contract.fulfilled ? 'contract--fulfilled' : '',
-    contract.type === 'market' ? 'contract--market' : 'contract--private'
-  ].filter(Boolean).join(' ');
-  
+    "contract",
+    contract.type === "market" ? "contract--market" : "contract--private",
+    contract.fulfilled ? "contract--fulfilled" : ""
+  ].filter(Boolean).join(" ");
+
   return (
     <div className={classes}>
       <div className="contract__header">
-        <div className="contract__tieValue">
-          {formatContractTieValue(contract)}
-        </div>
+        {formatContractTieValue(contract)}
         <div className="contract__rewardValue">
           ${rewardValue(contract)/1000}K
         </div>
       </div>
-      <CommodityRichName commodity={contract.commodity} />
-      <div>
-        to
-      </div>   
-      <div>
-        {contract.destinationKey}
-      </div>
+      <div className="contract__body">
+        <CommodityRichName commodity={contract.commodity} />
+        <div className="contract__destination">
+          to {contract.destinationKey}
+        </div>
+        <button 
+          className="contract__fulfillButton"
+          id={contract.id} 
+          name="toggleContractFulfilled"
+        >
+          Fulfill
+        </button>
       <button 
-        className="contract__fulfillButton"
-        id={contract.id} 
-        name="toggleContractFulfilled"
-        onClick={onToggle}
-        disabled={!enabled}
-      >
-        Fulfill
-      </button>
-     <button 
-        className={`deleteButton ${contract.fulfilled ? 'hidden' : ''}`}
-        id={contract.id} 
-        name="deleteContract"
-        onClick={onDelete}
-      >✕</button>
+          className={`deleteButton ${contract.fulfilled ? 'hidden' : ''}`}
+          id={contract.id} 
+          name="deleteContract"
+        >✕</button>
+      </div>
     </div>
   );
 }

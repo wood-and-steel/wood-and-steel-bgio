@@ -53,3 +53,16 @@ export const commodityIcons = {
   'wine': wineIcon,
   'wood': woodIcon,
 };
+// Import railroad tie icons
+import contractTie1Icon from './images/railroad-ties/contract-ties-1.svg';
+import contractTie2Icon from './images/railroad-ties/contract-ties-2.svg';
+import contractTie3Icon from './images/railroad-ties/contract-ties-3.svg';
+import contractTie4Icon from './images/railroad-ties/contract-ties-4.svg';
+
+// Map railroad tie names to their icons
+export const contractTieIcons = {
+  '1': contractTie1Icon,
+  '2': contractTie2Icon,
+  '3': contractTie3Icon,
+  '4': contractTie4Icon
+};
