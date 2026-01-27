@@ -1,16 +1,11 @@
 import React from "react";
 import { commodities } from "../data";
-import { commodityIcons } from "../shared/assets/icons";
 import { useGame } from "../hooks/useGame";
+import { CommodityRichName } from "./CommodityRichName";
 
 // Helper function
-function formatCommodityList(items) {
+function formatCommodityCityList(items) {
   return items.toString().replaceAll(',', ', ');
-}
-
-// Helper function to capitalize first letter
-function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // Commodities Page Component
@@ -43,10 +38,9 @@ export function CommoditiesPage() {
     const commodityRow = (
       <div key={key} className="commodityRow">
         <div className="commodityRow__header">
-          <img src={commodityIcons[key]} alt={key} className="commodityRow__icon" />
-          <span>{capitalizeFirst(key)}</span>
+          <CommodityRichName commodity={key} />
         </div>
-        <div className="commodityRow__cities">{formatCommodityList(value.cities)}</div>
+        <div className="commodityRow__cities">{formatCommodityCityList(value.cities)}</div>
       </div>
     );
 

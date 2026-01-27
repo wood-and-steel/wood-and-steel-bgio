@@ -1,5 +1,6 @@
 import React from "react";
 import { rewardValue, railroadTieValue } from "../Contract";
+import { CommodityRichName } from "./CommodityRichName";
 
 function getContractValue(contract) {
   const ties = railroadTieValue(contract);
@@ -31,7 +32,7 @@ export function Contract({ contract, ctx, onToggle, onDelete }) {
         onClick={onToggle}
         disabled={!enabled}
       >
-        {contract.commodity} to {contract.destinationKey} ({value})
+        <CommodityRichName commodity={contract.commodity} /> to {contract.destinationKey} ({value})
       </button>
       <button 
         className={`deleteButton ${contract.fulfilled ? 'hidden' : ''}`}

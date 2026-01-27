@@ -54,8 +54,8 @@ export function NavBar({ input, setInput, startingContractExists, currentPhase, 
   const tabs = [
     { id: 'board', label: 'Board' },
     { id: 'commodities', label: 'Commodities' },
-    { id: 'cities', label: 'Cities' },
-    { id: 'indies', label: 'Indies' }
+    { id: 'indies', label: 'Railroads' },
+    { id: 'cities', label: 'Cities' }
   ];
 
   return (
