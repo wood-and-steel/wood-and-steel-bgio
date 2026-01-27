@@ -44,10 +44,16 @@ export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onSt
           </div>
           <div className="playerBoard__buttonGroup">
             <button
-              name="privateContract"
+              name="privateContract2"
               className={`button ${startingContractExists ? '' : 'button--hidden'}`}
             >
-              +1 P
+              +2 P
+            </button>
+            <button
+              name="privateContract3"
+              className={`button ${startingContractExists ? '' : 'button--hidden'}`}
+            >
+              +3 P
             </button>
             <button
               name="marketContract"

@@ -82,7 +82,13 @@ export function WoodAndSteelState({ gameManager }) {
         moves.generateStartingContract(inputParameters);
         setInput("");
         break;
-      case "privateContract":
+      case "privateContract2":
+        moves.generatePrivateContract();
+        moves.generatePrivateContract();
+        break;
+      case "privateContract3":
+        moves.generatePrivateContract();
+        moves.generatePrivateContract();
         moves.generatePrivateContract();
         break;
       case "marketContract":
