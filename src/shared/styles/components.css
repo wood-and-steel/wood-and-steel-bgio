@@ -124,8 +124,9 @@
   right: var(--spacing-md);
   background-color: var(--color-bg-white);
   border: var(--border-width-md) solid var(--color-border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+  padding: var(--spacing-sm) 0;
   z-index: 102;
   min-width: 13rem;
   overflow: hidden;
@@ -208,7 +209,7 @@
     right: 0;
     height: auto;
     padding: 0;
-    padding-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
     flex-direction: row;
     justify-content: center;
     align-items: center;
@@ -231,7 +232,7 @@
     justify-content: center;
     position: absolute;
     left: var(--spacing-sm);
-    top: var(--spacing-xs);
+    top: 0.125rem;
     width: 2.5rem;
     height: 2.5rem;
     background-color: transparent;
@@ -306,8 +307,8 @@
   /* Desktop menu positioning */
   .navBar__menu {
     position: fixed;
-    top: calc(var(--spacing-sm) + 2.5rem + var(--spacing-sm)); /* Top padding + button height + bottom padding */
-    left: var(--spacing-lg);
+    top: calc(var(--spacing-sm) + 2.5rem); /* Top padding + button height + bottom padding */
+    left: var(--spacing-sm);
     bottom: auto;
     right: auto;
     min-width: 14rem;

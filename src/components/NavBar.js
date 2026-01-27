@@ -79,7 +79,7 @@ export function NavBar({ input, setInput, startingContractExists, currentPhase, 
             className="navBar__menuItem"
             onClick={() => handleMenuClick('lobby')}
           >
-            Lobby
+            Go to Lobby
           </button>
           {gameManager?.currentGameCode && (
             <button
@@ -95,7 +95,7 @@ export function NavBar({ input, setInput, startingContractExists, currentPhase, 
             className="navBar__menuItem"
             onClick={() => handleMenuClick('edit')}
           >
-            Edit Playtest
+            Add Contract or City...
           </button>
         </div>
       )}
