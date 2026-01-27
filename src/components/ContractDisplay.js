@@ -2,9 +2,9 @@ import React from "react";
 import { rewardValue, railroadTieValue } from "../Contract";
 import { CommodityRichName } from "./CommodityRichName";
 
-function getContractValue(contract) {
+function formatContractTieValue(contract) {
   const ties = railroadTieValue(contract);
-  return `$${rewardValue(contract)/1000}K + ${ties} ${ties > 1 ? "RR ties" : "RR tie"}`;
+  return `${ties} ${ties > 1 ? "RR ties" : "RR tie"}`;
 }
 
 function isContractEnabled(contract, ctx) {
@@ -21,10 +21,23 @@ export function Contract({ contract, ctx, onToggle, onDelete }) {
     contract.type === 'market' ? 'contract--market' : 'contract--private'
   ].filter(Boolean).join(' ');
   
-  const value = getContractValue(contract);
-
   return (
     <div className={classes}>
+      <div className="contract__header">
+        <div className="contract__tieValue">
+          {formatContractTieValue(contract)}
+        </div>
+        <div className="contract__rewardValue">
+          ${rewardValue(contract)/1000}K
+        </div>
+      </div>
+      <CommodityRichName commodity={contract.commodity} />
+      <div>
+        to
+      </div>   
+      <div>
+        {contract.destinationKey}
+      </div>
       <button 
         className="contract__fulfillButton"
         id={contract.id} 
@@ -34,17 +47,7 @@ export function Contract({ contract, ctx, onToggle, onDelete }) {
       >
         Fulfill
       </button>
-      <CommodityRichName commodity={contract.commodity} />
-      <div>
-        to
-      </div>   
-      <div>
-        {contract.destinationKey}
-      </div>
-      <div>
-        {value}
-      </div>
-      <button 
+     <button 
         className={`deleteButton ${contract.fulfilled ? 'hidden' : ''}`}
         id={contract.id} 
         name="deleteContract"
