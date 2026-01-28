@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { createStorageAdapter, LocalStorageAdapter, SupabaseAdapter } from '../utils/storage';
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isSupabaseConfigured } from '../config/storage';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { getStorageAdapter } from '../utils/storage';
+import { isSupabaseConfigured } from '../config/storage';
 import { isValidGameCode, normalizeGameCode } from '../utils/gameManager';
 
 /**
@@ -40,16 +40,15 @@ export function StorageProvider({ children }) {
     return (saved === 'local' || saved === 'cloud') ? saved : 'local';
   });
 
-  // Create adapter instance based on storage type
+  // Use cached adapters from storage module. Never create new Supabase clients on tab
+  // switch; multiple GoTrueClient instances in the same context cause Supabase warnings
+  // and undefined behavior. getStorageAdapter(type) returns a singleton per type.
   const adapter = useMemo(() => {
-    if (storageType === 'cloud') {
-      if (!isSupabaseConfigured()) {
-        console.warn('[StorageProvider] Supabase not configured, falling back to localStorage');
-        return new LocalStorageAdapter();
-      }
-      return new SupabaseAdapter(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const type = storageType === 'cloud' && !isSupabaseConfigured() ? 'local' : storageType;
+    if (type === 'local' && storageType === 'cloud') {
+      console.warn('[StorageProvider] Supabase not configured, falling back to localStorage');
     }
-    return new LocalStorageAdapter();
+    return getStorageAdapter(type);
   }, [storageType]);
 
   // Set storage type and persist to localStorage

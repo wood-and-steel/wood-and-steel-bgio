@@ -27,7 +27,9 @@ const AppContent = () => {
   // Get number of players from game store (must be at top level, before conditional returns)
   const numPlayers = useGameStore((state) => state.ctx?.numPlayers || 2);
 
-  // Initialize lobby mode on mount
+  // Initialize lobby mode on mount only. Do NOT re-run when storage type changes:
+  // switching Local/Cloud tabs in the lobby must stay in lobby and show the list,
+  // not load the current game for the new type and exit lobby.
   React.useEffect(() => {
     const initializeApp = async () => {
       const code = storage.getCurrentGameCode();
@@ -81,7 +83,7 @@ const AppContent = () => {
     
     initializeApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storage.storageType]); // Re-initialize when storage type changes
+  }, []); // Mount only: tab switches must not re-initialize and exit lobby
 
   // Real-time subscription for multiplayer sync
   React.useEffect(() => {
