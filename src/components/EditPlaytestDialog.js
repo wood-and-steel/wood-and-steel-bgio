@@ -1,6 +1,26 @@
 import React from "react";
 import { commodities, cities } from "../data";
 
+/**
+ * Dialog component for playtest editing. Allows creating manual contracts and adding cities to players.
+ * 
+ * @component
+ * @param {object} props
+ * @param {boolean} props.isOpen - Whether the dialog is currently open.
+ * @param {function} props.onClose - Callback function called when the dialog should be closed.
+ * @param {object} props.G - The game state object.
+ * @param {object} props.ctx - The game context.
+ * @param {object} props.moves - Object containing game move functions (addManualContract, addCityToPlayer).
+ * 
+ * @example
+ * <EditPlaytestDialog
+ *   isOpen={isDialogOpen}
+ *   onClose={() => setIsDialogOpen(false)}
+ *   G={G}
+ *   ctx={ctx}
+ *   moves={moves}
+ * />
+ */
 export function EditPlaytestDialog({ isOpen, onClose, G, ctx, moves }) {
   const [selectedCommodity, setSelectedCommodity] = React.useState("");
   const [selectedDestination, setSelectedDestination] = React.useState("");

@@ -8,7 +8,15 @@ function formatCommodityCityList(items) {
   return items.toString().replaceAll(',', ', ');
 }
 
-// Commodities Page Component
+/**
+ * Page component displaying all commodities, split into two sections:
+ * commodities that appear in active contracts, and all other commodities.
+ * 
+ * @component
+ * 
+ * @example
+ * <CommoditiesPage />
+ */
 export function CommoditiesPage() {
   const { G, ctx } = useGame();
 

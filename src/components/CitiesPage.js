@@ -7,7 +7,17 @@ function formatCommodityList(items) {
   return items.toString().replaceAll(',', ', ');
 }
 
-// Cities Page Component
+/**
+ * Page component displaying all cities with their values. Highlights cities that are active for the current player.
+ * 
+ * @component
+ * @param {object} props
+ * @param {object} props.G - The game state object containing players and their active cities.
+ * @param {object} props.ctx - The game context, used to identify the current player.
+ * 
+ * @example
+ * <CitiesPage G={G} ctx={ctx} />
+ */
 export function CitiesPage({ G, ctx }) {
   // Get current player's active cities
   const currentPlayer = G.players.find(([key]) => key === ctx.currentPlayer);

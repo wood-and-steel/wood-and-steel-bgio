@@ -1,7 +1,15 @@
 import React from "react";
 import { useGame } from "../hooks/useGame";
 
-// Independent Railroads Page Component
+/**
+ * Page component displaying all independent railroad companies with their routes.
+ * Each railroad can be acquired via the "Acquire" button.
+ * 
+ * @component
+ * 
+ * @example
+ * <IndependentRailroadsPage />
+ */
 export function IndependentRailroadsPage() {
   const { G } = useGame();
   

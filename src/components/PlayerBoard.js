@@ -11,7 +11,30 @@ const STARTING_CITY_PAIRS = [
   ["Charleston", "Savannah"]
 ];
 
-// Player Board Component
+/**
+ * Displays the active player's board with contracts, action buttons, and starting city selection.
+ * 
+ * @component
+ * @param {object} props
+ * @param {object} props.G - The game state object containing players and contracts.
+ * @param {object} props.ctx - The game context, including currentPlayer.
+ * @param {boolean} props.startingContractExists - Whether the current player has a starting contract (controls visibility of +2P and +3P buttons).
+ * @param {'setup'|'play'|'scoring'} props.currentPhase - The current game phase (affects which UI elements are shown).
+ * @param {function} props.onStartingPairSelect - Called when a starting city pair is selected during setup phase. Receives the pair array as argument.
+ * @param {function} props.onToggleFulfilled - Called when a contract's fulfilled state should be toggled. Receives the contract ID.
+ * @param {function} props.onDelete - Called when a contract should be deleted. Receives the contract ID.
+ * 
+ * @example
+ * <PlayerBoard
+ *   G={G}
+ *   ctx={ctx}
+ *   startingContractExists={true}
+ *   currentPhase="play"
+ *   onStartingPairSelect={(pair) => handlePairSelect(pair)}
+ *   onToggleFulfilled={(id) => handleToggle(id)}
+ *   onDelete={(id) => handleDelete(id)}
+ * />
+ */
 export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onStartingPairSelect, onToggleFulfilled, onDelete }) {
   const activePlayer = G.players.find(([key]) => key === ctx.currentPlayer);
   if (!activePlayer) return null;

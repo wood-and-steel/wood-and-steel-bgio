@@ -65,6 +65,33 @@ function useMenuPosition(anchorRef, placement, menuRef, isOpen) {
   return position;
 }
 
+/**
+ * Popup menu component that positions itself relative to an anchor element.
+ * Supports keyboard navigation (Escape to close) and click-outside-to-close behavior.
+ * 
+ * @component
+ * @param {object} props
+ * @param {boolean} props.isOpen - Whether the menu is currently open.
+ * @param {function} props.onClose - Called when the menu should be closed.
+ * @param {function} [props.onCloseOutside] - Optional callback called when clicking outside the menu (before onClose).
+ * @param {React.RefObject|Array<React.RefObject>} props.anchorRef - Reference(s) to the anchor element(s) that the menu positions relative to.
+ * @param {object} [props.placement] - Placement configuration object.
+ * @param {'top'|'bottom'} [props.placement.side='bottom'] - Which side of the anchor to place the menu.
+ * @param {'start'|'center'|'end'} [props.placement.align='center'] - How to align the menu relative to the anchor.
+ * @param {React.ReactNode} props.children - Menu items to render (typically PopupMenuItem components).
+ * 
+ * @example
+ * <PopupMenu
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   onCloseOutside={handleCloseOutside}
+ *   anchorRef={buttonRef}
+ *   placement={{ side: "bottom", align: "start" }}
+ * >
+ *   <PopupMenuItem onClick={handleAction1}>Action 1</PopupMenuItem>
+ *   <PopupMenuItem onClick={handleAction2}>Action 2</PopupMenuItem>
+ * </PopupMenu>
+ */
 export function PopupMenu({
   isOpen,
   onClose,
@@ -121,6 +148,20 @@ export function PopupMenu({
   return createPortal(menu, document.body);
 }
 
+/**
+ * Individual menu item within a PopupMenu.
+ * 
+ * @component
+ * @param {object} props
+ * @param {function} [props.onClick] - Called when the menu item is clicked.
+ * @param {React.ReactNode} props.children - The content to display in the menu item.
+ * @param {...any} props.rest - Additional props are spread to the underlying button element.
+ * 
+ * @example
+ * <PopupMenuItem onClick={() => handleAction()}>
+ *   Delete Item
+ * </PopupMenuItem>
+ */
 export function PopupMenuItem({ onClick, children, ...rest }) {
   const handleClick = (e) => {
     e.preventDefault();

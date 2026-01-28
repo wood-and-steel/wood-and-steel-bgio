@@ -15,6 +15,31 @@ function formatContractTieValue(contract) {
   );
 }
 
+/**
+ * Displays a single contract card with commodity, destination, reward value, and railroad ties.
+ * Clicking the card opens a popup menu for fulfilling or deleting the contract.
+ * 
+ * @component
+ * @param {object} props
+ * @param {object} props.contract - The contract object to display.
+ * @param {boolean} props.isMenuOpen - Whether the popup menu is currently open.
+ * @param {function} props.onCardClick - Called when the contract card is clicked (toggles menu).
+ * @param {function} props.onClose - Called when the menu should be closed.
+ * @param {function} props.onCloseOutside - Called when clicking outside the menu (used to prevent immediate reopening).
+ * @param {function} props.onToggleFulfilled - Called when the contract's fulfilled state should be toggled. Receives the contract ID.
+ * @param {function} props.onDelete - Called when the contract should be deleted. Receives the contract ID.
+ * 
+ * @example
+ * <ContractDisplay
+ *   contract={contract}
+ *   isMenuOpen={openId === contract.id}
+ *   onCardClick={() => handleClick(contract.id)}
+ *   onClose={() => setOpenId(null)}
+ *   onCloseOutside={handleCloseOutside}
+ *   onToggleFulfilled={(id) => toggleFulfilled(id)}
+ *   onDelete={(id) => deleteContract(id)}
+ * />
+ */
 export function ContractDisplay({
   contract,
   isMenuOpen,

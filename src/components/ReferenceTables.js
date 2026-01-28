@@ -8,7 +8,16 @@ function formatCommodityList(items) {
   return items.toString().replaceAll(',', ', ');
 }
 
-// Reference Tables Component
+/**
+ * Displays reference tables showing all commodities and cities with their values.
+ * 
+ * @component
+ * @param {object} props
+ * @param {object} props.G - The game state object, used to calculate city values.
+ * 
+ * @example
+ * <ReferenceTables G={G} />
+ */
 export function ReferenceTables({ G }) {
   const cityValues = [...cities].map(([key, value]) =>
     <div key={key} className="cityCell">
