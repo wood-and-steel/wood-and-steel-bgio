@@ -40,33 +40,41 @@ export function createStorageAdapter(storageType = null) {
 }
 
 /**
- * Default storage adapter instance
- * This is initialized once and reused throughout the application
+ * Cached storage adapter instances by storage type
+ * This ensures only one adapter instance per storage type is created
  */
-let defaultAdapter = null;
+const adapterCache = new Map();
 
 /**
- * Get or create the default storage adapter instance
- * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, reads from env variable.
- * @returns {StorageAdapter} The default storage adapter
+ * Get or create a storage adapter instance for the given storage type
+ * Adapters are cached and reused to prevent multiple instances of the same type
+ * @param {string} [storageType] - Storage type ('local' or 'cloud'). If not provided, reads from env variable.
+ * @returns {StorageAdapter} The storage adapter instance
  */
 export function getStorageAdapter(storageType = null) {
-  // If storageType is provided, create a new adapter for that type
-  // Otherwise, use the default cached adapter (for backward compatibility)
-  if (storageType) {
-    return createStorageAdapter(storageType);
+  // Determine the storage type to use
+  const typeToUse = storageType || STORAGE_TYPE;
+  
+  // Normalize storage type values
+  const normalizedType = typeToUse === 'supabase' || typeToUse === 'cloud' ? 'cloud' : 'local';
+  
+  // Return cached adapter if it exists
+  if (adapterCache.has(normalizedType)) {
+    return adapterCache.get(normalizedType);
   }
   
-  if (!defaultAdapter) {
-    defaultAdapter = createStorageAdapter();
-  }
-  return defaultAdapter;
+  // Create and cache new adapter
+  const adapter = createStorageAdapter(normalizedType);
+  adapterCache.set(normalizedType, adapter);
+  return adapter;
 }
 
 /**
- * Set a custom storage adapter instance (useful for testing)
+ * Set a custom storage adapter instance for a specific storage type (useful for testing)
+ * @param {string} storageType - Storage type ('local' or 'cloud')
  * @param {StorageAdapter} adapter - The storage adapter to use
  */
-export function setStorageAdapter(adapter) {
-  defaultAdapter = adapter;
+export function setStorageAdapter(storageType, adapter) {
+  const normalizedType = storageType === 'supabase' || storageType === 'cloud' ? 'cloud' : 'local';
+  adapterCache.set(normalizedType, adapter);
 }
