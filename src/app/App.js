@@ -28,7 +28,7 @@ const App = () => {
   const { isLobbyMode, setLobbyMode, setSelectedGame } = useLobbyStore();
   const [currentGameCode, setCurrentGameCodeState] = React.useState(null);
   // Get number of players from game store (must be at top level, before conditional returns)
-  const numPlayers = useGameStore((state) => state.ctx?.numPlayers || 3);
+  const numPlayers = useGameStore((state) => state.ctx?.numPlayers || 2);
 
   // Initialize lobby mode on mount
   React.useEffect(() => {
@@ -167,9 +167,9 @@ const App = () => {
   }, [setSelectedGame, setLobbyMode]);
 
   // Handler to create a new game
-  const handleNewGame = React.useCallback(async (numPlayers = 3) => {
-    // Validate numPlayers is between 2 and 6
-    const validNumPlayers = Math.max(2, Math.min(6, Math.floor(numPlayers) || 3));
+  const handleNewGame = React.useCallback(async (numPlayers = 2) => {
+    // Validate numPlayers is between 2 and 5
+    const validNumPlayers = Math.max(2, Math.min(5, Math.floor(numPlayers) || 2));
     
     try {
       const newCode = await createNewGame();
@@ -210,7 +210,7 @@ const App = () => {
             setLobbyMode(true);
             setCurrentGameCodeState(null);
             // Clear game store state
-            useGameStore.getState().resetState(3);
+            useGameStore.getState().resetState(2);
           }
           return true;
         }

@@ -86,7 +86,7 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
             <p>No games found.</p>
             <div className="lobbyScreen__newGame">
               <label>Start a new game:</label>
-              {[2, 3, 4, 5, 6].map(num => (
+              {[2, 3, 4, 5].map(num => (
                 <button
                   key={num}
                   onClick={() => handleNewGame(num)}
@@ -140,7 +140,7 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
             <div className="lobbyScreen__actions">
               <div className="lobbyScreen__newGame">
                 <label>Start a new game:</label>
-                {[2, 3, 4, 5, 6].map(num => (
+                {[2, 3, 4, 5].map(num => (
                   <button
                     key={num}
                     onClick={() => handleNewGame(num)}

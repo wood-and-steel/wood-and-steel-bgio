@@ -39,6 +39,20 @@ import { initializeIndependentRailroads } from '../independentRailroads';
  */
 
 /**
+ * Complete game store state type
+ * Includes both state properties and store methods
+ * @typedef {Object} GameStoreState
+ * @property {GameState} G - Game state
+ * @property {GameContext} ctx - Game context
+ * @property {(numPlayers?: number) => void} resetState - Reset state to initial values
+ * @property {(playerID: string) => Array<Contract>} getPlayerContracts - Get all contracts for a specific player
+ * @property {() => Array<Contract>} getMarketContracts - Get all market contracts
+ * @property {() => [string, PlayerProps]|undefined} getCurrentPlayer - Get current player data
+ * @property {(playerID: string) => boolean} isMyTurn - Check if it's a specific player's turn
+ * @property {(playerID: string) => Array<string>} getPlayerActiveCities - Get active cities for a specific player
+ */
+
+/**
  * Initial state factory
  * @param {number} numPlayers - Number of players (default: 3)
  * @returns {{G: GameState, ctx: GameContext}}
@@ -66,19 +80,16 @@ function getInitialState(numPlayers = 3) {
   };
 }
 
-/**
- * Zustand store for game state
- * Manages game state (G) and game context (ctx)
- */
-export const useGameStore = create((set, get) => ({
+const storeImpl = (set, get) => ({
   // Initial state
   ...getInitialState(),
 
   /**
    * Reset state to initial values
-   * @param {number} numPlayers - Number of players (default: 3)
+   * @param {number} [numPlayers=2] - Number of players (default: 2)
+   * @returns {void}
    */
-  resetState: (numPlayers = 3) => {
+  resetState: (numPlayers = 2) => {
     set(getInitialState(numPlayers));
   },
 
@@ -132,11 +143,25 @@ export const useGameStore = create((set, get) => ({
     const player = G.players.find(([id]) => id === playerID);
     return player ? player[1].activeCities : [];
   },
-}));
+});
+
+/**
+ * Zustand store for game state
+ * Manages game state (G) and game context (ctx)
+ * 
+ * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<GameStoreState>>}
+ * 
+ * The store's `getState()` method returns a `GameStoreState` object that includes:
+ * - State properties: `G` (GameState) and `ctx` (GameContext)
+ * - Methods: `resetState`, `getPlayerContracts`, `getMarketContracts`, `getCurrentPlayer`, `isMyTurn`, `getPlayerActiveCities`
+ */
+export const useGameStore = create(storeImpl);
 
 // Expose store to window for console debugging (development only)
 if (typeof window !== 'undefined' && !import.meta.env.PROD) {
+  // @ts-ignore - Development only debugging helpers
   window.__gameStore = useGameStore;
+  // @ts-ignore - Development only debugging helpers
   window.__getGameState = () => useGameStore.getState();
   console.log('🎮 Game store available in console:');
   console.log('  - window.__gameStore - Zustand store hook');
