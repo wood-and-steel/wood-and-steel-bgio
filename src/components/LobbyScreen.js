@@ -55,18 +55,17 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
     refreshGames();
   }, [storage.storageType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle tab switch
-  const handleTabSwitch = React.useCallback(async (newStorageType) => {
+  // Handle tab switch: only update storage type. The effect (storage.storageType dep)
+  // runs after re-render and refreshes the list. Do NOT call refreshGames here:
+  // React state updates are async, so the handler would fetch using the previous
+  // storage type. That fetch can resolve after the effect’s (correct) fetch, and
+  // overwrite the list (e.g. Local tab briefly shows local, then cloud).
+  const handleTabSwitch = React.useCallback((newStorageType) => {
     if (newStorageType === storage.storageType) {
-      return; // Already on this tab
+      return;
     }
-    
-    // Switch storage type
     storage.setStorageType(newStorageType);
-    
-    // Refresh games list with loading indicator
-    await refreshGames(true);
-  }, [storage, refreshGames]);
+  }, [storage]);
 
   const handleRowClick = (gameCode) => {
     if (gameCode !== selectedGameCode && onEnterGame) {
