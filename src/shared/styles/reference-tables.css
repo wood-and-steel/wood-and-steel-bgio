@@ -1,5 +1,6 @@
 .referenceTable {
-  margin: var(--spacing-md) 0;
+  margin: 0;
+  padding: var(--spacing-sm);
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -72,15 +73,19 @@
 }
 
 .commoditySection__title {
-  font-weight: bold;
-  margin-top: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: var(--border-width-md) solid var(--color-border);
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-text-subtle);
+  margin: 0;
+  padding: 0;
+  padding-top: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-top: var(--border-width-md) solid var(--color-border-light);
 }
 
 .commodityTable > div:first-child > .commoditySection__title {
-  margin-top: 0;
+  padding-top: 0;
+  border: none;
 }
 
 .commoditySection__empty {

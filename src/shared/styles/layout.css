@@ -4,7 +4,7 @@
 
 /* Mobile Layout (default, < 768px) */
 .boardPage {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs);
   padding-bottom: 3.125rem; /* Account for fixed navBar height on mobile */
 }
 
