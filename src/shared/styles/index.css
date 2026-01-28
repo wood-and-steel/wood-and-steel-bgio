@@ -12,7 +12,11 @@
 @import './reference-tables.css';
 @import './modal.css';
 @import './tables.css';
-@import './components.css';
+@import './popup-menu.css';
+@import './nav-bar.css';
+@import './independent-railroads.css';
+@import './lobby-screen.css';
+@import './commodity-rich-name.css';
 
 /* Utilities */
 @import './utilities.css';

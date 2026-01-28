@@ -1,0 +1,128 @@
+/* ========================================
+   LOBBY SCREEN
+   ======================================== */
+
+/* Mobile Layout (default, < 768px) */
+.lobbyScreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-light);
+}
+
+.lobbyScreen__content {
+  width: 100%;
+  padding: var(--spacing-md);
+}
+
+.lobbyScreen__title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.5rem;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.lobbyScreen__emptyState {
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.lobbyScreen__emptyState p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.lobbyScreen__actions {
+  margin-top: var(--spacing-md);
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.lobbyScreen__newGame {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-sm) 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+/* Tablet Layout (768px - 1023px) */
+@media (min-width: 768px) {
+  .lobbyScreen {
+    padding: var(--spacing-lg);
+    justify-content: center;
+  }
+
+  .lobbyScreen__content {
+    max-width: 38rem;
+    padding: var(--spacing-lg);
+    margin-top: 0;
+  }
+
+  .lobbyScreen__title {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .lobbyScreen__emptyState {
+    padding: var(--spacing-xl);
+  }
+
+  .lobbyScreen__emptyState p {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .lobbyScreen__actions {
+    margin-top: var(--spacing-lg);
+    gap: var(--spacing-sm);
+  }
+
+  .lobbyScreen__newGame {
+    gap: var(--spacing-md);
+    margin: var(--spacing-md);
+    font-size: 1rem;
+  }
+}
+
+/* Desktop Layout (>= 1024px) */
+@media (min-width: 1024px) {
+  .lobbyScreen {
+    padding: var(--spacing-xl);
+  }
+
+  .lobbyScreen__content {
+    max-width: 50rem;
+    padding: var(--spacing-xl);
+  }
+
+  .lobbyScreen__title {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .lobbyScreen__emptyState {
+    padding: var(--spacing-xl);
+  }
+
+  .lobbyScreen__emptyState p {
+    font-size: 1rem;
+  }
+
+  .lobbyScreen__actions {
+    margin-top: var(--spacing-lg);
+    gap: var(--spacing-sm);
+  }
+
+  .lobbyScreen__newGame {
+    gap: var(--spacing-md);
+    margin: var(--spacing-md);
+  }
+}

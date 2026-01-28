@@ -1,0 +1,9 @@
+/* ========================================
+   COMMODITY RICH NAME
+   ======================================== */
+.commodityRichName {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-xs);
+}

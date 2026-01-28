@@ -105,3 +105,8 @@
     font-size: 1rem;
   }
 }
+
+.table__cell--delete {
+  text-align: center;
+  width: 4rem;
+}
