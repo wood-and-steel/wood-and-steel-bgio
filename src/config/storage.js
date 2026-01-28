@@ -4,10 +4,16 @@
  * Configuration for storage adapters. Determines which storage backend to use
  * based on environment variables.
  * 
+ * @deprecated VITE_STORAGE_TYPE environment variable is deprecated.
+ * Storage type selection is now managed by StorageProvider context.
+ * The tab bar in the lobby screen allows users to switch between Local and Cloud storage.
+ * 
+ * This file is kept for backward compatibility and for reading Supabase configuration.
+ * 
  * Environment Variables:
- * - VITE_STORAGE_TYPE: 'localStorage' (default) or 'supabase'
- * - VITE_SUPABASE_URL: Supabase project URL (required if using supabase)
- * - VITE_SUPABASE_ANON_KEY: Supabase anonymous key (required if using supabase)
+ * - VITE_STORAGE_TYPE: 'localStorage' (default) or 'supabase' (DEPRECATED - use StorageProvider)
+ * - VITE_SUPABASE_URL: Supabase project URL (required for cloud storage)
+ * - VITE_SUPABASE_ANON_KEY: Supabase anonymous key (required for cloud storage)
  */
 
 export const STORAGE_TYPE = import.meta.env.VITE_STORAGE_TYPE || 'localStorage';
@@ -25,7 +31,7 @@ export function isSupabaseConfigured() {
 
 /**
  * Validate storage configuration
- * @returns {{valid: boolean, error?: string}
+ * @returns {{valid: boolean, error?: string}}
  */
 export function validateStorageConfig() {
   if (STORAGE_TYPE === 'supabase') {

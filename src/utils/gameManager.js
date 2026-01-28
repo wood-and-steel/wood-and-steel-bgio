@@ -6,8 +6,9 @@
 
 import { getStorageAdapter } from './storage/index';
 
-// Storage key for current game (still uses localStorage for now, as it's UI state)
-const CURRENT_GAME_KEY = 'current_game';
+// Storage keys for current game (separate for local and cloud storage)
+const CURRENT_GAME_LOCAL_KEY = 'current_game_local';
+const CURRENT_GAME_CLOUD_KEY = 'current_game_cloud';
 
 /**
  * Generate a random five-letter code (no vowels to avoid making words)
@@ -69,18 +70,20 @@ export function isValidGameCode(code) {
 
 /**
  * Get the storage adapter instance
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud')
  * @returns {StorageAdapter} The storage adapter
  */
-function getAdapter() {
-  return getStorageAdapter();
+function getAdapter(storageType = null) {
+  return getStorageAdapter(storageType);
 }
 
 /**
  * Switch to a different game by updating the active game code
  * @param {string} code - Game code to switch to
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). Defaults to 'local'.
  * @returns {Promise<boolean>} - True if switched successfully
  */
-export async function switchToGame(code) {
+export async function switchToGame(code, storageType = 'local') {
   const operation = 'switchToGame';
   
   if (!isValidGameCode(code)) {
@@ -91,15 +94,16 @@ export async function switchToGame(code) {
   const normalizedCode = normalizeGameCode(code);
   
   try {
-    // Check if game exists
-    const exists = await gameExists(normalizedCode);
+    // Check if game exists (using the appropriate adapter)
+    const adapter = getAdapter(storageType);
+    const exists = await adapter.gameExists(normalizedCode);
     if (!exists) {
       console.warn(`[${operation}] Game not found:`, normalizedCode);
       return false;
     }
     
-    // Set as current game
-    setCurrentGameCode(normalizedCode);
+    // Set as current game for the specified storage type
+    setCurrentGameCode(normalizedCode, storageType);
     return true;
   } catch (e) {
     console.error(`[${operation}] Unexpected error switching to game "${normalizedCode}":`, e.message);
@@ -112,9 +116,10 @@ export async function switchToGame(code) {
  * Delete a game from storage
  * Removes all game data for this game code
  * @param {string} code - Game code
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, tries both.
  * @returns {Promise<boolean>} - True if deleted, false if not found
  */
-export async function deleteGame(code) {
+export async function deleteGame(code, storageType = null) {
   const operation = 'deleteGame';
   
   if (!isValidGameCode(code)) {
@@ -125,8 +130,18 @@ export async function deleteGame(code) {
   const normalizedCode = normalizeGameCode(code);
   
   try {
-    const adapter = getAdapter();
-    return await adapter.deleteGame(normalizedCode);
+    if (storageType) {
+      // Delete from specific storage type
+      const adapter = getAdapter(storageType);
+      return await adapter.deleteGame(normalizedCode);
+    } else {
+      // Try both storage types (for backward compatibility)
+      const localAdapter = getAdapter('local');
+      const cloudAdapter = getAdapter('cloud');
+      const localResult = await localAdapter.deleteGame(normalizedCode);
+      const cloudResult = await cloudAdapter.deleteGame(normalizedCode);
+      return localResult || cloudResult;
+    }
   } catch (e) {
     console.error(`[${operation}] Unexpected error deleting game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);
@@ -146,33 +161,50 @@ export async function listGameCodes() {
 /**
  * Check if a game exists
  * @param {string} code - Game code
+ * @param {string} storageType - Storage type ('local' or 'cloud')
  * @returns {Promise<boolean>} - True if game exists
  */
-export async function gameExists(code) {
+export async function gameExists(code, storageType) {
   if (!isValidGameCode(code)) {
     return false;
   }
   
   const normalizedCode = normalizeGameCode(code);
-  const adapter = getAdapter();
-  
+  const adapter = getAdapter(storageType);
   return await adapter.gameExists(normalizedCode);
 }
 
 /**
  * Get the current active game code
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, uses current storage preference.
  * @returns {string|null} - Current game code or null
  */
-export function getCurrentGameCode() {
-  return localStorage.getItem(CURRENT_GAME_KEY);
+export function getCurrentGameCode(storageType = null) {
+  // If storageType is provided, use it
+  if (storageType === 'local') {
+    return localStorage.getItem(CURRENT_GAME_LOCAL_KEY);
+  }
+  if (storageType === 'cloud') {
+    return localStorage.getItem(CURRENT_GAME_CLOUD_KEY);
+  }
+  
+  // If not provided, use the current storage preference from StorageProvider
+  const storagePreference = localStorage.getItem('storage_preference');
+  const currentStorageType = (storagePreference === 'local' || storagePreference === 'cloud') 
+    ? storagePreference 
+    : 'local'; // Default to local if preference not set
+  
+  const key = currentStorageType === 'cloud' ? CURRENT_GAME_CLOUD_KEY : CURRENT_GAME_LOCAL_KEY;
+  return localStorage.getItem(key);
 }
 
 /**
  * Set the current active game code
  * @param {string} code - Game code to set as current
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, uses current storage preference.
  * @throws {Error} If game code is invalid or storage fails
  */
-export function setCurrentGameCode(code) {
+export function setCurrentGameCode(code, storageType = null) {
   const operation = 'setCurrentGameCode';
   
   if (!isValidGameCode(code)) {
@@ -183,8 +215,18 @@ export function setCurrentGameCode(code) {
   
   const normalizedCode = normalizeGameCode(code);
   
+  // If storageType not provided, use current storage preference
+  if (!storageType) {
+    const storagePreference = localStorage.getItem('storage_preference');
+    storageType = (storagePreference === 'local' || storagePreference === 'cloud') 
+      ? storagePreference 
+      : 'local'; // Default to local if preference not set
+  }
+  
+  const key = storageType === 'cloud' ? CURRENT_GAME_CLOUD_KEY : CURRENT_GAME_LOCAL_KEY;
+  
   try {
-    localStorage.setItem(CURRENT_GAME_KEY, normalizedCode);
+    localStorage.setItem(key, normalizedCode);
   } catch (e) {
     const error = new Error(`Failed to set current game code: ${e.message}`);
     console.error(`[${operation}]`, error.message);
@@ -195,21 +237,32 @@ export function setCurrentGameCode(code) {
 
 /**
  * Clear the current game code
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, uses current storage preference.
  */
-export function clearCurrentGameCode() {
-  localStorage.removeItem(CURRENT_GAME_KEY);
+export function clearCurrentGameCode(storageType = null) {
+  // If storageType not provided, use current storage preference
+  if (!storageType) {
+    const storagePreference = localStorage.getItem('storage_preference');
+    storageType = (storagePreference === 'local' || storagePreference === 'cloud') 
+      ? storagePreference 
+      : 'local'; // Default to local if preference not set
+  }
+  
+  const key = storageType === 'cloud' ? CURRENT_GAME_CLOUD_KEY : CURRENT_GAME_LOCAL_KEY;
+  localStorage.removeItem(key);
 }
 
 /**
  * Get all games with their codes and basic info
  * Sorted by lastModified descending (most recent first)
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, defaults to 'local'.
  * @returns {Promise<Array<{code: string, phase: string, turn: number, numPlayers: number, lastModified: string, playerNames: Array<string>, metadata: Object}>>} - Array of game info
  */
-export async function listGames() {
+export async function listGames(storageType = 'local') {
   const operation = 'listGames';
   
   try {
-    const adapter = getAdapter();
+    const adapter = getAdapter(storageType);
     return await adapter.listGames();
   } catch (e) {
     console.error(`[${operation}] Unexpected error listing games:`, e.message);
@@ -221,15 +274,17 @@ export async function listGames() {
 /**
  * Create a new game with a unique code
  * Sets initial lastModified timestamp in metadata
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). Defaults to 'local'.
  * @returns {Promise<string>} - The generated game code
  * @throws {Error} If code generation or storage fails
  */
-export async function createNewGame() {
+export async function createNewGame(storageType = 'local') {
   const operation = 'createNewGame';
   
   try {
+    const adapter = getAdapter(storageType);
     const code = await generateUniqueGameCode();
-    setCurrentGameCode(code);
+    setCurrentGameCode(code, storageType);
     
     // Initialize metadata with lastModified timestamp
     const metadata = {
@@ -237,7 +292,6 @@ export async function createNewGame() {
     };
     
     // Save empty initial state to create the game record
-    const adapter = getAdapter();
     // We'll save an empty state initially - the actual game state will be saved when the game starts
     // For now, we just need to create the metadata entry
     // Since the adapter expects state, we'll create a minimal valid state
@@ -248,7 +302,7 @@ export async function createNewGame() {
     
     await adapter.saveGame(code, initialState, metadata);
     
-    console.info(`[${operation}] Created new game with code:`, code);
+    console.info(`[${operation}] Created new game with code:`, code, `(storage: ${storageType})`);
     return code;
   } catch (e) {
     console.error(`[${operation}] Failed to create new game:`, e.message);
@@ -268,9 +322,10 @@ const lastModifiedCache = new Map();
  * @param {string} code - Game code
  * @param {Object} G - Game state
  * @param {Object} ctx - Game context
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, tries to detect from current game.
  * @returns {Promise<boolean>} - True if saved successfully
  */
-export async function saveGameState(code, G, ctx) {
+export async function saveGameState(code, G, ctx, storageType = null) {
   const operation = 'saveGameState';
   
   if (!isValidGameCode(code)) {
@@ -300,8 +355,24 @@ export async function saveGameState(code, G, ctx) {
       lastModified: new Date().toISOString() // ISO 8601 format for cloud compatibility
     };
     
+    // Determine storage type if not provided
+    let adapterStorageType = storageType;
+    if (!adapterStorageType) {
+      // Try to detect from current game codes
+      const localCode = localStorage.getItem(CURRENT_GAME_LOCAL_KEY);
+      const cloudCode = localStorage.getItem(CURRENT_GAME_CLOUD_KEY);
+      if (cloudCode === normalizedCode) {
+        adapterStorageType = 'cloud';
+      } else if (localCode === normalizedCode) {
+        adapterStorageType = 'local';
+      } else {
+        // Default to local for backward compatibility
+        adapterStorageType = 'local';
+      }
+    }
+    
     // Save using adapter
-    const adapter = getAdapter();
+    const adapter = getAdapter(adapterStorageType);
     
     // For Supabase adapter, use optimistic locking with expectedLastModified
     // Use cached value if available and recent, but let saveGame() fetch fresh for actual comparison
@@ -388,9 +459,10 @@ export function updateLastModifiedCache(code, lastModified) {
  * Returns state in the format: { G: {...}, ctx: {...} }
  * Also updates the last_modified cache for conflict resolution
  * @param {string} code - Game code
+ * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). If not provided, tries both.
  * @returns {Promise<{G: Object, ctx: Object}|null>} - Game state or null if not found/invalid
  */
-export async function loadGameState(code) {
+export async function loadGameState(code, storageType = null) {
   const operation = 'loadGameState';
   
   if (!isValidGameCode(code)) {
@@ -401,18 +473,42 @@ export async function loadGameState(code) {
   const normalizedCode = normalizeGameCode(code);
   
   try {
-    const adapter = getAdapter();
-    const state = await adapter.loadGame(normalizedCode);
-    
-    // Update last_modified cache after loading (for Supabase adapter)
-    if (state && adapter.getLastModified && typeof adapter.getLastModified === 'function') {
-      const lastModified = await adapter.getLastModified(normalizedCode);
-      if (lastModified) {
-        lastModifiedCache.set(normalizedCode, lastModified);
+    if (storageType) {
+      // Load from specific storage type
+      const adapter = getAdapter(storageType);
+      const state = await adapter.loadGame(normalizedCode);
+      
+      // Update last_modified cache after loading (for Supabase adapter)
+      if (state && adapter.getLastModified && typeof adapter.getLastModified === 'function') {
+        const lastModified = await adapter.getLastModified(normalizedCode);
+        if (lastModified) {
+          lastModifiedCache.set(normalizedCode, lastModified);
+        }
       }
+      
+      return state;
+    } else {
+      // Try both storage types (for backward compatibility)
+      const localAdapter = getAdapter('local');
+      const cloudAdapter = getAdapter('cloud');
+      
+      // Try cloud first (newer), then local
+      let state = await cloudAdapter.loadGame(normalizedCode);
+      if (state) {
+        // Update cache
+        if (cloudAdapter.getLastModified && typeof cloudAdapter.getLastModified === 'function') {
+          const lastModified = await cloudAdapter.getLastModified(normalizedCode);
+          if (lastModified) {
+            lastModifiedCache.set(normalizedCode, lastModified);
+          }
+        }
+        return state;
+      }
+      
+      state = await localAdapter.loadGame(normalizedCode);
+      // Note: localStorage adapter doesn't have getLastModified, so no cache update needed
+      return state;
     }
-    
-    return state;
   } catch (e) {
     console.error(`[${operation}] Unexpected error loading state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);

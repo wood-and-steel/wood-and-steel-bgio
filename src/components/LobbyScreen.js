@@ -1,5 +1,6 @@
 import React from "react";
 import { useLobbyStore } from "../stores/lobbyStore";
+import { useStorage } from "../providers/StorageProvider";
 
 /**
  * Lobby Screen Component
@@ -9,14 +10,38 @@ import { useLobbyStore } from "../stores/lobbyStore";
 export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
   const [games, setGames] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [showLoadingIndicator, setShowLoadingIndicator] = React.useState(false);
   const { selectedGameCode } = useLobbyStore();
+  const storage = useStorage();
 
   // Refresh games list when needed
-  const refreshGames = React.useCallback(async () => {
+  const refreshGames = React.useCallback(async (showLoading = false) => {
+    const startTime = Date.now();
+    
     try {
       setIsLoading(true);
-      const gamesList = await gameManager.onListGames();
-      setGames(gamesList || []);
+      if (showLoading) {
+        setShowLoadingIndicator(false);
+        // Show loading indicator if operation takes >250ms
+        const loadingTimeout = setTimeout(() => {
+          setShowLoadingIndicator(true);
+        }, 250);
+        
+        const gamesList = await gameManager.onListGames();
+        clearTimeout(loadingTimeout);
+        
+        // If we're still loading and it's been >250ms, show indicator briefly
+        if (Date.now() - startTime >= 250) {
+          setShowLoadingIndicator(true);
+          // Hide after brief delay to show completion
+          setTimeout(() => setShowLoadingIndicator(false), 100);
+        }
+        
+        setGames(gamesList || []);
+      } else {
+        const gamesList = await gameManager.onListGames();
+        setGames(gamesList || []);
+      }
     } catch (error) {
       console.error('[LobbyScreen] Error loading games:', error);
       setGames([]);
@@ -25,10 +50,23 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
     }
   }, [gameManager]);
 
-  // Refresh games list on mount and when gameManager changes
+  // Refresh games list on mount and when storage type changes
   React.useEffect(() => {
     refreshGames();
-  }, [refreshGames]);
+  }, [storage.storageType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle tab switch
+  const handleTabSwitch = React.useCallback(async (newStorageType) => {
+    if (newStorageType === storage.storageType) {
+      return; // Already on this tab
+    }
+    
+    // Switch storage type
+    storage.setStorageType(newStorageType);
+    
+    // Refresh games list with loading indicator
+    await refreshGames(true);
+  }, [storage, refreshGames]);
 
   const handleRowClick = (gameCode) => {
     if (gameCode !== selectedGameCode && onEnterGame) {
@@ -76,6 +114,29 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
     <div className="lobbyScreen">
       <div className="lobbyScreen__content">
         <h1 className="lobbyScreen__title">Wood and Steel Lobby</h1>
+        
+        {/* Tab Bar */}
+        <div className="lobbyScreen__tabs">
+          <button
+            className={`lobbyScreen__tab ${storage.storageType === 'local' ? 'lobbyScreen__tab--active' : ''}`}
+            onClick={() => handleTabSwitch('local')}
+            disabled={isLoading}
+          >
+            Local
+          </button>
+          <button
+            className={`lobbyScreen__tab ${storage.storageType === 'cloud' ? 'lobbyScreen__tab--active' : ''}`}
+            onClick={() => handleTabSwitch('cloud')}
+            disabled={isLoading}
+          >
+            Cloud
+          </button>
+          {showLoadingIndicator && (
+            <span className="lobbyScreen__loadingIndicator" aria-label="Loading">
+              <span className="lobbyScreen__spinner"></span>
+            </span>
+          )}
+        </div>
         
         {isLoading ? (
           <div className="lobbyScreen__emptyState">

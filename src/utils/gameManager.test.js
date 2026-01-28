@@ -344,8 +344,8 @@ describe('Persistence Tests', () => {
       saveGameState(gameCode2, useGameStore.getState().G, useGameStore.getState().ctx);
 
       // Verify both games exist
-      expect(gameExists(gameCode1)).toBe(true);
-      expect(gameExists(gameCode2)).toBe(true);
+      expect(await gameExists(gameCode1, 'local')).toBe(true);
+      expect(await gameExists(gameCode2, 'local')).toBe(true);
 
       // Switch to first game and verify state
       switchToGame(gameCode1);

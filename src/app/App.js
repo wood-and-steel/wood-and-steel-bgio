@@ -1,11 +1,11 @@
 import React from 'react';
 import { GameProvider } from '../providers/GameProvider';
+import { StorageProvider, useStorage } from '../providers/StorageProvider';
 import { WoodAndSteelState } from '../Board';
 import { LobbyScreen } from '../components/LobbyScreen';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { 
-  getCurrentGameCode, 
   createNewGame,
   gameExists,
   listGames,
@@ -13,18 +13,16 @@ import {
   isValidGameCode,
   normalizeGameCode,
   loadGameState,
-  clearCurrentGameCode,
-  setCurrentGameCode,
   updateLastModifiedCache
 } from '../utils/gameManager';
-import { getStorageAdapter } from '../utils/storage';
 // Import test utilities in development
 if (!import.meta.env.PROD) {
   import('../utils/storage/testMigration');
 }
 
-const App = () => {
+const AppContent = () => {
   const { isLobbyMode, setLobbyMode, setSelectedGame } = useLobbyStore();
+  const storage = useStorage();
   const [currentGameCode, setCurrentGameCodeState] = React.useState(null);
   // Get number of players from game store (must be at top level, before conditional returns)
   const numPlayers = useGameStore((state) => state.ctx?.numPlayers || 2);
@@ -32,7 +30,7 @@ const App = () => {
   // Initialize lobby mode on mount
   React.useEffect(() => {
     const initializeApp = async () => {
-      const code = getCurrentGameCode();
+      const code = storage.getCurrentGameCode();
       
       // If no current game or it doesn't exist, go to lobby mode
       if (!code) {
@@ -44,7 +42,7 @@ const App = () => {
       }
       
       try {
-        const exists = await gameExists(code);
+        const exists = await gameExists(code, storage.storageType);
         if (!exists) {
           setLobbyMode(true);
           setSelectedGame(null);
@@ -54,7 +52,7 @@ const App = () => {
         }
         
         // Game exists, load it and exit lobby mode
-        const savedState = await loadGameState(code);
+        const savedState = await loadGameState(code, storage.storageType);
         if (savedState && savedState.G && savedState.ctx) {
           // Load state into Zustand store
           useGameStore.setState({
@@ -83,7 +81,7 @@ const App = () => {
     
     initializeApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount
+  }, [storage.storageType]); // Re-initialize when storage type changes
 
   // Real-time subscription for multiplayer sync
   React.useEffect(() => {
@@ -91,7 +89,7 @@ const App = () => {
       return; // No subscription if no game or in lobby mode
     }
 
-    const adapter = getStorageAdapter();
+    const adapter = storage.getStorageAdapter();
     
     // Subscribe to real-time updates for the current game
     const unsubscribe = adapter.subscribeToGame(currentGameCode, (state, metadata, lastModified) => {
@@ -123,7 +121,7 @@ const App = () => {
         console.info('[App] Unsubscribed from real-time updates for game:', currentGameCode);
       }
     };
-  }, [currentGameCode, isLobbyMode]);
+  }, [currentGameCode, isLobbyMode, storage]);
 
   // Handler to enter a game
   const handleEnterGame = React.useCallback(async (code) => {
@@ -135,14 +133,14 @@ const App = () => {
         return;
       }
       
-      const exists = await gameExists(normalizedCode);
+      const exists = await gameExists(normalizedCode, storage.storageType);
       if (!exists) {
         alert(`Game "${normalizedCode}" not found.`);
         return;
       }
       
       // Load game state
-      const savedState = await loadGameState(normalizedCode);
+      const savedState = await loadGameState(normalizedCode, storage.storageType);
       if (savedState && savedState.G && savedState.ctx) {
         // Load state into Zustand store
         useGameStore.setState({
@@ -150,7 +148,7 @@ const App = () => {
           ctx: savedState.ctx
         });
         // Set as current game
-        setCurrentGameCode(normalizedCode);
+        storage.setCurrentGameCode(normalizedCode);
         setSelectedGame(normalizedCode);
         setLobbyMode(false);
         setCurrentGameCodeState(normalizedCode);
@@ -163,7 +161,7 @@ const App = () => {
       console.error('[App] Error entering game:', error.message);
       alert(`Unable to enter game "${code}". ${error.message || 'Please try again.'}`);
     }
-  }, [setSelectedGame, setLobbyMode]);
+  }, [setSelectedGame, setLobbyMode, storage]);
 
   // Handler to create a new game
   const handleNewGame = React.useCallback(async (numPlayers = 2) => {
@@ -171,13 +169,13 @@ const App = () => {
     const validNumPlayers = Math.max(2, Math.min(5, Math.floor(numPlayers) || 2));
     
     try {
-      const newCode = await createNewGame();
+      const newCode = await createNewGame(storage.storageType);
       
       // Initialize game state to initial values with specified number of players
       useGameStore.getState().resetState(validNumPlayers);
       
       // Set as current game
-      setCurrentGameCode(newCode);
+      storage.setCurrentGameCode(newCode);
       setSelectedGame(newCode);
       setLobbyMode(false);
       setCurrentGameCodeState(newCode);
@@ -186,7 +184,7 @@ const App = () => {
       console.error('[App] Error creating new game:', error.message);
       alert(`Unable to create a new game. ${error.message || 'Please try again or refresh the page.'}`);
     }
-  }, [setSelectedGame, setLobbyMode]);
+  }, [setSelectedGame, setLobbyMode, storage]);
 
   // Pass game management functions to components
   const gameManager = {
@@ -200,11 +198,11 @@ const App = () => {
         const normalizedCode = normalizeGameCode(code);
         const wasCurrentGame = normalizedCode === currentGameCode;
         
-        const deleted = await deleteGame(normalizedCode);
+        const deleted = await deleteGame(normalizedCode, storage.storageType);
         if (deleted) {
           // If we deleted the current game, return to lobby
           if (wasCurrentGame) {
-            clearCurrentGameCode();
+            storage.clearCurrentGameCode();
             setSelectedGame(null);
             setLobbyMode(true);
             setCurrentGameCodeState(null);
@@ -221,7 +219,7 @@ const App = () => {
       }
     },
     onListGames: async () => {
-      return await listGames();
+      return await listGames(storage.storageType);
     },
     isValidGameCode,
     normalizeGameCode
@@ -247,6 +245,14 @@ const App = () => {
         </GameProvider>
       ))}
     </div>
+  );
+};
+
+const App = () => {
+  return (
+    <StorageProvider>
+      <AppContent />
+    </StorageProvider>
   );
 };
 

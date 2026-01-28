@@ -9,6 +9,13 @@
  */
 
 /**
+ * @typedef {Object} SaveGameResult
+ * @property {boolean} success - Whether the save was successful
+ * @property {boolean} [conflict] - Whether there was a conflict (cloud adapters only)
+ * @property {string} [lastModified] - The last modified timestamp (cloud adapters only)
+ */
+
+/**
  * Base StorageAdapter class
  * 
  * All storage adapters must implement these methods:
@@ -25,9 +32,10 @@ export class StorageAdapter {
    * @param {string} code - Game code (5-letter code)
    * @param {Object} state - Game state object with structure { G: {...}, ctx: {...} }
    * @param {Object} metadata - Game metadata (e.g., { lastModified: string, playerNames: Array<string> })
-   * @returns {Promise<boolean>} - True if saved successfully
+   * @param {string} [expectedLastModified] - Optional: expected last_modified timestamp for optimistic locking (cloud adapters only)
+   * @returns {Promise<boolean|{success: boolean, conflict?: boolean, lastModified?: string}>} - True if saved successfully, or result object with success flag and optional conflict/lastModified info
    */
-  async saveGame(code, state, metadata) {
+  async saveGame(code, state, metadata, expectedLastModified) {
     throw new Error('saveGame must be implemented by storage adapter');
   }
 
