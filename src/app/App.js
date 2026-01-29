@@ -13,6 +13,7 @@ import {
   isValidGameCode,
   normalizeGameCode,
   loadGameState,
+  saveGameState,
   updateLastModifiedCache
 } from '../utils/gameManager';
 // Import test utilities in development
@@ -175,6 +176,10 @@ const AppContent = () => {
       
       // Initialize game state to initial values with specified number of players
       useGameStore.getState().resetState(validNumPlayers);
+      
+      // Save the properly initialized state to storage
+      const { G, ctx } = useGameStore.getState();
+      await saveGameState(newCode, G, ctx, storage.storageType);
       
       // Set as current game
       storage.setCurrentGameCode(newCode);
