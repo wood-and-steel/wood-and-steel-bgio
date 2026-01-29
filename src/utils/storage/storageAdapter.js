@@ -97,4 +97,19 @@ export class StorageAdapter {
     const game = await this.loadGame(code);
     return game !== null;
   }
+
+  /**
+   * Get the last modified timestamp for a game
+   * 
+   * This method is optional - adapters that don't track timestamps (like localStorage)
+   * return null. Cloud adapters should override this to return the actual timestamp.
+   * 
+   * @param {string} code - Game code
+   * @returns {Promise<string|null>} - ISO 8601 timestamp or null if not available
+   */
+  async getLastModified(code) {
+    // Default implementation: timestamps not supported
+    // Cloud adapters should override this
+    return null;
+  }
 }

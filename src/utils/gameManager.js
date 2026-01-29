@@ -4,7 +4,7 @@
  * Uses storage adapter pattern to support multiple storage backends (localStorage, Supabase, etc.)
  */
 
-import { getStorageAdapter } from './storage/index';
+import { getStorageAdapter, StorageAdapter } from './storage/index';
 
 // Storage keys for current game (separate for local and cloud storage)
 const CURRENT_GAME_LOCAL_KEY = 'current_game_local';
