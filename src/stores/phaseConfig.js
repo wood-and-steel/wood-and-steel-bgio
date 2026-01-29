@@ -13,6 +13,52 @@ import { growIndependentRailroads } from '../independentRailroads';
  * - turn.onEnd: Hook called at end of turn (for round-end logic)
  */
 export const phaseConfig = {
+  // Phase 0: Waiting for Players (BYOD only) - Players join and host starts the game
+  // Hotseat games skip this phase entirely and start in 'setup'
+  waiting_for_players: {
+    next: 'setup',
+    
+    /**
+     * End waiting_for_players phase when host has started the game
+     * The host clicks "Start Game" which:
+     * 1. Calls assignRandomPlayerIDs() to assign playerIDs in metadata
+     * 2. Sets G.byodGameStarted = true in game state
+     * 
+     * This endIf checks for that flag, indicating all players have joined
+     * and the host has initiated the game start.
+     * 
+     * @param {Object} params
+     * @param {Object} params.G - Game state
+     * @param {Object} params.ctx - Game context
+     * @returns {boolean} True if phase should end (game started by host)
+     */
+    endIf: ({ G, ctx }) => {
+      // Check if the host has started the game
+      // This flag is set by the UI when host clicks "Start Game"
+      // after assignRandomPlayerIDs() has assigned playerIDs to all seats
+      return G.byodGameStarted === true;
+    },
+    
+    /**
+     * Hook called when waiting_for_players phase ends
+     * At this point, all players have joined and playerIDs have been assigned
+     * in metadata by assignRandomPlayerIDs()
+     * 
+     * @param {Object} params
+     * @param {Object} params.G - Game state
+     * @param {Object} params.ctx - Game context
+     */
+    onEnd: ({ G, ctx }) => {
+      console.log('[waiting_for_players] All players joined. Starting game setup.');
+      console.log(`[waiting_for_players] Number of players: ${ctx.numPlayers}`);
+    },
+    
+    turn: {
+      // No turn onEnd hook for waiting phase - no game actions allowed
+      onEnd: null
+    }
+  },
+
   // Phase 1: Setup - Each player chooses starting cities and gets a starting contract
   setup: {
     next: 'play',
@@ -122,7 +168,7 @@ export const phaseConfig = {
 
 /**
  * Get phase configuration for a given phase name
- * @param {string} phaseName - Name of the phase ('setup', 'play', 'scoring')
+ * @param {string} phaseName - Name of the phase ('waiting_for_players', 'setup', 'play', 'scoring')
  * @returns {Object|undefined} Phase configuration object or undefined if not found
  */
 export function getPhaseConfig(phaseName) {
