@@ -318,11 +318,11 @@ export async function createNewGame(storageType = 'local', options = {}) {
     // For BYOD mode, initialize host device and player seats
     if (gameMode === 'byod') {
       metadata.hostDeviceId = hostDeviceId;
-      // Host automatically joins as the first player
+      // Host automatically joins as the first player with default name "Host"
       metadata.playerSeats = {
         [hostDeviceId]: {
           joinedAt: new Date().toISOString(),
-          playerName: null, // Will be set on waiting screen
+          playerName: 'Host', // Default name for host, can be overridden on waiting screen
         }
       };
     }
@@ -713,10 +713,18 @@ export async function assignPlayerSeat(code, deviceId, storageType = 'cloud') {
       return { success: false, error: SeatAssignmentError.GAME_FULL };
     }
     
-    // Assign the seat
+    // Calculate default guest name based on join order and number of players
+    // - For 2-player games: "Guest" (no number)
+    // - For 3+ player games: "Guest 1", "Guest 2", etc. based on arrival order
+    // currentJoined already excludes this player, so it represents how many are already in (including host)
+    // Guest number = currentJoined (since host is seat 0, first guest is seat 1 -> "Guest 1" for 3+ players)
+    const guestNumber = currentJoined; // 1 for first guest, 2 for second guest, etc.
+    const defaultGuestName = numPlayers === 2 ? 'Guest' : `Guest ${guestNumber}`;
+    
+    // Assign the seat with default name
     const newSeat = {
       joinedAt: new Date().toISOString(),
-      playerName: null, // Will be set by updatePlayerName
+      playerName: defaultGuestName, // Default name for guest, can be overridden on waiting screen
     };
     
     const updatedPlayerSeats = {

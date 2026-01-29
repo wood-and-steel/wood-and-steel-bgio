@@ -840,11 +840,58 @@ describe('Persistence Tests', () => {
         expect(result.success).toBe(true);
         expect(result.seat).toBeDefined();
         expect(result.seat.joinedAt).toBeDefined();
-        expect(result.seat.playerName).toBeNull();
+        // Default name is "Guest 1" for first guest in a 3-player game
+        expect(result.seat.playerName).toBe('Guest 1');
         
         // Verify in metadata
         const metadata = await getGameMetadata(gameCode, 'local');
         expect(metadata.playerSeats[testDeviceId2]).toBeDefined();
+      });
+
+      test('assigns "Guest" without number for 2-player game', async () => {
+        // Create a 2-player BYOD game
+        const twoPlayerCode = await createNewGame('local');
+        
+        // Set up as BYOD game with 2 players
+        const metadataMap = JSON.parse(localStorage.getItem('game_metadata') || '[]');
+        const metadataMapObj = new Map(metadataMap);
+        metadataMapObj.set(twoPlayerCode, {
+          gameMode: 'byod',
+          hostDeviceId: testDeviceId,
+          playerSeats: {
+            [testDeviceId]: {
+              joinedAt: new Date().toISOString(),
+              playerName: 'Host',
+            }
+          },
+          lastModified: new Date().toISOString(),
+        });
+        localStorage.setItem('game_metadata', JSON.stringify(Array.from(metadataMapObj.entries())));
+        
+        // Update ctx.numPlayers to 2
+        const state = await loadGameState(twoPlayerCode, 'local');
+        state.ctx.numPlayers = 2;
+        await saveGameState(twoPlayerCode, state.G, state.ctx, 'local');
+        
+        // Guest joins
+        const result = await assignPlayerSeat(twoPlayerCode, testDeviceId2, 'local');
+        
+        expect(result.success).toBe(true);
+        // For 2-player games, guest gets "Guest" without a number
+        expect(result.seat.playerName).toBe('Guest');
+      });
+
+      test('assigns sequential guest numbers for 3+ player games', async () => {
+        // Add first guest
+        const result1 = await assignPlayerSeat(gameCode, testDeviceId2, 'local');
+        expect(result1.success).toBe(true);
+        expect(result1.seat.playerName).toBe('Guest 1');
+        
+        // Add second guest
+        const result2 = await assignPlayerSeat(gameCode, testDeviceId3, 'local');
+        expect(result2.success).toBe(true);
+        // Second guest should be "Guest 2"
+        expect(result2.seat.playerName).toBe('Guest 2');
       });
 
       test('returns existing seat for reconnection', async () => {
