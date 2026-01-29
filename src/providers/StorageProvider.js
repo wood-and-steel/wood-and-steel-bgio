@@ -158,10 +158,10 @@ export function StorageProvider({ children }) {
   }, []);
 
   // ============================================================================
-  // BYOD Preparation: Game Mode Utilities
+  // BYOD: Game Mode Utilities
   // ============================================================================
   // These functions help distinguish between hotseat and BYOD games.
-  // Currently stubbed - will be fully implemented when BYOD mode is added.
+  // Game mode is stored in game metadata and read from storage adapters.
 
   /**
    * Get the game mode for a game.
