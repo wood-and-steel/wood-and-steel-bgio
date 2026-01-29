@@ -1,7 +1,21 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { getStorageAdapter } from '../utils/storage';
 import { isSupabaseConfigured } from '../config/storage';
-import { isValidGameCode, normalizeGameCode } from '../utils/gameManager';
+import { 
+  isValidGameCode, 
+  normalizeGameCode,
+  getDevicePlayerID,
+  getDeviceSeat,
+  getPlayerSeats as getPlayerSeatsFromManager,
+  assignPlayerSeat as assignPlayerSeatInManager,
+  updatePlayerName as updatePlayerNameInManager,
+  assignRandomPlayerIDs as assignRandomPlayerIDsInManager,
+  isHost as isHostInManager,
+  getNumPlayersJoined as getNumPlayersJoinedFromManager,
+  allPlayersJoined as allPlayersJoinedFromManager,
+  getGameMetadata as getGameMetadataFromManager,
+  SeatAssignmentError,
+} from '../utils/gameManager';
 
 /**
  * StorageProvider Context
@@ -249,7 +263,7 @@ export function StorageProvider({ children }) {
 
   /**
    * Get the player ID for this device in a game.
-   * For BYOD games, returns the assigned player seat.
+   * For BYOD games, returns the assigned player seat from game metadata.
    * For hotseat games, returns null (all players on same device).
    * 
    * @param {string} gameCode - Game code
@@ -258,10 +272,112 @@ export function StorageProvider({ children }) {
   const getMyPlayerID = useCallback(async (gameCode) => {
     const isBYOD = await isBYODGame(gameCode);
     if (isBYOD) {
-      return getPlayerSeat(gameCode);
+      const deviceId = getDeviceId();
+      // Use the gameManager function that reads from game metadata
+      return await getDevicePlayerID(gameCode, deviceId, storageType);
     }
     return null; // Hotseat: all players on same device
-  }, [isBYODGame, getPlayerSeat]);
+  }, [isBYODGame, storageType]);
+
+  // ============================================================================
+  // BYOD: Seat Assignment API (delegates to gameManager)
+  // ============================================================================
+
+  /**
+   * Join a BYOD game by assigning this device to a seat.
+   * 
+   * @param {string} gameCode - Game code to join
+   * @returns {Promise<{success: boolean, error?: string, seat?: Object}>} - Result
+   */
+  const joinGame = useCallback(async (gameCode) => {
+    const deviceId = getDeviceId();
+    return await assignPlayerSeatInManager(gameCode, deviceId, 'cloud');
+  }, []);
+
+  /**
+   * Update this player's name in a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @param {string} playerName - New player name
+   * @returns {Promise<{success: boolean, error?: string}>} - Result
+   */
+  const updateMyPlayerName = useCallback(async (gameCode, playerName) => {
+    const deviceId = getDeviceId();
+    return await updatePlayerNameInManager(gameCode, deviceId, playerName, 'cloud');
+  }, []);
+
+  /**
+   * Get all player seats for a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<Object|null>} - Player seats keyed by deviceId, or null
+   */
+  const getPlayerSeatsForGame = useCallback(async (gameCode) => {
+    return await getPlayerSeatsFromManager(gameCode, 'cloud');
+  }, []);
+
+  /**
+   * Get this device's seat in a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<Object|null>} - Seat object or null
+   */
+  const getMySeat = useCallback(async (gameCode) => {
+    const deviceId = getDeviceId();
+    return await getDeviceSeat(gameCode, deviceId, 'cloud');
+  }, []);
+
+  /**
+   * Check if this device is the host of a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<boolean>} - True if this device is the host
+   */
+  const amIHost = useCallback(async (gameCode) => {
+    const deviceId = getDeviceId();
+    return await isHostInManager(gameCode, deviceId, 'cloud');
+  }, []);
+
+  /**
+   * Get the number of players that have joined a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<{joined: number, total: number}|null>} - Player counts or null
+   */
+  const getPlayerCounts = useCallback(async (gameCode) => {
+    return await getNumPlayersJoinedFromManager(gameCode, 'cloud');
+  }, []);
+
+  /**
+   * Check if all players have joined a BYOD game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<boolean>} - True if all players have joined
+   */
+  const areAllPlayersJoined = useCallback(async (gameCode) => {
+    return await allPlayersJoinedFromManager(gameCode, 'cloud');
+  }, []);
+
+  /**
+   * Start a BYOD game by assigning random playerIDs (host only).
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<{success: boolean, error?: string, assignments?: Object}>} - Result
+   */
+  const startBYODGame = useCallback(async (gameCode) => {
+    const deviceId = getDeviceId();
+    return await assignRandomPlayerIDsInManager(gameCode, deviceId, 'cloud');
+  }, []);
+
+  /**
+   * Get game metadata for a game.
+   * 
+   * @param {string} gameCode - Game code
+   * @returns {Promise<Object|null>} - Game metadata or null
+   */
+  const getMetadata = useCallback(async (gameCode) => {
+    return await getGameMetadataFromManager(gameCode, storageType);
+  }, [storageType]);
 
   // Context value
   const value = useMemo(() => ({
@@ -280,7 +396,7 @@ export function StorageProvider({ children }) {
     // BYOD: Device identification
     getDeviceId,
     
-    // BYOD: Player seat management
+    // BYOD: Player seat management (legacy local storage)
     getPlayerSeat,
     setPlayerSeat,
     clearPlayerSeat,
@@ -289,6 +405,20 @@ export function StorageProvider({ children }) {
     getGameMode,
     isBYODGame,
     getMyPlayerID,
+    
+    // BYOD: Seat assignment API (uses gameManager, stores in cloud metadata)
+    joinGame,
+    updateMyPlayerName,
+    getPlayerSeatsForGame,
+    getMySeat,
+    amIHost,
+    getPlayerCounts,
+    areAllPlayersJoined,
+    startBYODGame,
+    getMetadata,
+    
+    // BYOD: Error codes
+    SeatAssignmentError,
   }), [
     storageType,
     setStorageType,
@@ -304,6 +434,15 @@ export function StorageProvider({ children }) {
     getGameMode,
     isBYODGame,
     getMyPlayerID,
+    joinGame,
+    updateMyPlayerName,
+    getPlayerSeatsForGame,
+    getMySeat,
+    amIHost,
+    getPlayerCounts,
+    areAllPlayersJoined,
+    startBYODGame,
+    getMetadata,
   ]);
 
   return (
