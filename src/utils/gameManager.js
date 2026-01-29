@@ -408,13 +408,13 @@ export async function saveGameState(code, G, ctx, storageType = null) {
     
     // Handle both boolean (localStorage) and object (Supabase) return formats
     let success = false;
-    let hadConflict = false;
     
     if (typeof result === 'boolean') {
       success = result;
     } else if (result && typeof result === 'object') {
       success = result.success === true;
-      hadConflict = result.conflict === true;
+      // Note: result.conflict is available but only logged by the adapter
+      // when it represents a significant conflict (> 10 seconds difference)
       
       // Update cache immediately with the timestamp we just set (optimistic update)
       // This prevents race conditions when multiple saves happen in quick succession
@@ -427,10 +427,6 @@ export async function saveGameState(code, G, ctx, storageType = null) {
           lastModifiedCache.set(normalizedCode, newLastModified);
         }
       }
-    }
-    
-    if (hadConflict) {
-      console.warn(`[${operation}] Save completed with conflict resolution (last-write-wins) for game "${normalizedCode}"`);
     }
     
     return success;

@@ -86,10 +86,8 @@ export function generateStartingContract(activeCities) {
   saveCurrentGameState();
 
   // Automatically end turn after choosing starting cities
+  // Note: endTurnEvent() saves state internally, so no need for additional save here
   endTurnEvent();
-
-  // Save state to localStorage (after turn ends)
-  saveCurrentGameState();
 }
 
 /**
