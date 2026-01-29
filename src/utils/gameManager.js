@@ -5,6 +5,7 @@
  */
 
 import { getStorageAdapter, StorageAdapter } from './storage/index';
+import { shuffleArray } from './random';
 
 // Storage keys for current game (separate for local and cloud storage)
 const CURRENT_GAME_LOCAL_KEY = 'current_game_local';
@@ -277,6 +278,8 @@ export async function listGames(storageType = 'local') {
  * @param {string} [storageType] - Optional storage type ('local' or 'cloud'). Defaults to 'local'.
  * @param {Object} [options] - Optional configuration for the new game
  * @param {string} [options.gameMode='hotseat'] - Game mode: 'hotseat' (default) or 'byod'
+ * @param {string} [options.hostDeviceId] - Device ID of the host (required for BYOD mode)
+ * @param {number} [options.numPlayers=3] - Number of players (for BYOD mode)
  * @returns {Promise<string>} - The generated game code
  * @throws {Error} If code generation or storage fails
  */
@@ -284,11 +287,21 @@ export async function createNewGame(storageType = 'local', options = {}) {
   const operation = 'createNewGame';
   
   // Extract options with defaults
-  const { gameMode = 'hotseat' } = options;
+  const { gameMode = 'hotseat', hostDeviceId = null, numPlayers = 3 } = options;
   
   // Validate gameMode
   if (gameMode !== 'hotseat' && gameMode !== 'byod') {
     throw new Error(`Invalid gameMode: ${gameMode}. Must be 'hotseat' or 'byod'.`);
+  }
+  
+  // BYOD mode requires hostDeviceId
+  if (gameMode === 'byod' && !hostDeviceId) {
+    throw new Error('BYOD games require a hostDeviceId');
+  }
+  
+  // BYOD mode requires cloud storage
+  if (gameMode === 'byod' && storageType !== 'cloud') {
+    throw new Error('BYOD games require cloud storage');
   }
   
   try {
@@ -302,18 +315,32 @@ export async function createNewGame(storageType = 'local', options = {}) {
       gameMode: gameMode
     };
     
+    // For BYOD mode, initialize host device and player seats
+    if (gameMode === 'byod') {
+      metadata.hostDeviceId = hostDeviceId;
+      // Host automatically joins as the first player
+      metadata.playerSeats = {
+        [hostDeviceId]: {
+          joinedAt: new Date().toISOString(),
+          playerName: null, // Will be set on waiting screen
+        }
+      };
+    }
+    
     // Save empty initial state to create the game record
     // We'll save an empty state initially - the actual game state will be saved when the game starts
     // For now, we just need to create the metadata entry
     // Since the adapter expects state, we'll create a minimal valid state
+    // For BYOD, we start in 'waiting_for_players' phase
+    const initialPhase = gameMode === 'byod' ? 'waiting_for_players' : 'setup';
     const initialState = {
       G: { contracts: [], players: [], independentRailroads: [] },
-      ctx: { phase: 'setup', currentPlayer: '0', numPlayers: 3, playOrder: ['0'], playOrderPos: 0, turn: 0 }
+      ctx: { phase: initialPhase, currentPlayer: '0', numPlayers: numPlayers, playOrder: ['0'], playOrderPos: 0, turn: 0 }
     };
     
     await adapter.saveGame(code, initialState, metadata);
     
-    console.info(`[${operation}] Created new game with code:`, code, `(storage: ${storageType}, mode: ${gameMode})`);
+    console.info(`[${operation}] Created new game with code:`, code, `(storage: ${storageType}, mode: ${gameMode}, numPlayers: ${numPlayers})`);
     return code;
   } catch (e) {
     console.error(`[${operation}] Failed to create new game:`, e.message);
@@ -520,6 +547,545 @@ export async function loadGameState(code, storageType = null) {
     console.error(`[${operation}] Unexpected error loading state for game "${normalizedCode}":`, e.message);
     console.error(`[${operation}] Error details:`, e);
     console.error(`[${operation}] Stack trace:`, e.stack);
+    return null;
+  }
+}
+
+// ============================================================================
+// BYOD: Player Seat Assignment
+// ============================================================================
+
+/**
+ * Error codes for seat assignment operations
+ */
+export const SeatAssignmentError = {
+  INVALID_CODE: 'INVALID_CODE',
+  GAME_NOT_FOUND: 'GAME_NOT_FOUND',
+  WRONG_GAME_MODE: 'WRONG_GAME_MODE',
+  GAME_FULL: 'GAME_FULL',
+  ALREADY_JOINED: 'ALREADY_JOINED',
+  GAME_STARTED: 'GAME_STARTED',
+  NOT_JOINED: 'NOT_JOINED',
+  NOT_HOST: 'NOT_HOST',
+  UPDATE_FAILED: 'UPDATE_FAILED',
+};
+
+/**
+ * Get game metadata from storage
+ * @param {string} code - Game code
+ * @param {string} [storageType='cloud'] - Storage type ('local' or 'cloud')
+ * @returns {Promise<Object|null>} - Game metadata or null if not found
+ */
+export async function getGameMetadata(code, storageType = 'cloud') {
+  const operation = 'getGameMetadata';
+  
+  if (!isValidGameCode(code)) {
+    console.error(`[${operation}] Invalid game code format:`, code);
+    return null;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    return await adapter.getGameMetadata(normalizedCode);
+  } catch (e) {
+    console.error(`[${operation}] Error getting metadata for game "${normalizedCode}":`, e.message);
+    return null;
+  }
+}
+
+/**
+ * Update game metadata in storage
+ * @param {string} code - Game code
+ * @param {Object} metadata - Metadata to merge with existing
+ * @param {string} [storageType='cloud'] - Storage type ('local' or 'cloud')
+ * @returns {Promise<boolean>} - True if updated successfully
+ */
+export async function updateGameMetadata(code, metadata, storageType = 'cloud') {
+  const operation = 'updateGameMetadata';
+  
+  if (!isValidGameCode(code)) {
+    console.error(`[${operation}] Invalid game code format:`, code);
+    return false;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    return await adapter.updateGameMetadata(normalizedCode, metadata);
+  } catch (e) {
+    console.error(`[${operation}] Error updating metadata for game "${normalizedCode}":`, e.message);
+    return false;
+  }
+}
+
+/**
+ * Assign a player seat to a device in a BYOD game
+ * 
+ * When a player joins:
+ * - Adds them to playerSeats with their deviceId
+ * - No playerID is assigned yet (that happens when all players join and game starts)
+ * - If device already has a seat, returns success (reconnection support)
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID
+ * @param {string} [storageType='cloud'] - Storage type (BYOD requires 'cloud')
+ * @returns {Promise<{success: boolean, error?: string, seat?: Object}>} - Result with success flag and optional error code
+ */
+export async function assignPlayerSeat(code, deviceId, storageType = 'cloud') {
+  const operation = 'assignPlayerSeat';
+  
+  // Validate inputs
+  if (!isValidGameCode(code)) {
+    console.error(`[${operation}] Invalid game code format:`, code);
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  if (!deviceId || typeof deviceId !== 'string') {
+    console.error(`[${operation}] Invalid deviceId:`, deviceId);
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    
+    // Get game metadata
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata) {
+      console.error(`[${operation}] Game not found:`, normalizedCode);
+      return { success: false, error: SeatAssignmentError.GAME_NOT_FOUND };
+    }
+    
+    // Check game mode
+    if (metadata.gameMode !== 'byod') {
+      console.error(`[${operation}] Game "${normalizedCode}" is not a BYOD game (mode: ${metadata.gameMode})`);
+      return { success: false, error: SeatAssignmentError.WRONG_GAME_MODE };
+    }
+    
+    // Get current player seats
+    const playerSeats = metadata.playerSeats || {};
+    
+    // Check if device already has a seat (reconnection support)
+    if (playerSeats[deviceId]) {
+      console.info(`[${operation}] Device ${deviceId} already has a seat in game "${normalizedCode}" (reconnection)`);
+      return { success: true, seat: playerSeats[deviceId] };
+    }
+    
+    // Check if any seat has a playerID assigned (game has started)
+    const hasStarted = Object.values(playerSeats).some(seat => seat.playerID !== undefined);
+    if (hasStarted) {
+      console.error(`[${operation}] Game "${normalizedCode}" has already started (playerIDs assigned)`);
+      return { success: false, error: SeatAssignmentError.GAME_STARTED };
+    }
+    
+    // Get number of players from game state to check if full
+    const state = await adapter.loadGame(normalizedCode);
+    if (!state || !state.ctx) {
+      console.error(`[${operation}] Could not load game state for "${normalizedCode}"`);
+      return { success: false, error: SeatAssignmentError.GAME_NOT_FOUND };
+    }
+    
+    const numPlayers = state.ctx.numPlayers || 3;
+    const currentJoined = Object.keys(playerSeats).length;
+    
+    if (currentJoined >= numPlayers) {
+      console.error(`[${operation}] Game "${normalizedCode}" is full (${currentJoined}/${numPlayers})`);
+      return { success: false, error: SeatAssignmentError.GAME_FULL };
+    }
+    
+    // Assign the seat
+    const newSeat = {
+      joinedAt: new Date().toISOString(),
+      playerName: null, // Will be set by updatePlayerName
+    };
+    
+    const updatedPlayerSeats = {
+      ...playerSeats,
+      [deviceId]: newSeat,
+    };
+    
+    // Update metadata
+    const updated = await adapter.updateGameMetadata(normalizedCode, {
+      playerSeats: updatedPlayerSeats,
+    });
+    
+    if (!updated) {
+      console.error(`[${operation}] Failed to update metadata for game "${normalizedCode}"`);
+      return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+    }
+    
+    console.info(`[${operation}] Successfully assigned seat to device ${deviceId} in game "${normalizedCode}" (${currentJoined + 1}/${numPlayers})`);
+    return { success: true, seat: newSeat };
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error assigning seat for game "${normalizedCode}":`, e.message);
+    return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+  }
+}
+
+/**
+ * Update a player's name in a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID
+ * @param {string} playerName - Player name to set
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<{success: boolean, error?: string}>} - Result with success flag
+ */
+export async function updatePlayerName(code, deviceId, playerName, storageType = 'cloud') {
+  const operation = 'updatePlayerName';
+  
+  // Validate inputs
+  if (!isValidGameCode(code)) {
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  if (!deviceId || typeof deviceId !== 'string') {
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    
+    // Get game metadata
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata) {
+      return { success: false, error: SeatAssignmentError.GAME_NOT_FOUND };
+    }
+    
+    // Get current player seats
+    const playerSeats = metadata.playerSeats || {};
+    
+    // Check if device has a seat
+    if (!playerSeats[deviceId]) {
+      console.error(`[${operation}] Device ${deviceId} does not have a seat in game "${normalizedCode}"`);
+      return { success: false, error: SeatAssignmentError.NOT_JOINED };
+    }
+    
+    // Update player name
+    const updatedPlayerSeats = {
+      ...playerSeats,
+      [deviceId]: {
+        ...playerSeats[deviceId],
+        playerName: playerName || null,
+      },
+    };
+    
+    // Update metadata
+    const updated = await adapter.updateGameMetadata(normalizedCode, {
+      playerSeats: updatedPlayerSeats,
+    });
+    
+    if (!updated) {
+      return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+    }
+    
+    console.info(`[${operation}] Updated player name for device ${deviceId} in game "${normalizedCode}" to "${playerName}"`);
+    return { success: true };
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error updating player name:`, e.message);
+    return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+  }
+}
+
+/**
+ * Check if a device is the host of a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID to check
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<boolean>} - True if device is the host
+ */
+export async function isHost(code, deviceId, storageType = 'cloud') {
+  const operation = 'isHost';
+  
+  if (!isValidGameCode(code) || !deviceId) {
+    return false;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata) {
+      return false;
+    }
+    
+    return metadata.hostDeviceId === deviceId;
+  } catch (e) {
+    console.error(`[${operation}] Error checking host status:`, e.message);
+    return false;
+  }
+}
+
+/**
+ * Get the number of players that have joined a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<{joined: number, total: number}|null>} - Number joined and total, or null if error
+ */
+export async function getNumPlayersJoined(code, storageType = 'cloud') {
+  const operation = 'getNumPlayersJoined';
+  
+  if (!isValidGameCode(code)) {
+    return null;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    
+    // Get metadata for player seats
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    if (!metadata) {
+      return null;
+    }
+    
+    // Get state for numPlayers
+    const state = await adapter.loadGame(normalizedCode);
+    if (!state || !state.ctx) {
+      return null;
+    }
+    
+    const playerSeats = metadata.playerSeats || {};
+    const joined = Object.keys(playerSeats).length;
+    const total = state.ctx.numPlayers || 3;
+    
+    return { joined, total };
+  } catch (e) {
+    console.error(`[${operation}] Error getting player count:`, e.message);
+    return null;
+  }
+}
+
+/**
+ * Check if all players have joined a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<boolean>} - True if all players have joined
+ */
+export async function allPlayersJoined(code, storageType = 'cloud') {
+  const counts = await getNumPlayersJoined(code, storageType);
+  if (!counts) {
+    return false;
+  }
+  return counts.joined >= counts.total;
+}
+
+/**
+ * Assign random playerIDs to all joined players in a BYOD game
+ * 
+ * This should be called when transitioning from 'waiting_for_players' to 'setup' phase.
+ * It randomly shuffles playerIDs (0, 1, 2, etc.) and assigns them to all joined players.
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID of the host (only host can start)
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<{success: boolean, error?: string, assignments?: Object}>} - Result with playerID assignments keyed by deviceId
+ */
+export async function assignRandomPlayerIDs(code, deviceId, storageType = 'cloud') {
+  const operation = 'assignRandomPlayerIDs';
+  
+  // Validate inputs
+  if (!isValidGameCode(code)) {
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  if (!deviceId || typeof deviceId !== 'string') {
+    return { success: false, error: SeatAssignmentError.INVALID_CODE };
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    
+    // Get game metadata
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata) {
+      return { success: false, error: SeatAssignmentError.GAME_NOT_FOUND };
+    }
+    
+    // Check if caller is host
+    if (metadata.hostDeviceId !== deviceId) {
+      console.error(`[${operation}] Device ${deviceId} is not the host of game "${normalizedCode}"`);
+      return { success: false, error: SeatAssignmentError.NOT_HOST };
+    }
+    
+    // Check game mode
+    if (metadata.gameMode !== 'byod') {
+      return { success: false, error: SeatAssignmentError.WRONG_GAME_MODE };
+    }
+    
+    // Get player seats
+    const playerSeats = metadata.playerSeats || {};
+    const deviceIds = Object.keys(playerSeats);
+    
+    // Get state for numPlayers
+    const state = await adapter.loadGame(normalizedCode);
+    if (!state || !state.ctx) {
+      return { success: false, error: SeatAssignmentError.GAME_NOT_FOUND };
+    }
+    
+    const numPlayers = state.ctx.numPlayers || 3;
+    
+    // Check if all players have joined
+    if (deviceIds.length < numPlayers) {
+      console.error(`[${operation}] Not all players have joined game "${normalizedCode}" (${deviceIds.length}/${numPlayers})`);
+      return { success: false, error: SeatAssignmentError.GAME_FULL }; // Reusing error, but means "not enough players"
+    }
+    
+    // Check if playerIDs already assigned
+    const alreadyAssigned = Object.values(playerSeats).some(seat => seat.playerID !== undefined);
+    if (alreadyAssigned) {
+      console.error(`[${operation}] PlayerIDs already assigned for game "${normalizedCode}"`);
+      return { success: false, error: SeatAssignmentError.GAME_STARTED };
+    }
+    
+    // Create array of playerIDs and shuffle
+    const playerIDs = Array.from({ length: numPlayers }, (_, i) => String(i));
+    shuffleArray(playerIDs);
+    
+    // Assign playerIDs to devices
+    const updatedPlayerSeats = {};
+    const assignments = {};
+    
+    deviceIds.forEach((did, index) => {
+      const playerID = playerIDs[index];
+      updatedPlayerSeats[did] = {
+        ...playerSeats[did],
+        playerID: playerID,
+      };
+      assignments[did] = playerID;
+    });
+    
+    // Update metadata
+    const updated = await adapter.updateGameMetadata(normalizedCode, {
+      playerSeats: updatedPlayerSeats,
+    });
+    
+    if (!updated) {
+      return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+    }
+    
+    console.info(`[${operation}] Assigned random playerIDs for game "${normalizedCode}":`, assignments);
+    return { success: true, assignments };
+  } catch (e) {
+    console.error(`[${operation}] Unexpected error assigning playerIDs:`, e.message);
+    return { success: false, error: SeatAssignmentError.UPDATE_FAILED };
+  }
+}
+
+/**
+ * Get the playerID assigned to a device in a BYOD game
+ * Returns null if device hasn't joined or playerIDs haven't been assigned yet
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<string|null>} - PlayerID ('0', '1', etc.) or null
+ */
+export async function getDevicePlayerID(code, deviceId, storageType = 'cloud') {
+  const operation = 'getDevicePlayerID';
+  
+  if (!isValidGameCode(code) || !deviceId) {
+    return null;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata || !metadata.playerSeats) {
+      return null;
+    }
+    
+    const seat = metadata.playerSeats[deviceId];
+    if (!seat) {
+      return null;
+    }
+    
+    return seat.playerID || null;
+  } catch (e) {
+    console.error(`[${operation}] Error getting playerID:`, e.message);
+    return null;
+  }
+}
+
+/**
+ * Get the seat information for a device in a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} deviceId - Device UUID
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<Object|null>} - Seat object { joinedAt, playerName, playerID? } or null
+ */
+export async function getDeviceSeat(code, deviceId, storageType = 'cloud') {
+  const operation = 'getDeviceSeat';
+  
+  if (!isValidGameCode(code) || !deviceId) {
+    return null;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata || !metadata.playerSeats) {
+      return null;
+    }
+    
+    return metadata.playerSeats[deviceId] || null;
+  } catch (e) {
+    console.error(`[${operation}] Error getting device seat:`, e.message);
+    return null;
+  }
+}
+
+/**
+ * Get all player seats for a BYOD game
+ * 
+ * @param {string} code - Game code
+ * @param {string} [storageType='cloud'] - Storage type
+ * @returns {Promise<Object|null>} - Player seats object keyed by deviceId, or null
+ */
+export async function getPlayerSeats(code, storageType = 'cloud') {
+  const operation = 'getPlayerSeats';
+  
+  if (!isValidGameCode(code)) {
+    return null;
+  }
+  
+  const normalizedCode = normalizeGameCode(code);
+  
+  try {
+    const adapter = getAdapter(storageType);
+    const metadata = await adapter.getGameMetadata(normalizedCode);
+    
+    if (!metadata) {
+      return null;
+    }
+    
+    return metadata.playerSeats || {};
+  } catch (e) {
+    console.error(`[${operation}] Error getting player seats:`, e.message);
     return null;
   }
 }

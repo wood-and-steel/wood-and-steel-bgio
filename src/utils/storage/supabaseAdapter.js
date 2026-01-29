@@ -592,4 +592,115 @@ export class SupabaseAdapter extends StorageAdapter {
     this.activeSubscriptions.clear();
     console.info('[SupabaseAdapter] Cleaned up all subscriptions');
   }
+
+  /**
+   * Get game metadata without loading full game state
+   * 
+   * @param {string} code - Game code
+   * @returns {Promise<Object|null>} - Game metadata or null if not found
+   */
+  async getGameMetadata(code) {
+    const operation = 'getGameMetadata';
+    
+    if (!this._isValidCode(code)) {
+      console.error(`[SupabaseAdapter.${operation}] Invalid game code format:`, code);
+      return null;
+    }
+
+    const normalizedCode = this._normalizeCode(code);
+    
+    try {
+      await this._ensureInitialized();
+      
+      const { data, error } = await this.supabase
+        .from('games')
+        .select('metadata')
+        .eq('code', normalizedCode)
+        .maybeSingle();
+      
+      if (error) {
+        console.error(`[SupabaseAdapter.${operation}] Error getting metadata for game "${normalizedCode}":`, error.message);
+        return null;
+      }
+      
+      if (!data) {
+        console.info(`[SupabaseAdapter.${operation}] No game found with code:`, normalizedCode);
+        return null;
+      }
+      
+      return data.metadata || {};
+    } catch (e) {
+      console.error(`[SupabaseAdapter.${operation}] Unexpected error getting metadata for game "${normalizedCode}":`, e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Update game metadata without modifying game state
+   * Merges the provided metadata with existing metadata.
+   * 
+   * @param {string} code - Game code
+   * @param {Object} metadata - Metadata to merge with existing metadata
+   * @returns {Promise<boolean>} - True if updated successfully
+   */
+  async updateGameMetadata(code, metadata) {
+    const operation = 'updateGameMetadata';
+    
+    if (!this._isValidCode(code)) {
+      console.error(`[SupabaseAdapter.${operation}] Invalid game code format:`, code);
+      return false;
+    }
+
+    const normalizedCode = this._normalizeCode(code);
+    
+    try {
+      await this._ensureInitialized();
+      
+      // Get existing metadata
+      const { data: existingGame, error: fetchError } = await this.supabase
+        .from('games')
+        .select('metadata')
+        .eq('code', normalizedCode)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error(`[SupabaseAdapter.${operation}] Error fetching existing metadata for game "${normalizedCode}":`, fetchError.message);
+        return false;
+      }
+      
+      if (!existingGame) {
+        console.error(`[SupabaseAdapter.${operation}] Game not found:`, normalizedCode);
+        return false;
+      }
+      
+      // Merge metadata
+      const now = new Date().toISOString();
+      const existingMetadata = existingGame.metadata || {};
+      const updatedMetadata = {
+        ...existingMetadata,
+        ...metadata,
+        lastModified: now
+      };
+      
+      // Update metadata and last_modified
+      const { error: updateError } = await this.supabase
+        .from('games')
+        .update({
+          metadata: updatedMetadata,
+          last_modified: now
+        })
+        .eq('code', normalizedCode);
+      
+      if (updateError) {
+        console.error(`[SupabaseAdapter.${operation}] Error updating metadata for game "${normalizedCode}":`, updateError.message);
+        return false;
+      }
+      
+      console.info(`[SupabaseAdapter.${operation}] Successfully updated metadata for game "${normalizedCode}"`);
+      return true;
+    } catch (e) {
+      console.error(`[SupabaseAdapter.${operation}] Unexpected error updating metadata for game "${normalizedCode}":`, e.message);
+      return false;
+    }
+  }
 }

@@ -111,3 +111,24 @@ export function randomSetItem(set) {
     return undefined;
   }
 }
+
+/**
+ * Shuffles an array in place using the Fisher-Yates algorithm
+ * 
+ * @export
+ * @param {Array} array - Array to shuffle
+ * @returns {Array} - The same array, shuffled in place
+ */
+export function shuffleArray(array) {
+  if (!array || array.length <= 1) {
+    return array;
+  }
+  
+  // Fisher-Yates shuffle
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  
+  return array;
+}

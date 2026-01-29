@@ -390,4 +390,86 @@ export class LocalStorageAdapter extends StorageAdapter {
     // Return a no-op unsubscribe function
     return () => {};
   }
+
+  /**
+   * Get game metadata without loading full game state
+   * 
+   * @param {string} code - Game code
+   * @returns {Promise<Object|null>} - Game metadata or null if not found
+   */
+  async getGameMetadata(code) {
+    const operation = 'getGameMetadata';
+    
+    if (!this._isValidCode(code)) {
+      console.error(`[LocalStorageAdapter.${operation}] Invalid game code format:`, code);
+      return null;
+    }
+
+    const normalizedCode = this._normalizeCode(code);
+    
+    try {
+      const metadataMap = this._getGameData(GAME_METADATA_KEY);
+      const metadata = metadataMap.get(normalizedCode);
+      
+      if (!metadata) {
+        console.info(`[LocalStorageAdapter.${operation}] No metadata found for game:`, normalizedCode);
+        return null;
+      }
+      
+      return metadata;
+    } catch (e) {
+      console.error(`[LocalStorageAdapter.${operation}] Error getting metadata for game "${normalizedCode}":`, e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Update game metadata without modifying game state
+   * Merges the provided metadata with existing metadata.
+   * 
+   * @param {string} code - Game code
+   * @param {Object} metadata - Metadata to merge with existing metadata
+   * @returns {Promise<boolean>} - True if updated successfully
+   */
+  async updateGameMetadata(code, metadata) {
+    const operation = 'updateGameMetadata';
+    
+    if (!this._isValidCode(code)) {
+      console.error(`[LocalStorageAdapter.${operation}] Invalid game code format:`, code);
+      return false;
+    }
+
+    const normalizedCode = this._normalizeCode(code);
+    
+    try {
+      // Check if game exists (via state map)
+      const stateMap = this._getGameData(GAME_STATE_KEY);
+      if (!stateMap.has(normalizedCode)) {
+        console.error(`[LocalStorageAdapter.${operation}] Game not found:`, normalizedCode);
+        return false;
+      }
+      
+      // Get existing metadata and merge
+      const metadataMap = this._getGameData(GAME_METADATA_KEY);
+      const existingMetadata = metadataMap.get(normalizedCode) || {};
+      const updatedMetadata = {
+        ...existingMetadata,
+        ...metadata,
+        lastModified: new Date().toISOString()
+      };
+      
+      metadataMap.set(normalizedCode, updatedMetadata);
+      const saved = this._setGameData(GAME_METADATA_KEY, metadataMap);
+      
+      if (!saved) {
+        console.error(`[LocalStorageAdapter.${operation}] Failed to save metadata for game "${normalizedCode}"`);
+        return false;
+      }
+      
+      return true;
+    } catch (e) {
+      console.error(`[LocalStorageAdapter.${operation}] Error updating metadata for game "${normalizedCode}":`, e.message);
+      return false;
+    }
+  }
 }

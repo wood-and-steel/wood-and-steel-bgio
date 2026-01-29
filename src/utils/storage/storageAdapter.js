@@ -112,4 +112,26 @@ export class StorageAdapter {
     // Cloud adapters should override this
     return null;
   }
+
+  /**
+   * Get game metadata without loading full game state
+   * 
+   * @param {string} code - Game code
+   * @returns {Promise<Object|null>} - Game metadata or null if not found
+   */
+  async getGameMetadata(code) {
+    throw new Error('getGameMetadata must be implemented by storage adapter');
+  }
+
+  /**
+   * Update game metadata without modifying game state
+   * Merges the provided metadata with existing metadata.
+   * 
+   * @param {string} code - Game code
+   * @param {Object} metadata - Metadata to merge with existing metadata
+   * @returns {Promise<boolean>} - True if updated successfully
+   */
+  async updateGameMetadata(code, metadata) {
+    throw new Error('updateGameMetadata must be implemented by storage adapter');
+  }
 }
