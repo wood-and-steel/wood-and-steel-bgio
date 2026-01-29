@@ -335,7 +335,14 @@ export async function createNewGame(storageType = 'local', options = {}) {
     const initialPhase = gameMode === 'byod' ? 'waiting_for_players' : 'setup';
     const initialState = {
       G: { contracts: [], players: [], independentRailroads: [] },
-      ctx: { phase: initialPhase, currentPlayer: '0', numPlayers: numPlayers, playOrder: ['0'], playOrderPos: 0, turn: 0 }
+      ctx: {
+        phase: initialPhase,
+        currentPlayer: '0',
+        numPlayers: numPlayers,
+        playOrder: Array.from({ length: numPlayers }, (_, i) => String(i)),
+        playOrderPos: 0,
+        turn: 0
+      }
     };
     
     await adapter.saveGame(code, initialState, metadata);
@@ -388,12 +395,7 @@ export async function saveGameState(code, G, ctx, storageType = null) {
     // Prepare state object
     const state = { G, ctx };
     
-    // Prepare metadata with lastModified timestamp
-    const metadata = {
-      lastModified: new Date().toISOString() // ISO 8601 format for cloud compatibility
-    };
-    
-    // Determine storage type if not provided
+    // Determine storage type if not provided (needed early for fetching existing metadata)
     let adapterStorageType = storageType;
     if (!adapterStorageType) {
       // Try to detect from current game codes
@@ -409,8 +411,21 @@ export async function saveGameState(code, G, ctx, storageType = null) {
       }
     }
     
-    // Save using adapter
+    // Fetch existing metadata to preserve BYOD fields (playerSeats, hostDeviceId, gameMode)
     const adapter = getAdapter(adapterStorageType);
+    let existingMetadata = {};
+    try {
+      existingMetadata = await adapter.getGameMetadata(normalizedCode) || {};
+    } catch (e) {
+      console.warn(`[${operation}] Could not fetch existing metadata for "${normalizedCode}":`, e.message);
+    }
+    
+    // Merge existing metadata with new lastModified timestamp
+    // This preserves BYOD fields that should not be overwritten
+    const metadata = {
+      ...existingMetadata,
+      lastModified: new Date().toISOString() // ISO 8601 format for cloud compatibility
+    };
     
     // For Supabase adapter, use optimistic locking with expectedLastModified
     // Use cached value if available and recent, but let saveGame() fetch fresh for actual comparison

@@ -9,11 +9,10 @@ import { useGame } from "./hooks/useGame";
 import { useLobbyStore } from "./stores/lobbyStore";
 
 // Main Component
-export function WoodAndSteelState({ gameManager }) {
+export function WoodAndSteelState({ gameManager, isBYODMode = false }) {
   // Get game state and moves from useGame hook instead of props
   const { G, ctx, moves, playerID } = useGame();
   const { clearSelection, setLobbyMode } = useLobbyStore();
-
   // React hooks must be at the top of the component
   const [input, setInput] = React.useState('');
   const [isEditPlaytestDialogOpen, setIsEditPlaytestDialogOpen] = React.useState(false);
@@ -51,9 +50,9 @@ export function WoodAndSteelState({ gameManager }) {
   // Handler for starting city pair selection
   const handleStartingPairSelect = React.useCallback((pair) => {
     const inputParameters = pair;
-    moves.generateStartingContract(inputParameters);
+    moves.generateStartingContract(inputParameters, playerID);
     setInput("");
-  }, [moves]);
+  }, [moves, playerID, ctx.currentPlayer, ctx.phase, isBYODMode]);
 
   const handleToggleFulfilled = React.useCallback(
     (contractId) => moves.toggleContractFulfilled(contractId),
@@ -79,7 +78,7 @@ export function WoodAndSteelState({ gameManager }) {
 
     switch (e.nativeEvent.submitter.name) {
       case "startingContract":
-        moves.generateStartingContract(inputParameters);
+        moves.generateStartingContract(inputParameters, playerID);
         setInput("");
         break;
       case "privateContract2":
@@ -114,10 +113,14 @@ export function WoodAndSteelState({ gameManager }) {
     }
   }
 
+  // In BYOD mode, always show the board (each device shows one player's board)
+  // In hotseat mode, only show the current player's board
+  const isHidden = !isBYODMode && ctx.currentPlayer !== playerID;
+  
   // Render different UI based on phase
   if (currentPhase === 'scoring') {
     return (
-      <div className={`boardPage ${ctx.currentPlayer === playerID ? '' : 'boardPage--hidden'}`}>
+      <div className={`boardPage ${isHidden ? 'boardPage--hidden' : ''}`}>
         <form className="form" method="post" onSubmit={handleSubmit}>
           <NavBar 
             input={input} 
@@ -148,7 +151,7 @@ export function WoodAndSteelState({ gameManager }) {
   }
 
   return (
-    <div className={`boardPage ${ctx.currentPlayer === playerID ? '' : 'boardPage--hidden'}`}>
+    <div className={`boardPage ${isHidden ? 'boardPage--hidden' : ''}`}>
       <form className="form" method="post" onSubmit={handleSubmit}>
         <div>
           <NavBar 
@@ -171,7 +174,17 @@ export function WoodAndSteelState({ gameManager }) {
             moves={moves}
           />
           {activeTab === 'board' && (
-            <PlayerBoard G={G} ctx={ctx} startingContractExists={startingContractExists} currentPhase={currentPhase} onStartingPairSelect={handleStartingPairSelect} onToggleFulfilled={handleToggleFulfilled} onDelete={handleDelete} />
+            <PlayerBoard
+              G={G}
+              ctx={ctx}
+              playerID={playerID}
+              isBYODMode={isBYODMode}
+              startingContractExists={startingContractExists}
+              currentPhase={currentPhase}
+              onStartingPairSelect={handleStartingPairSelect}
+              onToggleFulfilled={handleToggleFulfilled}
+              onDelete={handleDelete}
+            />
           )}
           {activeTab === 'commodities' && <CommoditiesPage />}
           {activeTab === 'cities' && <CitiesPage G={G} ctx={ctx} />}

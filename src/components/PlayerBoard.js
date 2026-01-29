@@ -18,6 +18,8 @@ const STARTING_CITY_PAIRS = [
  * @param {object} props
  * @param {object} props.G - The game state object containing players and contracts.
  * @param {object} props.ctx - The game context, including currentPlayer.
+ * @param {string|null} props.playerID - Player ID for this board (BYOD mode).
+ * @param {boolean} props.isBYODMode - Whether this is a BYOD game.
  * @param {boolean} props.startingContractExists - Whether the current player has a starting contract (controls visibility of +2P and +3P buttons).
  * @param {'setup'|'play'|'scoring'} props.currentPhase - The current game phase (affects which UI elements are shown).
  * @param {function} props.onStartingPairSelect - Called when a starting city pair is selected during setup phase. Receives the pair array as argument.
@@ -35,8 +37,10 @@ const STARTING_CITY_PAIRS = [
  *   onDelete={(id) => handleDelete(id)}
  * />
  */
-export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onStartingPairSelect, onToggleFulfilled, onDelete }) {
-  const activePlayer = G.players.find(([key]) => key === ctx.currentPlayer);
+export function PlayerBoard({ G, ctx, playerID, isBYODMode = false, startingContractExists, currentPhase, onStartingPairSelect, onToggleFulfilled, onDelete }) {
+  const effectivePlayerID = isBYODMode && playerID != null ? playerID : ctx.currentPlayer;
+  const activePlayer = G.players.find(([key]) => key === effectivePlayerID);
+  const isPlayerTurn = !isBYODMode || playerID === ctx.currentPlayer;
   if (!activePlayer) return null;
 
   const [key, { name }] = activePlayer;
@@ -54,7 +58,7 @@ export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onSt
   const isPairChosen = (pair) => chosenCities.has(pair[0]) || chosenCities.has(pair[1]);
 
   const handlePairClick = (pair) => {
-    if (isPairChosen(pair)) return;
+    if (isPairChosen(pair) || !isPlayerTurn) return;
     onStartingPairSelect(pair);
   };
 
@@ -97,7 +101,7 @@ export function PlayerBoard({ G, ctx, startingContractExists, currentPhase, onSt
           <div className="playerBoard__startingPairs">
             <div className="playerBoard__startingPairsLabel">Choose your starting cities:</div>
             {STARTING_CITY_PAIRS.map((pair, index) => {
-              const disabled = isPairChosen(pair);
+              const disabled = isPairChosen(pair) || !isPlayerTurn;
               return (
                 <button
                   key={index}

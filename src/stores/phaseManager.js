@@ -26,7 +26,9 @@ export function checkPhaseTransition(G, ctx) {
   }
 
   // Evaluate end condition
-  if (!currentPhaseConfig.endIf || !currentPhaseConfig.endIf({ G, ctx })) {
+  const endIfResult = currentPhaseConfig.endIf ? currentPhaseConfig.endIf({ G, ctx }) : false;
+  
+  if (!endIfResult) {
     // Phase should not end
     return false;
   }

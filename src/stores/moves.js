@@ -19,8 +19,8 @@ import {
  */
 
 export const createMoves = (store) => ({
-  generateStartingContract: (activeCities) => 
-    generateStartingContract(activeCities),
+  generateStartingContract: (activeCities, playerID) => 
+    generateStartingContract(activeCities, playerID),
   
   generatePrivateContract: () => 
     generatePrivateContract(),

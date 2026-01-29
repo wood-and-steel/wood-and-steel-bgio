@@ -17,6 +17,30 @@ const JOIN_ERROR_MESSAGES = {
 };
 
 /**
+ * Tab identifiers for the lobby
+ * - 'local': Local storage, hotseat mode only
+ * - 'cloud-hotseat': Cloud storage, hotseat mode
+ * - 'cloud-byod': Cloud storage, BYOD mode
+ */
+const TAB_LOCAL = 'local';
+const TAB_CLOUD_HOTSEAT = 'cloud-hotseat';
+const TAB_CLOUD_BYOD = 'cloud-byod';
+
+/**
+ * Map tab to storage type
+ */
+function getStorageTypeForTab(tab) {
+  return tab === TAB_LOCAL ? 'local' : 'cloud';
+}
+
+/**
+ * Map tab to game mode for new games
+ */
+function getGameModeForTab(tab) {
+  return tab === TAB_CLOUD_BYOD ? 'byod' : 'hotseat';
+}
+
+/**
  * Lobby Screen Component
  * Full-screen lobby that serves as the entry point for the application
  * Allows players to manage their games (view, enter, delete, create new)
@@ -27,6 +51,13 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
   const [showLoadingIndicator, setShowLoadingIndicator] = React.useState(false);
   const { selectedGameCode } = useLobbyStore();
   const storage = useStorage();
+  
+  // Active tab state - tracks which tab is selected (separate from storage type since
+  // both Cloud tabs use the same storage type)
+  const [activeTab, setActiveTab] = React.useState(() => {
+    // Initialize based on current storage type, defaulting to hotseat for cloud
+    return storage.storageType === 'local' ? TAB_LOCAL : TAB_CLOUD_HOTSEAT;
+  });
   
   // Join game state
   const [joinGameCode, setJoinGameCode] = React.useState('');
@@ -74,17 +105,44 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
     refreshGames();
   }, [storage.storageType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle tab switch: only update storage type. The effect (storage.storageType dep)
-  // runs after re-render and refreshes the list. Do NOT call refreshGames here:
+  // Filter games based on active tab's expected game mode
+  // - Local tab: show all local games (they're always hotseat)
+  // - Cloud (Hotseat) tab: show games where gameMode is 'hotseat' or undefined (backward compatibility)
+  // - Cloud (BYOD) tab: show only games where gameMode is 'byod'
+  const filteredGames = React.useMemo(() => {
+    if (activeTab === TAB_LOCAL) {
+      // Local storage only has hotseat games, show all
+      return games;
+    }
+    
+    const expectedMode = getGameModeForTab(activeTab);
+    return games.filter(game => {
+      const gameMode = game.metadata?.gameMode || 'hotseat'; // Default to hotseat for backward compatibility
+      return gameMode === expectedMode;
+    });
+  }, [games, activeTab]);
+
+  // Handle tab switch: update active tab and storage type if needed. The effect
+  // (storage.storageType dep) runs after re-render and refreshes the list.
   // React state updates are async, so the handler would fetch using the previous
   // storage type. That fetch can resolve after the effect’s (correct) fetch, and
   // overwrite the list (e.g. Local tab briefly shows local, then cloud).
-  const handleTabSwitch = React.useCallback((newStorageType) => {
-    if (newStorageType === storage.storageType) {
+  const handleTabSwitch = React.useCallback((newTab) => {
+    if (newTab === activeTab) {
       return;
     }
-    storage.setStorageType(newStorageType);
-  }, [storage]);
+    
+    setActiveTab(newTab);
+    
+    // Update storage type if it changed
+    const newStorageType = getStorageTypeForTab(newTab);
+    if (newStorageType !== storage.storageType) {
+      storage.setStorageType(newStorageType);
+      // The effect will refresh games when storage type changes
+    }
+    // Note: when switching between Cloud tabs (same storage type), no refresh needed
+    // since both tabs show the same games
+  }, [activeTab, storage]);
 
   const handleRowClick = (gameCode) => {
     if (gameCode !== selectedGameCode && onEnterGame) {
@@ -114,7 +172,8 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
 
   const handleNewGame = (numPlayers) => {
     if (onNewGame) {
-      onNewGame(numPlayers);
+      const gameMode = getGameModeForTab(activeTab);
+      onNewGame(numPlayers, gameMode);
     }
   };
 
@@ -146,10 +205,11 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
         return;
       }
       
-      // Successfully joined! Switch to cloud storage (BYOD is cloud-only)
+      // Successfully joined! Switch to cloud storage and BYOD tab (BYOD is cloud-only)
       if (storage.storageType !== 'cloud') {
         storage.setStorageType('cloud');
       }
+      setActiveTab(TAB_CLOUD_BYOD);
       
       // Enter the game (this will load the game and show WaitingForPlayersScreen)
       if (onEnterGame) {
@@ -192,18 +252,25 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
         {/* Tab Bar */}
         <div className="lobbyScreen__tabs">
           <button
-            className={`lobbyScreen__tab ${storage.storageType === 'local' ? 'lobbyScreen__tab--active' : ''}`}
-            onClick={() => handleTabSwitch('local')}
+            className={`lobbyScreen__tab ${activeTab === TAB_LOCAL ? 'lobbyScreen__tab--active' : ''}`}
+            onClick={() => handleTabSwitch(TAB_LOCAL)}
             disabled={isLoading}
           >
             Local
           </button>
           <button
-            className={`lobbyScreen__tab ${storage.storageType === 'cloud' ? 'lobbyScreen__tab--active' : ''}`}
-            onClick={() => handleTabSwitch('cloud')}
+            className={`lobbyScreen__tab ${activeTab === TAB_CLOUD_HOTSEAT ? 'lobbyScreen__tab--active' : ''}`}
+            onClick={() => handleTabSwitch(TAB_CLOUD_HOTSEAT)}
             disabled={isLoading}
           >
-            Cloud
+            Cloud (Hotseat)
+          </button>
+          <button
+            className={`lobbyScreen__tab ${activeTab === TAB_CLOUD_BYOD ? 'lobbyScreen__tab--active' : ''}`}
+            onClick={() => handleTabSwitch(TAB_CLOUD_BYOD)}
+            disabled={isLoading}
+          >
+            Cloud (BYOD)
           </button>
           {showLoadingIndicator && (
             <span className="lobbyScreen__loadingIndicator" aria-label="Loading">
@@ -212,47 +279,46 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
           )}
         </div>
 
-        {/* Join Game Section
-            TODO: Once the "Cloud (BYOD)" tab is implemented, this section should only
-            be visible on that tab. For now, it's shown on all tabs since BYOD games
-            can only be joined via cloud storage anyway. */}
-        <div className="lobbyScreen__joinGame">
-          <form onSubmit={handleJoinGame} className="lobbyScreen__joinForm">
-            <label htmlFor="joinGameCode" className="lobbyScreen__joinLabel">
-              Join a game:
-            </label>
-            <input
-              id="joinGameCode"
-              type="text"
-              value={joinGameCode}
-              onChange={handleJoinCodeChange}
-              placeholder="Enter game code"
-              className="lobbyScreen__joinInput"
-              maxLength={6}
-              disabled={isJoining}
-              autoComplete="off"
-              autoCapitalize="characters"
-            />
-            <button
-              type="submit"
-              className="button lobbyScreen__joinButton"
-              disabled={isJoining || !joinGameCode.trim()}
-            >
-              {isJoining ? 'Joining...' : 'Join'}
-            </button>
-          </form>
-          {joinError && (
-            <p className="lobbyScreen__joinError" role="alert">
-              {joinError}
-            </p>
-          )}
-        </div>
+        {/* Join Game Section - only visible on Cloud (BYOD) tab */}
+        {activeTab === TAB_CLOUD_BYOD && (
+          <div className="lobbyScreen__joinGame">
+            <form onSubmit={handleJoinGame} className="lobbyScreen__joinForm">
+              <label htmlFor="joinGameCode" className="lobbyScreen__joinLabel">
+                Join a game:
+              </label>
+              <input
+                id="joinGameCode"
+                type="text"
+                value={joinGameCode}
+                onChange={handleJoinCodeChange}
+                placeholder="Enter game code"
+                className="lobbyScreen__joinInput"
+                maxLength={6}
+                disabled={isJoining}
+                autoComplete="off"
+                autoCapitalize="characters"
+              />
+              <button
+                type="submit"
+                className="button lobbyScreen__joinButton"
+                disabled={isJoining || !joinGameCode.trim()}
+              >
+                {isJoining ? 'Joining...' : 'Join'}
+              </button>
+            </form>
+            {joinError && (
+              <p className="lobbyScreen__joinError" role="alert">
+                {joinError}
+              </p>
+            )}
+          </div>
+        )}
         
         {isLoading ? (
           <div className="lobbyScreen__emptyState">
             <p>Loading games...</p>
           </div>
-        ) : games.length === 0 ? (
+        ) : filteredGames.length === 0 ? (
           <div className="lobbyScreen__emptyState">
             <p>No games found.</p>
             <div className="lobbyScreen__newGame">
@@ -282,7 +348,7 @@ export function LobbyScreen({ gameManager, onEnterGame, onNewGame }) {
                 </tr>
               </thead>
               <tbody>
-                {games.map(game => (
+                {filteredGames.map(game => (
                   <tr 
                     key={game.code} 
                     className={`table__row ${game.code === selectedGameCode ? 'table__row--current' : ''}`}

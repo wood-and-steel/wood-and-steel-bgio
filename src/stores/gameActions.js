@@ -7,7 +7,7 @@
  */
 
 import { useGameStore } from './gameStore';
-import { isMoveAllowed } from './moveValidation';
+import { isMoveAllowed, isMoveAllowedForPlayer } from './moveValidation';
 import { 
   generateStartingContract as generateStartingContractContract,
   generatePrivateContract as generatePrivateContractContract,
@@ -39,12 +39,14 @@ function saveCurrentGameState() {
  * @param {Array<string>} activeCities - Array of two starting city keys
  * @returns {void}
  */
-export function generateStartingContract(activeCities) {
+export function generateStartingContract(activeCities, playerID) {
   // Get current state from store
   const { G, ctx } = useGameStore.getState();
-
   // Validate move is allowed in current phase
-  if (!isMoveAllowed('generateStartingContract', ctx)) {
+  const moveAllowed = playerID
+    ? isMoveAllowedForPlayer('generateStartingContract', playerID, ctx)
+    : isMoveAllowed('generateStartingContract', ctx);
+  if (!moveAllowed) {
     console.warn('[generateStartingContract] Move not allowed in current phase');
     return;
   }
@@ -77,7 +79,6 @@ export function generateStartingContract(activeCities) {
       )
     }
   }));
-
   // Check for phase transition after state update
   const updatedState = useGameStore.getState();
   checkPhaseTransition(updatedState.G, updatedState.ctx);

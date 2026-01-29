@@ -17,6 +17,7 @@ import {
   saveGameState,
   updateLastModifiedCache
 } from '../utils/gameManager';
+import { checkPhaseTransition } from '../stores/phaseManager';
 // Import test utilities in development
 if (!import.meta.env.PROD) {
   import('../utils/storage/testMigration');
@@ -33,6 +34,10 @@ const AppContent = () => {
   // BYOD mode state
   const [isBYODGame, setIsBYODGame] = React.useState(false);
   const [myPlayerID, setMyPlayerID] = React.useState(null);
+  
+  // Track last applied update timestamp to prevent stale real-time updates
+  // This ref is shared between the subscription handler and local save operations
+  const lastAppliedTimestampRef = React.useRef(null);
 
   // Initialize lobby mode on mount only. Do NOT re-run when storage type changes:
   // switching Local/Cloud tabs in the lobby must stay in lobby and show the list,
@@ -125,6 +130,16 @@ const AppContent = () => {
     const unsubscribe = adapter.subscribeToGame(currentGameCode, async (state, metadata, lastModified) => {
       if (state && state.G && state.ctx) {
         console.info('[App] Received real-time update for game:', currentGameCode);
+        // Check if this update is stale (older than what we've already applied)
+        // This prevents race conditions where old subscription notifications overwrite newer local state
+        if (lastModified && lastAppliedTimestampRef.current) {
+          const incomingTime = new Date(lastModified).getTime();
+          const lastAppliedTime = new Date(lastAppliedTimestampRef.current).getTime();
+          if (incomingTime <= lastAppliedTime) {
+            console.info('[App] Ignoring stale real-time update (incoming:', lastModified, 'vs applied:', lastAppliedTimestampRef.current, ')');
+            return; // Skip this stale update
+          }
+        }
         
         // Update Zustand store with remote state
         useGameStore.setState({
@@ -132,10 +147,10 @@ const AppContent = () => {
           ctx: state.ctx
         });
         
-        // Update last_modified cache with the new timestamp from the database
-        // This prevents false conflict warnings when we save after receiving our own updates
+        // Update last_modified cache and our tracking ref
         if (lastModified) {
           updateLastModifiedCache(currentGameCode, lastModified);
+          lastAppliedTimestampRef.current = lastModified;
         }
         
         // For BYOD games, check if playerID was just assigned (when game transitions from waiting)
@@ -232,28 +247,50 @@ const AppContent = () => {
   }, [setSelectedGame, setLobbyMode, storage]);
 
   // Handler to create a new game
-  const handleNewGame = React.useCallback(async (numPlayers = 2) => {
+  const handleNewGame = React.useCallback(async (numPlayers = 2, gameMode = 'hotseat') => {
     // Validate numPlayers is between 2 and 5
     const validNumPlayers = Math.max(2, Math.min(5, Math.floor(numPlayers) || 2));
     
     try {
-      const newCode = await createNewGame(storage.storageType);
+      // For BYOD mode, get device ID for host
+      const isBYOD = gameMode === 'byod';
+      const hostDeviceId = isBYOD ? storage.getDeviceId() : null;
       
-      // Initialize game state to initial values with specified number of players
-      useGameStore.getState().resetState(validNumPlayers);
+      // Create game with appropriate options
+      const newCode = await createNewGame(storage.storageType, {
+        gameMode,
+        hostDeviceId,
+        numPlayers: validNumPlayers,
+      });
       
-      // Save the properly initialized state to storage
-      const { G, ctx } = useGameStore.getState();
-      await saveGameState(newCode, G, ctx, storage.storageType);
+      // For hotseat games, initialize state normally
+      // For BYOD games, the state is already initialized by createNewGame with 'waiting_for_players' phase
+      if (!isBYOD) {
+        // Initialize game state to initial values with specified number of players
+        useGameStore.getState().resetState(validNumPlayers);
+        
+        // Save the properly initialized state to storage
+        const { G, ctx } = useGameStore.getState();
+        await saveGameState(newCode, G, ctx, storage.storageType);
+      } else {
+        // For BYOD, load the state that was created by createNewGame
+        const savedState = await loadGameState(newCode, storage.storageType);
+        if (savedState && savedState.G && savedState.ctx) {
+          useGameStore.setState({
+            G: savedState.G,
+            ctx: savedState.ctx
+          });
+        }
+      }
       
       // Set as current game
       storage.setCurrentGameCode(newCode);
       setSelectedGame(newCode);
       setLobbyMode(false);
       setCurrentGameCodeState(newCode);
-      setIsBYODGame(false);
-      setMyPlayerID(null);
-      console.info('[App] Created and entered new game:', newCode, 'with', validNumPlayers, 'players');
+      setIsBYODGame(isBYOD);
+      setMyPlayerID(null); // For BYOD, playerID will be assigned when game starts
+      console.info('[App] Created and entered new game:', newCode, 'with', validNumPlayers, 'players (mode:', gameMode + ')');
     } catch (error) {
       console.error('[App] Error creating new game:', error.message);
       alert(`Unable to create a new game. ${error.message || 'Please try again or refresh the page.'}`);
@@ -272,22 +309,58 @@ const AppContent = () => {
       // Get the current game state
       const { G, ctx } = useGameStore.getState();
       
+      // Initialize players array if empty (BYOD games start with empty players)
+      // Build players from assignments, using playerNames from metadata if available
+      let players = G.players;
+      if (!players || players.length === 0) {
+        // Get player names from metadata
+        const metadata = await storage.getMetadata(currentGameCode);
+        const playerSeats = metadata?.playerSeats || {};
+        
+        // Create players array indexed by playerID
+        players = Array.from({ length: ctx.numPlayers }, (_, i) => {
+          const playerID = String(i);
+          // Find the device that was assigned this playerID
+          const deviceEntry = Object.entries(assignments).find(([, pid]) => pid === playerID);
+          const deviceId = deviceEntry ? deviceEntry[0] : null;
+          const seat = deviceId ? playerSeats[deviceId] : null;
+          const playerName = seat?.playerName || `Player ${i}`;
+          
+          return [playerID, { name: playerName, activeCities: [] }];
+        });
+        
+        console.info('[App] Initialized players for BYOD game:', players);
+      }
+      
       // Set the byodGameStarted flag to trigger phase transition
       const updatedG = {
         ...G,
+        players,
         byodGameStarted: true
       };
       
-      // Update Zustand store
+      // Update Zustand store with the new G (including players array)
+      // Don't save to storage yet - let checkPhaseTransition do it atomically
+      // This prevents intermediate state (old phase) from being broadcasted
       useGameStore.setState({ G: updatedG });
       
-      // Save the updated state to storage (this triggers the phase transition via endIf)
-      await saveGameState(currentGameCode, updatedG, ctx, storage.storageType);
+      // Update the timestamp ref BEFORE the transition to block any stale notifications
+      lastAppliedTimestampRef.current = new Date().toISOString();
+      
+      // Trigger the phase transition from waiting_for_players to setup
+      // This will:
+      // 1. Check endIf (true because byodGameStarted is set)
+      // 2. Update ctx.phase to 'setup' in the store
+      // 3. Save the complete state (with players AND new phase) to storage
+      // IMPORTANT: Pass updatedG directly instead of re-fetching from store.
+      checkPhaseTransition(updatedG, ctx);
+      
+      // Update timestamp again after phase transition save
+      lastAppliedTimestampRef.current = new Date().toISOString();
       
       // Get my player ID from the assignments
       const deviceId = storage.getDeviceId();
       const myNewPlayerID = assignments[deviceId];
-      
       if (myNewPlayerID !== undefined) {
         setMyPlayerID(myNewPlayerID);
         console.info('[App] BYOD game started, my playerID:', myNewPlayerID);
@@ -415,7 +488,7 @@ const AppContent = () => {
     return (
       <div>
         <GameProvider playerID={myPlayerID}>
-          <WoodAndSteelState gameManager={gameManager} />
+          <WoodAndSteelState gameManager={gameManager} isBYODMode={true} />
         </GameProvider>
       </div>
     );

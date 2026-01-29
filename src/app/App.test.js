@@ -14,5 +14,5 @@ test('renders lobby screen on initial load', async () => {
   
   // Lobby shows storage tabs
   expect(screen.getByRole('button', { name: /local/i })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /cloud/i })).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: /cloud/i }).length).toBeGreaterThan(0);
 });
