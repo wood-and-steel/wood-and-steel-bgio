@@ -11,7 +11,8 @@ import { useGame } from "../hooks/useGame";
  * <IndependentRailroadsPage />
  */
 export function IndependentRailroadsPage() {
-  const { G } = useGame();
+  const { G, ctx, playerID } = useGame();
+  const isPlayerTurn = playerID === ctx.currentPlayer;
   
   // Convert object to array for rendering
   const railroadsArray = Object.values(G.independentRailroads);
@@ -24,11 +25,13 @@ export function IndependentRailroadsPage() {
             <div key={railroad.name} className="independentRailroads__item">
               <div className="independentRailroads__header">
                 <div className="independentRailroads__name">{railroad.name}</div>
-                <button 
-                  name="acquireIndependentRailroad" 
-                  id={railroad.name} 
-                  className="button independentRailroads__button"
-                >Acquire</button>
+                {isPlayerTurn && (
+                  <button 
+                    name="acquireIndependentRailroad" 
+                    id={railroad.name} 
+                    className="button independentRailroads__button"
+                  >Acquire</button>
+                )}
               </div>
               <div className="independentRailroads__body">
                 {railroad.routes.map((route, routeIndex) => (

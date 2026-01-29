@@ -41,6 +41,9 @@ export function PlayerBoard({ G, ctx, playerID, isBYODMode = false, startingCont
   const effectivePlayerID = isBYODMode && playerID != null ? playerID : ctx.currentPlayer;
   const activePlayer = G.players.find(([key]) => key === effectivePlayerID);
   const isPlayerTurn = !isBYODMode || playerID === ctx.currentPlayer;
+  const currentPlayerEntry = G.players.find(([id]) => id === ctx.currentPlayer);
+  const currentPlayerName = currentPlayerEntry?.[1]?.name || `Player ${ctx.currentPlayer}`;
+  const showTurnIndicator = isBYODMode && !isPlayerTurn;
   if (!activePlayer) return null;
 
   const [key, { name }] = activePlayer;
@@ -65,6 +68,11 @@ export function PlayerBoard({ G, ctx, playerID, isBYODMode = false, startingCont
   return (
     <div className="playerBoard">
       <div className="playerBoard__player">
+        {showTurnIndicator && (
+          <div className="playerBoard__turnIndicator">
+            {currentPlayerName} is taking their turn
+          </div>
+        )}
         <div className="playerBoard__info playerBoard__info--active">
           <div className="playerBoard__name playerBoard__name--active">
             {name}
@@ -72,26 +80,26 @@ export function PlayerBoard({ G, ctx, playerID, isBYODMode = false, startingCont
           <div className="playerBoard__buttonGroup">
             <button
               name="privateContract2"
-              className={`button ${startingContractExists ? '' : 'button--hidden'}`}
+              className={`button ${startingContractExists && isPlayerTurn ? '' : 'button--hidden'}`}
             >
               +2 P
             </button>
             <button
               name="privateContract3"
-              className={`button ${startingContractExists ? '' : 'button--hidden'}`}
+              className={`button ${startingContractExists && isPlayerTurn ? '' : 'button--hidden'}`}
             >
               +3 P
             </button>
             <button
               name="marketContract"
-              className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
+              className={`button ${currentPhase === 'play' && isPlayerTurn ? '' : 'button--hidden'}`}
             >
               +1 M
             </button>
             {/* End turn button - not shown during setup (auto-advances) */}
             <button 
               name="endTurn" 
-              className={`button ${currentPhase === 'play' ? '' : 'button--hidden'}`}
+              className={`button ${currentPhase === 'play' && isPlayerTurn ? '' : 'button--hidden'}`}
             >End Turn</button>
           </div>
         </div>
@@ -120,7 +128,7 @@ export function PlayerBoard({ G, ctx, playerID, isBYODMode = false, startingCont
           <h3 className="playerBoard__contractsTitle">Private</h3>
           <ContractsList G={G} ctx={ctx} type="private" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
           <h3 className="playerBoard__contractsTitle">Market</h3>
-          <ContractsList G={G} ctx={ctx} type="market" onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
+          <ContractsList G={G} ctx={ctx} type="market" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
           <h3 className="playerBoard__contractsTitle">Fulfilled</h3>
           <ContractsList G={G} ctx={ctx} type="fulfilled" playerID={key} onToggleFulfilled={onToggleFulfilled} onDelete={onDelete} />
         </div>

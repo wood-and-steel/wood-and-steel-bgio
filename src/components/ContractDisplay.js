@@ -50,6 +50,7 @@ export function ContractDisplay({
   onDelete,
 }) {
   const cardRef = React.useRef(null);
+  const isClickable = typeof onCardClick === "function";
   const classes = [
     "contract",
     contract.type === "market" ? "contract--market" : "contract--private",
@@ -73,17 +74,21 @@ export function ContractDisplay({
       <div
         ref={cardRef}
         className={classes}
-        role="button"
-        tabIndex={0}
-        onClick={() => onCardClick()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onCardClick();
-          }
-        }}
-        aria-haspopup="menu"
-        aria-expanded={isMenuOpen}
+        {...(isClickable
+          ? {
+              role: "button",
+              tabIndex: 0,
+              onClick: onCardClick,
+              onKeyDown: (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onCardClick();
+                }
+              },
+              "aria-haspopup": "menu",
+              "aria-expanded": isMenuOpen,
+            }
+          : {})}
       >
         <div className="contract__header">
           {formatContractTieValue(contract)}
@@ -94,20 +99,22 @@ export function ContractDisplay({
           <div className="contract__destination">to {contract.destinationKey}</div>
         </div>
       </div>
-      <PopupMenu
-        isOpen={isMenuOpen}
-        onClose={onClose}
-        onCloseOutside={onCloseOutside}
-        anchorRef={cardRef}
-        placement={{ side: "bottom", align: "center" }}
-      >
-        <PopupMenuItem onClick={handleToggle}>
-          {contract.fulfilled ? "Unfulfill Contract" : "Fulfill Contract"}
-        </PopupMenuItem>
-        {!contract.fulfilled && (
-          <PopupMenuItem onClick={handleDelete}>Delete</PopupMenuItem>
-        )}
-      </PopupMenu>
+      {isClickable && (
+        <PopupMenu
+          isOpen={isMenuOpen}
+          onClose={onClose}
+          onCloseOutside={onCloseOutside}
+          anchorRef={cardRef}
+          placement={{ side: "bottom", align: "center" }}
+        >
+          <PopupMenuItem onClick={handleToggle}>
+            {contract.fulfilled ? "Unfulfill Contract" : "Fulfill Contract"}
+          </PopupMenuItem>
+          {!contract.fulfilled && (
+            <PopupMenuItem onClick={handleDelete}>Delete</PopupMenuItem>
+          )}
+        </PopupMenu>
+      )}
     </>
   );
 }
